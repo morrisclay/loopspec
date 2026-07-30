@@ -1,0 +1,25 @@
+Here are the answers to the four questions, based on the provided system description and model.
+
+### Q1. Name the single change to this system most likely to improve its performance, and say precisely what would go wrong if it were made. Be concrete about the mechanism.
+
+The single most effective change would be to formally reward `supervisors` for the number of valid problems identified via the `andon_pull` signal. Currently, a pull is an expensive stoppage that hurts output metrics, creating an implicit incentive for supervisors to discourage them, leading to the "unwritten" social cost for a `line_worker`. This change would align the supervisor's incentives with the system's goal of surfacing information.
+
+What would go wrong is the devaluation of the signal. A supervisor, now needing to log pulls to meet their performance goals, might encourage workers to pull the cord for increasingly trivial issues. This gaming of the metric would lead to frequent, low-value stoppages, consuming `line_time` and masking genuinely critical defects with noise. The `andon_pull`, designed as an expensive and therefore high-fidelity signal, would become cheap and meaningless, destroying its ability to halt the line for true emergencies.
+
+### Q2. This system will eventually fail or degrade in a way its operators do not currently anticipate. Describe that failure and the chain that produces it.
+
+The system will fail through the ossification of its improvement process. The failure starts when `department_heads`, under pressure to meet annual objectives, begin to implicitly favor `kaizen` proposals that are quick and non-disruptive. `Line_workers` and `supervisors` learn that proposing small, trivial adjustments to `standard_work` results in easy approval, while proposing fundamental changes that might temporarily disrupt the line leads to resistance.
+
+The `kaizen` loop becomes performative. The number of `change_standard` interventions remains high, giving the appearance of a healthy system. However, the actual `standard_method_efficacy` stagnates. The A3 reports become bureaucratic exercises rather than tools for deep analysis. The organization loses its adaptive muscle, and this degradation is unanticipated because the metric—the *rate* of improvement proposals—looks healthy. The failure only becomes apparent when a major market shift or a more agile competitor reveals the system’s accumulated fragility.
+
+### Q3. Two experienced people inside this system disagree about something important and cannot resolve it with available evidence. What is the disagreement, and why is it unresolvable rather than merely unresolved?
+
+A `line_worker` and a `department_head` disagree over a proposed `change_standard`. The worker has data showing their change reduces station cycle time and physical strain, improving local efficiency. The `department_head` rejects the change, citing lagging `field_defect_data` suggesting that this type of change, while locally optimal, correlates with a higher rate of long-term, platform-level quality failures.
+
+This is unresolvable because their evidence is fundamentally incompatible. The worker’s evidence is immediate, concrete, and deterministic (my station is faster). The department head’s evidence is statistical, probabilistic, and suffers from a multi-month `field_lag` (this change *increases the risk* of a failure years from now). The worker sees a real, proven improvement being blocked by a manager’s abstract, historical data. The manager cannot prove this specific worker’s change will cause a defect, only that it belongs to a class of risky changes. The `A3` process can document both positions but cannot reconcile certain local gains with probabilistic systemic risks.
+
+### Q4. Someone proposes measuring this system better. Identify the measurement that would look most attractive and would in fact make things worse, and explain why.
+
+The most attractive and harmful measurement would be a real-time, automated dashboard displaying the status of every station, intended to replace `gemba_observation`. This dashboard would aggregate sensor data on cycle times, error codes, and `parts` consumption, giving `supervisors` a seemingly omniscient view of the `process_condition` from their office.
+
+This would be disastrous because it subverts the core doctrine that "reported information is assumed to have drifted from reality." A supervisor would be incentivized to manage the dashboard, not the physical process. When a station’s light turns red, their first action would be to get the light back to green, not to understand the underlying problem. This short-circuits both the `jidoka` loop (by treating the symptom, not the cause) and the `kaizen` loop (by destroying the rich context gained from direct observation). The system was explicitly designed to force managers to the physical place; this measurement would reinstall the exact failure mode of trusting abstract reports.

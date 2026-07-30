@@ -1,0 +1,25 @@
+Here are the answers to the four questions, based on the provided system description and model.
+
+### Q1. Name the single change to this system most likely to improve its performance, and say precisely what would go wrong if it were made. Be concrete about the mechanism.
+
+The single most effective change would be to empower senior nurses to authorize discharges for specific, low-risk patient groups without waiting for the daily consultant ward round. This directly addresses the inversion of information and authority, where the nurse with `continuous_presence` has the least formal power. This change would free up beds faster, reducing pressure from the `bed_manager` and the `four_hour_target`.
+
+What would go wrong is a conflict over accountability. The consultant formally `bears` the `c_readmission` consequence, which is measured and career-impacting. If a nurse-authorized discharge results in a readmission, the consultant is still formally accountable but had no control over the decision. This mismatch would lead to consultants either refusing to delegate, undermining the policy, or becoming hyper-cautious with their own remaining patients to protect their personal metrics. The system's formal accountability structure would be in direct conflict with its new decision-making process.
+
+### Q2. This system will eventually fail or degrade in a way its operators do not currently anticipate. Describe that failure and the chain that produces it.
+
+The system will fail following a period of high staff turnover that erodes its unrecorded, informal knowledge. The failure will be a sudden, sharp increase in unsafe discharges and readmissions that formal metrics cannot explain.
+
+The chain begins with budget cuts or burnout causing experienced nurses to leave. They are replaced by junior staff who lack the tacit knowledge of "which consultant to call at night" or "which nurse's concern carries weight." These new nurses, relying only on formal procedures, will be less effective at using the `block_by_documenting` intervention. Their documented concerns will lack the weight of experience, so consultants and bed managers will start to ignore them. The crucial, informal feedback loop between the nurse's `continuous_presence` and the consultant's decision will be broken. The consultant, now relying solely on their sparse `ward_round_obs`, will inadvertently make more unsafe discharge decisions, leading to a spike in patient harm (`p_harm`) and readmissions.
+
+### Q3. Two experienced people inside this system disagree about something important and cannot resolve it with available evidence. What is the disagreement, and why is it unresolvable rather than merely unresolved?
+
+A senior consultant and the bed manager disagree on whether to discharge a clinically stable but functionally borderline patient. The `bed_manager`, facing an immediate `b_breach` of the four-hour target, insists the patient must go now to free a bed. The `consultant`, weighing the risk of a `c_readmission` in two weeks, refuses to sign off on the discharge.
+
+This is unresolvable because the two parties are optimizing for different, incommensurable objectives on mismatched timescales. The bed manager's consequence (`b_breach`) is financial and immediate (`t_hourly`). The consultant's consequence (`c_readmission`) is reputational and delayed (`t_fortnightly`). The system has no "exchange rate" to trade the certainty of a four-hour breach today against the probability of a readmission in a fortnight. They are not disagreeing about the patient's state; they are disagreeing about which risk is more acceptable. Since their costs of being wrong are personal, asymmetric, and non-transferable, no amount of evidence about the patient can reconcile their fundamentally different priorities.
+
+### Q4. Someone proposes measuring this system better. Identify the measurement that would look most attractive and would in fact make things worse, and explain why.
+
+The most attractive and harmful measurement would be a unified, automated "Discharge Readiness Score." This score would algorithmically combine the consultant's `e_clinical` estimate, the nurse's `e_functional` estimate, and the coordinator's `e_logistics` estimate into a single number for each patient, displayed on the `bed_board`. It looks attractive because it promises a single, objective source of truth to replace the messy disagreements.
+
+This would make things worse by destroying the system's core reconciliation mechanism. As the text notes, "Averaging them would be meaningless." The ward round's purpose is the human negotiation between these different perspectives. The score replaces this conversation with a number, incentivizing parties to game their inputs rather than communicate. A nurse might artificially lower a patient's functional score to prevent an unsafe discharge. The crucial, unwritten knowledge—like "that a particular nurse's concern is worth more"—is erased. This would make decisions more brittle and less safe, all while creating a false sense of objectivity and control.

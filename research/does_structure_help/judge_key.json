@@ -1,0 +1,11 @@
+{
+ "hospital-A": "both",
+ "hospital-B": "encoding",
+ "hospital-C": "prose",
+ "toyota-A": "encoding",
+ "toyota-B": "prose",
+ "toyota-C": "both",
+ "hop_aero-A": "encoding",
+ "hop_aero-B": "prose",
+ "hop_aero-C": "both"
+}

@@ -1,0 +1,69 @@
+{
+  "hospital": {
+    "A": {
+      "specificity": 5,
+      "causal_depth": 5,
+      "non_obviousness": 4,
+      "groundedness": 4
+    },
+    "B": {
+      "specificity": 3,
+      "causal_depth": 3,
+      "non_obviousness": 3,
+      "groundedness": 4
+    },
+    "C": {
+      "specificity": 5,
+      "causal_depth": 5,
+      "non_obviousness": 4,
+      "groundedness": 3
+    },
+    "best": "A",
+    "why": "A is the strongest complete set because it consistently ties named roles, authority, accountability, timescales, and information loss into mechanisms without relying as heavily as C on unsupported scenario-specific numbers."
+  },
+  "toyota": {
+    "A": {
+      "specificity": 4,
+      "causal_depth": 5,
+      "non_obviousness": 4,
+      "groundedness": 4
+    },
+    "B": {
+      "specificity": 4,
+      "causal_depth": 4,
+      "non_obviousness": 2,
+      "groundedness": 3
+    },
+    "C": {
+      "specificity": 5,
+      "causal_depth": 4,
+      "non_obviousness": 4,
+      "groundedness": 4
+    },
+    "best": "A",
+    "why": "A wins narrowly because its feasibility dispute is genuinely unresolvable without undertaking the risky trial, whereas C's strongest disagreement is a difficult decision under uncertainty rather than an evidentially unresolvable one."
+  },
+  "hop_aero": {
+    "A": {
+      "specificity": 2,
+      "causal_depth": 1,
+      "non_obviousness": 1,
+      "groundedness": 2
+    },
+    "B": {
+      "specificity": 1,
+      "causal_depth": 0,
+      "non_obviousness": 0,
+      "groundedness": 1
+    },
+    "C": {
+      "specificity": 2,
+      "causal_depth": 1,
+      "non_obviousness": 0,
+      "groundedness": 2
+    },
+    "best": "A",
+    "why": "A is best only by a small margin because it at least states partial candidate mechanisms for a funding-trigger change and an insider conflict, while B and C remain almost entirely descriptions of analysis still to be done."
+  },
+  "overall_observation": "Complete answers with explicit causal chains separated the stronger sets; process notes received almost no credit, and answers lost ground when they substituted plausible but unsupported exact details or treated ordinary uncertainty as fundamental unresolvability."
+}

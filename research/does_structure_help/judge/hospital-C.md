@@ -1,0 +1,25 @@
+Here are the answers to the four questions, based on the provided system description.
+
+### Q1. Name the single change to this system most likely to improve its performance, and say precisely what would go wrong if it were made. Be concrete about the mechanism.
+
+The most likely improvement would be to institute nurse-led discharge for specific, low-risk patient pathways. A senior nurse, using a clear protocol, could discharge a patient they know is functionally ready without waiting for the next day's consultant ward round. This would free up a bed 12-24 hours earlier, directly relieving the bed manager's hourly pressure from the emergency department.
+
+What would go wrong is the consultant's reaction to this diffusion of authority. The consultant is individually measured on readmissions. To protect themselves from discharges they did not personally approve, they would insist on an extremely rigid, defensive, checklist-based protocol for the nurses. This would replace the nurse's nuanced, continuous observation with a bureaucratic exercise. A patient who is clearly well but doesn't tick one specific box (e.g., "walked 50 metres unaided") would be blocked, potentially delaying a discharge that the consultant would have approved in person, thus slowing the system down.
+
+### Q2. This system will eventually fail or degrade in a way its operators do not currently anticipate. Describe that failure and the chain that produces it.
+
+The failure will be a sudden, system-wide gridlock caused by the erosion of unwritten knowledge. The chain begins with sustained budget pressure leading to a hiring freeze and the departure of experienced nurses and discharge coordinators for less stressful roles. They are replaced by junior or temporary staff who lack the tacit knowledge of the system: which care homes accept Friday admissions, which consultants are pragmatic about risk, how to navigate inter-departmental favours.
+
+The failure manifests when this critical mass of experience is lost. A discharge coordinator, following the official process, tries to place a patient on a Friday and finds no care home will formally accept. The bed is blocked all weekend. A junior nurse documents a minor concern that an experienced nurse would have contextualised, blocking another discharge. These individual delays, previously smoothed over by informal know-how, cascade. The operators, seeing only the formal system, will not anticipate this collapse because the informal system that made it work was never measured or even acknowledged.
+
+### Q3. Two experienced people inside this system disagree about something important and cannot resolve it with available evidence. What is the disagreement, and why is it unresolvable rather than merely unresolved?
+
+The disagreement is between a senior consultant and the bed manager over discharging a clinically stable but borderline elderly patient. The consultant wants to keep the patient one more night for observation, as their data shows a 15% chance of readmission if discharged today, which reflects poorly on their personal metrics and represents a clinical failure. The bed manager, facing three imminent four-hour breaches in the emergency department, needs the bed immediately and argues that an 85% chance of a successful discharge is a risk worth taking for the good of the whole hospital.
+
+This is unresolvable because it is not a dispute over facts—both parties agree on the clinical risk. It is a clash of incommensurable objectives and timescales. The consultant is optimising for individual patient safety and their professional record over a multi-week period. The bed manager is optimising for hospital throughput and avoiding financial penalties on an hourly basis. There is no shared currency to trade a potential readmission against a definite four-hour breach.
+
+### Q4. Someone proposes measuring this system better. Identify the measurement that would look most attractive and would in fact make things worse, and explain why.
+
+The most attractive and harmful measurement would be "Discharge Date Variance": measuring the difference between a "Predicted Date of Discharge" (PDD) set near admission and the actual date of discharge. This would look attractive to administrators as a tool for improving planning, managing flow, and holding teams accountable for "predictability."
+
+This would make things worse by creating perverse incentives. To avoid negative variance, a consultant might keep a patient who recovers quickly in their bed for an extra day to meet the PDD, blocking the bed unnecessarily. Conversely, a discharge coordinator, under pressure to meet the PDD, might arrange transport and pressure the clinical team to discharge a patient who is not truly ready, shifting risk onto the patient and community services. The focus would shift from "Is this patient safe to go home?" to "Are we hitting the date?" This punishes responsiveness to a patient's actual condition, making the system more rigid and less safe.
