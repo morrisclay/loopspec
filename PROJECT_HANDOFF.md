@@ -248,11 +248,11 @@ System
 
 Boundary
 
-Mission
+Observer
 
-Goal
+Desired Condition        (collapses Mission, Goal, Reference State)
 
-Reference State
+Preference Ordering      (collapses Objective, Utility, Tradeoff)
 
 Observed State
 
@@ -280,6 +280,8 @@ Intervention
 
 Actuator
 
+Resource
+
 Constraint
 
 Disturbance
@@ -288,18 +290,73 @@ Feedback
 
 Delay
 
+Time Scale
+
 Invariant
 
 Learning Rule
 
-Objective
+Calibration
 
-Utility
-
-Tradeoff
+Revision                 (of goals, of state space, of boundary)
 ```
 
 But challenge every one.
+
+### Notes on the current list
+
+The synonym collapses above are provisional but deliberate. `Mission`, `Goal`, and
+`Reference State` were three names for *desired condition*; `Objective`, `Utility`,
+and `Tradeoff` were three names for *a ranking over conditions*. Five names became
+two. Apply the same pressure to everything that remains.
+
+Four additions, each justified by absence rather than theory:
+
+- **`Observer`** — a belief with no holder cannot represent disagreement. Hospitals,
+  funds, markets, democracies, scientific communities and military command all turn
+  on parties holding different estimates of the same quantity. Without this primitive
+  more than half the benchmark corpus flattens into a single averaged posterior that
+  describes nobody.
+
+- **`Resource`** — interventions are not free. Every real adaptive system is bound by
+  capital, attention, headcount, or energy. Nothing in the original list represented
+  scarcity.
+
+- **`Calibration`** — the loop that closes on the *estimator* rather than on the
+  world. It appeared only in Phase 8; it is arguably the most important loop in any
+  system that must learn whether its own beliefs track reality.
+
+- **`Revision`** — change to the *schema* of the system rather than to its parameters:
+  goals rewritten, state variables discovered, boundaries renegotiated. This is
+  distinct from `Learning Rule`, which improves performance within a fixed identity.
+  A startup pivot, an institution captured by its opponents, and a cell differentiating
+  are all revision, not learning. This is also the sharpest candidate for what
+  classical formalisms cannot express (see the prior-art gate in Phase 1).
+
+### Representational commitments
+
+Four constraints on the representation, adopted for engineering reasons and to be
+overturned only by benchmark evidence:
+
+1. **Beliefs and desired conditions are observer-indexed.** There is no unowned
+   belief. Where a system appears to hold a single belief, that is a modelling
+   choice to be stated, not a default.
+
+2. **Competing desired conditions are never scalarized in the representation.**
+   A weighted sum is a *decision*, and decisions belong to the policy layer.
+   The representation holds the conflict; a policy may resolve it. Collapsing
+   early permanently destroys the ability to express contested tradeoffs.
+
+3. **Every system declares its excluded-variable frontier.** State variables known
+   to exist and deliberately left out of the state space are recorded, not merely
+   absent. This is not documentation — it is the candidate set for `Revision` when
+   the system underperforms, and the first place to look when an encoding fails.
+   May be empty; emptiness is reported as a coverage metric, not an error.
+
+4. **Unspecified values are typed.** `unknown` and `deliberately-unspecified` are
+   distinct, because they have different execution semantics: an estimator should
+   spend evidence-gathering budget reducing the former and must not spend it on
+   the latter.
 
 ### Deliverable
 
@@ -358,6 +415,25 @@ For each
 Describe using exactly the same ontology.
 
 The benchmark exists to break weak abstractions.
+
+### Encoding metadata
+
+Every benchmark encoding carries document-level provenance: who encoded it, from
+what source material, and from whose vantage point within the system. This is not
+bookkeeping — inter-encoder agreement is the strongest objective measure available
+for whether the ontology is determinate or merely suggestive, and it cannot be
+computed without knowing who produced which encoding.
+
+Document level only. Per-node provenance is not worth its weight.
+
+### Questions the corpus should settle
+
+- Whose account gets encoded when a system contains parties that disagree? Encode
+  a hospital from the administration's vantage and from the ward's, and compare.
+  If the ontology cannot make the difference visible, `Observer` is not doing its job.
+- Is belief *visibility* structural? In a hospital, who may see which estimate is
+  not incidental — patient data and performance assessment are both restricted.
+  Determine whether this needs representation or belongs to the execution layer.
 
 ### Deliverable
 
