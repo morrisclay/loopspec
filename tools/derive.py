@@ -76,10 +76,11 @@ def q_consequence_without_authority(d, nodes, edges):
             sev = nodes.get(cons, {}).get("severity")
             out.append({
                 "pattern": "consequence_without_authority",
-                "claim": (f"`{party}` bears a consequence of severity `{sev}` while holding no "
-                          f"authority over any intervention. Its exposure is structurally "
-                          f"unhedgeable: it cannot act to reduce its own risk."),
+                "claim": (f"`{party}` bears consequence `{cons}` (severity `{sev}`) and the "
+                          f"encoding records no `authorizes` edge from it to any intervention."),
                 "evidence": {"bears": cons, "severity": sev, "authorizes": []},
+                "does_not_claim": ("that no risk-reducing act exists — only that none is "
+                                   "encoded. Adjudication rejected the stronger form."),
             })
     return out
 
@@ -178,7 +179,14 @@ def q_shared_intervention_across_timescales(d, nodes, edges):
             p1 = closes.get(iv1)
             if revises.get(iv2) and p1 and revises.get(iv2) == p1:
                 shared = p1
+            # Adjudication rejected treating `closes` and `revises` as the same kind of
+            # contact with a shared object: they are unlike roles, and a missing authorizer
+            # does not establish an unowned tradeoff. Require the SAME relation type.
             if not shared:
+                continue
+            same_rel = ((iv1 in consumes and iv2 in consumes) or
+                        (iv1 in revises and iv2 in revises))
+            if not same_rel:
                 continue
             owners1 = [a for a, b in rel(edges, "authorizes") if b == iv1]
             owners2 = [a for a, b in rel(edges, "authorizes") if b == iv2]
@@ -231,7 +239,17 @@ def q_unmeasured_estimand(d, nodes, edges):
 
 
 def q_delay_without_feedback_owner(d, nodes, edges):
-    """A delayed intervention whose consequence lands on a party who did not authorise it."""
+    """
+    A delayed intervention whose consequence lands on a party who did not authorise it.
+
+    WITHDRAWN as a claim-generating query. Adjudication rejected all three of its outputs as
+    `unsupported`, correctly: it inferred that a delay "falls on" a party purely because that
+    party bears an unmeasured consequence, with NO edge relating the intervention or its delay
+    to that consequence. Co-occurrence in the graph is not a relation in the graph.
+
+    Retained as a QUESTION generator rather than deleted, because the pattern is worth
+    flagging for a human — it just is not an established claim.
+    """
     delays = {b for _, b in rel(edges, "delays")}
     auth = {}
     for a, b in rel(edges, "authorizes"):
@@ -242,17 +260,17 @@ def q_delay_without_feedback_owner(d, nodes, edges):
         for p in kind(nodes, "Party"):
             if p in owners:
                 continue
-            cons = [b for a, b in rel(edges, "bears") if a == p]
-            for c in cons:
+            for c in [b for a, b in rel(edges, "bears") if a == p]:
                 if nodes.get(c, {}).get("measured") is False:
                     out.append({
-                        "pattern": "delayed_harm_to_unauthorised_party",
-                        "claim": (f"Intervention `{iv}` is delayed and authorised by {owners}, "
-                                  f"while `{p}` bears consequence `{c}` which is unmeasured. "
-                                  f"The lag falls on a party with neither authority over the "
-                                  f"act nor a measured record of the harm."),
+                        "pattern": "open_question_delay_exposure",
+                        "is_question": True,
+                        "claim": (f"QUESTION, not a claim: `{iv}` is delayed and authorised by "
+                                  f"{owners}; `{p}` bears unmeasured consequence `{c}`. The "
+                                  f"encoding does not relate them. Should there be an edge?"),
                         "evidence": {"intervention": iv, "authorised_by": owners,
-                                     "exposed_party": p, "consequence": c},
+                                     "party": p, "consequence": c,
+                                     "missing_relation": f"{iv} -> {c}"},
                     })
     return out
 

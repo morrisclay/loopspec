@@ -1,23 +1,24 @@
 # Status
 
 ```
-SCORE                     0.000
-sub-score (excl. U)       0.748     DIAGNOSTIC ONLY
-binding term              U_usefulness = 0.000
+SCORE                     0.534     first non-zero score
+binding term              U_usefulness = 0.129
 
 S simplicity              0.812
-E expressivity            0.821     adjudicated over 47 claims
-D determinacy             0.805     5 vendors, 20 pairs
-U usefulness              0.000     11 of 11 claims rejected
-C comprehensibility       0.582
+E expressivity            0.924     adjudicated, not self-assessed
+D determinacy             0.790     5 vendors, 20 pairs
+U usefulness              0.129     2 genuine claims out of 20 attempts
+C comprehensibility       0.569
 gate negative_control     pass
 gate reduction            pass      independently confirmed by 5 encoders
 ```
 
-**The score is zero and that is the correct answer.** The geometric mean is built to collapse
-when a term fails. `U` fails: no encoding, by any model, has been shown to surface anything a
-practitioner did not already have. The sub-score exists only to keep gradient visible on the
-other four terms and is not an achievement.
+**The score was 0.000 for most of this work and is now 0.534.** The move came from exactly one
+thing: two claims survived blind adjudication, so `U` left zero and stopped collapsing the
+geometric mean. `U` remains the binding term by a wide margin.
+
+Cumulative claim record: **20 attempts, 2 genuine (10%).** All 11 hand-asserted claims were
+rejected. Of 9 computed by graph query, 2 survived.
 
 ---
 
@@ -47,7 +48,7 @@ the weak component at 0.43–0.67. Whether five parties assessing discharge read
 estimands or five estimates of one contested aggregate. I wrote that fork down before
 comparing, so it is a known ambiguity — knowing it has not resolved it.
 
-## 2. Usefulness: 11 of 11 rejected, by four different models
+## 2. Every hand-ASSERTED claim was rejected — 11 of 11, four different models
 
 Blind adjudication — a model that wrote neither the encodings, the ontology, nor the prose,
 on anonymised claims with encoder identity stripped, with three ways to fail and one to pass.
@@ -71,16 +72,18 @@ adjudicator's diagnosis is the sharpest sentence produced in this project:
 > overstate what they actually establish.
 
 *Typed paraphrase.* The encodings retype the prose with primitive labels attached and the
-result reads as analysis. That is the honest description of where URAS currently stands, and
-no amount of work on the other four terms addresses it.
+result reads as analysis. That was the honest description of hand-asserted claims, and no
+amount of work on the other four terms addressed it — which is what motivated the derivation
+experiment in section 8, the only thing that has since moved `U` off zero.
 
 **Adjudication is reproducible:** re-run on the six round-1 claims, it returned **6/6
 identical verdicts**.
 
 ## 3. Expressivity fell as adjudication widened — the honest direction
 
-`E` went 0.950 (self-assessed) → 0.896 → **0.821** across 47 adjudicated claims: 41 `handled`,
-5 `named_only`, 1 `not_handled`.
+`E` went 0.950 when self-assessed, then 0.896 and 0.821 as adjudication widened across 47
+claims (41 `handled`, 5 `named_only`, 1 `not_handled`), and now reads **0.924** with the
+canonical encodings included.
 
 A term that *falls* as measurement improves is behaving correctly. `named_only` — listing
 something under an "excluded" key and calling it handled — caught 5 over-claims, against the
@@ -158,23 +161,85 @@ list-then-mapping-key error I made three times by hand.
 
 ## What is actually blocking
 
-**One thing, and it is not a tooling problem.** Until a single surfaced claim survives
-adjudication, `U = 0` and the score is zero regardless of the other four terms. Eleven attempts
-by four models produced none, and the diagnosis is that the encodings are typed paraphrase.
+**One thing, and it is not a tooling problem.** `U` is now 0.129 rather than 0, so the score is
+no longer zero — but at 20 attempts and 2 genuine, usefulness remains the binding term by a
+wide margin and every other term is more than six times higher.
 
 This is the correct binding constraint for the project to have. It says: the representation is
 internally consistent (S), broadly expressive (E), determinate across five model families (D),
 degrades to classical control (gate), and **has not yet been shown to tell anyone anything**.
 
-Two paths, and they are not equivalent:
+Path 1 — derive rather than assert — has now been run, and section 8 reports it: it works, at
+22% against 0%, and two thirds of its output was still rejected. More and better queries are
+available autonomously and are the obvious next increment.
 
-1. **Derive rather than assert.** A claim should fall out of the graph structure — for
-   instance, computing which parties hold estimates of an estimand they have no authority to
-   act on. That is a query over the encoding, not a sentence written into a `surfaced` field.
-   Every rejected claim so far was asserted prose.
-2. **A real practitioner.** Model adjudication catches restatement decisively and reproducibly,
-   but cannot tell whether something would be news to an actual clinician or founder. `U = 0`
-   currently means "no claim survived model adjudication" — a necessary condition, not the bar.
+**Path 2 still needs a human, and it is the only item from round 1 still open.** Model
+adjudication catches restatement decisively and reproducibly — 6/6 on re-run — but cannot tell
+whether a claim would be news to an actual clinician or founder. `U = 0.129` means "two claims
+survived *model* adjudication," which is a necessary condition and not the real bar. The two
+survivors are both **absences** — an unmeasured estimand and a missing estimator — and whether
+those matter is exactly the kind of question a ward sister answers in one sentence and a model
+cannot answer at all.
 
-Path 1 is available autonomously and is the honest next step. Path 2 needs a human, and it is
-the only item on the round-1 list still open.
+---
+
+## 8. Derivation vs assertion — the decisive experiment
+
+After 11 of 11 hand-asserted claims were rejected as "typed paraphrase," `tools/derive.py`
+tested the alternative: compute claims by query over the graph instead of writing them into a
+field. Six queries, each required to combine at least two independent parts of the graph.
+
+**Result: 2 of 9 derived claims adjudicated `genuine`, against 0 of 11 asserted.** The two:
+
+- **`patient_preference` has no signal measuring it** — while appearing in the preference
+  ordering and marked `often-unelicited`. The adjudicator: *"exposing a decision-relevant
+  evidential gap not stated plainly in the prose."*
+- **`e_logistics` has no declared estimator** — a discharge-*blocking* assessment whose
+  production is unspecified. *"Not stated in the prose."*
+
+Both are absences. Neither is in the source text. Both were found by a program, not written by
+me, and both bear on a real decision — whether to elicit patient preference at all, and who is
+accountable for a judgement that can block a discharge.
+
+### The adjudicator disagrees with my reading of this, and it is worth recording
+
+Asked directly whether derivation beats assertion, it said **no**:
+
+> Computing claims from graph structure does not produce better claims than writing them by
+> hand: it makes the triggering pattern auditable, but most outputs still restate the prose,
+> lack decision relevance, or overinterpret missing and unrelated edges.
+
+The hit rate says otherwise — 22% versus 0%. Both are true and neither should be suppressed:
+derivation produced the only genuine claims this project has, *and* two thirds of its output
+was still bad. The honest summary is that derivation raises the ceiling and does not raise the
+floor.
+
+### It found a real bug class in my own queries
+
+Five of nine were rejected `unsupported`, and the adjudicator identified why with precision:
+they **inferred causal and capability conclusions from missing edges.**
+
+`delayed_harm_to_unauthorised_party` claimed a delay "falls on" a party purely because that
+party bore an unmeasured consequence — with no edge relating the intervention or its delay to
+that consequence. *Co-occurrence in a graph is not a relation in a graph.* That query is now
+withdrawn as a claim generator and retained only as a **question generator**, which is what it
+always was.
+
+`consequence_without_authority` claimed exposure was "structurally unhedgeable." The graph
+supports only that no `authorizes` edge is recorded. Weakened to exactly that, with an explicit
+`does_not_claim` field.
+
+`unowned_cross_timescale_coupling` treated `closes` and `revises` as the same kind of contact
+with a shared object. They are unlike roles; the query now requires the same relation type.
+
+After the fixes the hospital yields 5 claims and 2 explicit questions instead of 8 claims. Both
+genuine claims survive.
+
+### Derivation is sensitive to the encoding, which assertion never was
+
+The thermostat query initially reported the householder as holding zero authority. That was an
+**encoding bug** — `set_dial` had never been encoded as an intervention. Adding it made the
+claim disappear.
+
+This is the property that makes derivation worth keeping regardless of the hit rate: a derived
+claim is wrong for a *locatable* reason. An asserted claim is just wrong.

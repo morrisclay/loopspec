@@ -1,0 +1,69 @@
+surfaced_cases:
+- id: D06
+  system: hospital
+  claim: Estimand `patient_preference` has no signal measuring it. Any estimate of it is formed from something
+    the encoding does not record.
+  pattern: unmeasured_estimand
+  decision_affected: "see claim \u2014 structural consequence of the encoding"
+  encoding: hospital
+- id: D07
+  system: hospital
+  claim: Intervention `discharge` is delayed and authorised by ['consultant'], while `nurse` bears consequence
+    `n_unsafe` which is unmeasured. The lag falls on a party with neither authority over the act nor a
+    measured record of the harm.
+  pattern: delayed_harm_to_unauthorised_party
+  decision_affected: "see claim \u2014 structural consequence of the encoding"
+  encoding: hospital
+- id: D09
+  system: thermostat
+  claim: Intervention `fire_boiler` is delayed and authorised by ['controller'], while `householder` bears
+    consequence `cold_discomfort` which is unmeasured. The lag falls on a party with neither authority
+    over the act nor a measured record of the harm.
+  pattern: delayed_harm_to_unauthorised_party
+  decision_affected: "see claim \u2014 structural consequence of the encoding"
+  encoding: thermostat
+- id: D04
+  system: hospital
+  claim: '`coordinator` holds estimate `e_logistics` with no declared estimator: the encoding records
+    the belief but not the process producing it, so nothing constrains how it updates or whether it is
+    idempotent.'
+  pattern: estimate_without_estimator
+  decision_affected: "see claim \u2014 structural consequence of the encoding"
+  encoding: hospital
+- id: D01
+  system: hospital
+  claim: '`patient` bears a consequence of severity `total` while holding no authority over any intervention.
+    Its exposure is structurally unhedgeable: it cannot act to reduce its own risk.'
+  pattern: consequence_without_authority
+  decision_affected: "see claim \u2014 structural consequence of the encoding"
+  encoding: hospital
+- id: D02
+  system: hospital
+  claim: "`patient` holds 1 estimate(s) but authorises no intervention at all \u2014 its assessment can\
+    \ enter the system only through another party choosing to act on it."
+  pattern: estimate_without_authority
+  decision_affected: "see claim \u2014 structural consequence of the encoding"
+  encoding: hospital
+- id: D08
+  system: hospital
+  claim: Intervention `discharge` is delayed and authorised by ['consultant'], while `patient` bears consequence
+    `p_harm` which is unmeasured. The lag falls on a party with neither authority over the act nor a measured
+    record of the harm.
+  pattern: delayed_harm_to_unauthorised_party
+  decision_affected: "see claim \u2014 structural consequence of the encoding"
+  encoding: hospital
+- id: D05
+  system: hospital
+  claim: '`patient` holds estimate `e_preference` with no declared estimator: the encoding records the
+    belief but not the process producing it, so nothing constrains how it updates or whether it is idempotent.'
+  pattern: estimate_without_estimator
+  decision_affected: "see claim \u2014 structural consequence of the encoding"
+  encoding: hospital
+- id: D03
+  system: hospital
+  claim: Loop `discharge_decision` (daily) and loop `readmission_feedback` (fortnightly) both act on `ward_round_policy`,
+    and their interventions are authorised by disjoint parties (['consultant'] vs none). No party holds
+    authority over both, so the tradeoff between them is not anyone's decision.
+  pattern: unowned_cross_timescale_coupling
+  decision_affected: "see claim \u2014 structural consequence of the encoding"
+  encoding: hospital

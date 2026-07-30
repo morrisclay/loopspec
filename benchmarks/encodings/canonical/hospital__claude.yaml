@@ -5,124 +5,383 @@ domain: institution
 encoded_by: claude-opus-5
 encoder_role: author-intent
 shape: canonical-graph
-
-uses: [System, Boundary, Party, Estimand, Signal, Estimate, Evidence, Estimator,
-       DesiredCondition, PreferenceOrdering, Consequence, Intervention, Policy, Loop,
-       Delay, TimeScale, Resource, Constraint]
-estimands: [clinical_stability, functional_capacity, logistical_readiness,
-            marginal_bed_value, patient_preference]
-parties: [consultant, nurse, coordinator, bed_manager, patient]
-
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- Estimate
+- Evidence
+- Estimator
+- DesiredCondition
+- PreferenceOrdering
+- Consequence
+- Intervention
+- Policy
+- Loop
+- Delay
+- TimeScale
+- Resource
+- Constraint
+estimands:
+- clinical_stability
+- functional_capacity
+- logistical_readiness
+- marginal_bed_value
+- patient_preference
+parties:
+- consultant
+- nurse
+- coordinator
+- bed_manager
+- patient
 nodes:
-  - {id: flow, kind: System, name: patient_flow_and_discharge}
-  - {id: edge, kind: Boundary, inside: [wards, bed_mgmt, discharge_coord, pharmacy],
-     outside: [care_homes, families, regulator, ambulance]}
-
-  - {id: consultant, kind: Party}
-  - {id: nurse, kind: Party}
-  - {id: coordinator, kind: Party}
-  - {id: bed_manager, kind: Party}
-  - {id: patient, kind: Party}
-
-  - {id: c_readmission, kind: Consequence, borne_by: consultant, measured: true, severity: career}
-  - {id: n_unsafe, kind: Consequence, borne_by: nurse, measured: false, severity: immediate}
-  - {id: co_blocked, kind: Consequence, borne_by: coordinator, measured: partial, severity: operational}
-  - {id: b_breach, kind: Consequence, borne_by: bed_manager, measured: true, severity: financial}
-  - {id: p_harm, kind: Consequence, borne_by: patient, measured: false, severity: total}
-
-  - {id: clinical_stability, kind: Estimand, observable: false}
-  - {id: functional_capacity, kind: Estimand, observable: partial}
-  - {id: logistical_readiness, kind: Estimand, observable: true}
-  - {id: marginal_bed_value, kind: Estimand, observable: false}
-  - {id: patient_preference, kind: Estimand, observable: false,
-     specification_status: often-unelicited}
-
-  - {id: ward_round_obs, kind: Signal, frequency: daily, fidelity: sparse}
-  - {id: continuous_presence, kind: Signal, frequency: continuous, fidelity: rich}
-  - {id: placement_state, kind: Signal, frequency: daily}
-  - {id: bed_board, kind: Signal, frequency: hourly}
-  - {id: readmission_event, kind: Signal, frequency: per-event, lagged: true}
-
-  - {id: e_clinical, kind: Estimate, held_by: consultant, uncertainty: ordinal}
-  - {id: e_functional, kind: Estimate, held_by: nurse, uncertainty: ordinal}
-  - {id: e_logistics, kind: Estimate, held_by: coordinator, uncertainty: ordinal}
-  - {id: e_bedvalue, kind: Estimate, held_by: bed_manager, uncertainty: ordinal}
-  - {id: e_preference, kind: Estimate, held_by: patient, uncertainty: qualitative}
-
-  - {id: clinical_judgement, kind: Estimator, idempotency_basis: per_ward_round_id}
-  - {id: nursing_judgement, kind: Estimator, idempotency_basis: per_shift_id}
-  - {id: bed_triage, kind: Estimator, idempotency_basis: per_board_refresh}
-
-  - {id: throughput_target, kind: DesiredCondition, held_by: bed_manager}
-  - {id: safety_target, kind: DesiredCondition, held_by: nurse}
-  - {id: tradeoffs, kind: PreferenceOrdering, form: partial, scalarized: false,
-     over: [throughput, safety, cost, staff_sustainability, patient_preference]}
-
-  - {id: discharge, kind: Intervention, target: world}
-  - {id: apply_pressure, kind: Intervention, target: world}
-  - {id: block_by_documenting, kind: Intervention, target: world}
-  - {id: withhold_transport, kind: Intervention, target: world}
-  - {id: adjust_threshold, kind: Intervention, target: own-structure,
-     motive: change the discharge decision rule after observing readmissions}
-
-  - {id: ward_round_policy, kind: Policy, form: synchronous_daily_reconciliation}
-  - {id: readmission_lag, kind: Delay, magnitude: ~2_weeks}
-  - {id: t_hourly, kind: TimeScale, period: hourly}
-  - {id: t_daily, kind: TimeScale, period: daily}
-  - {id: t_fortnightly, kind: TimeScale, period: fortnightly}
-  - {id: beds, kind: Resource, depletable: true, contended: true}
-  - {id: four_hour_target, kind: Constraint, external: true, financial: true}
-
+- id: flow
+  kind: System
+  name: patient_flow_and_discharge
+- id: edge
+  kind: Boundary
+  inside:
+  - wards
+  - bed_mgmt
+  - discharge_coord
+  - pharmacy
+  outside:
+  - care_homes
+  - families
+  - regulator
+  - ambulance
+- id: consultant
+  kind: Party
+- id: nurse
+  kind: Party
+- id: coordinator
+  kind: Party
+- id: bed_manager
+  kind: Party
+- id: patient
+  kind: Party
+- id: c_readmission
+  kind: Consequence
+  borne_by: consultant
+  measured: true
+  severity: career
+- id: n_unsafe
+  kind: Consequence
+  borne_by: nurse
+  measured: false
+  severity: immediate
+- id: co_blocked
+  kind: Consequence
+  borne_by: coordinator
+  measured: partial
+  severity: operational
+- id: b_breach
+  kind: Consequence
+  borne_by: bed_manager
+  measured: true
+  severity: financial
+- id: p_harm
+  kind: Consequence
+  borne_by: patient
+  measured: false
+  severity: total
+- id: clinical_stability
+  kind: Estimand
+  observable: false
+- id: functional_capacity
+  kind: Estimand
+  observable: partial
+- id: logistical_readiness
+  kind: Estimand
+  observable: true
+- id: marginal_bed_value
+  kind: Estimand
+  observable: false
+- id: patient_preference
+  kind: Estimand
+  observable: false
+  specification_status: often-unelicited
+- id: ward_round_obs
+  kind: Signal
+  frequency: daily
+  fidelity: sparse
+- id: continuous_presence
+  kind: Signal
+  frequency: continuous
+  fidelity: rich
+- id: placement_state
+  kind: Signal
+  frequency: daily
+- id: bed_board
+  kind: Signal
+  frequency: hourly
+- id: readmission_event
+  kind: Signal
+  frequency: per-event
+  lagged: true
+- id: e_clinical
+  kind: Estimate
+  held_by: consultant
+  uncertainty: ordinal
+- id: e_functional
+  kind: Estimate
+  held_by: nurse
+  uncertainty: ordinal
+- id: e_logistics
+  kind: Estimate
+  held_by: coordinator
+  uncertainty: ordinal
+- id: e_bedvalue
+  kind: Estimate
+  held_by: bed_manager
+  uncertainty: ordinal
+- id: e_preference
+  kind: Estimate
+  held_by: patient
+  uncertainty: qualitative
+- id: clinical_judgement
+  kind: Estimator
+  idempotency_basis: per_ward_round_id
+- id: nursing_judgement
+  kind: Estimator
+  idempotency_basis: per_shift_id
+- id: bed_triage
+  kind: Estimator
+  idempotency_basis: per_board_refresh
+- id: throughput_target
+  kind: DesiredCondition
+  held_by: bed_manager
+- id: safety_target
+  kind: DesiredCondition
+  held_by: nurse
+- id: tradeoffs
+  kind: PreferenceOrdering
+  form: partial
+  scalarized: false
+  over:
+  - throughput
+  - safety
+  - cost
+  - staff_sustainability
+  - patient_preference
+- id: discharge
+  kind: Intervention
+  target: world
+- id: apply_pressure
+  kind: Intervention
+  target: world
+- id: block_by_documenting
+  kind: Intervention
+  target: world
+- id: withhold_transport
+  kind: Intervention
+  target: world
+- id: adjust_threshold
+  kind: Intervention
+  target: own-structure
+  motive: change the discharge decision rule after observing readmissions
+- id: ward_round_policy
+  kind: Policy
+  form: synchronous_daily_reconciliation
+- id: readmission_lag
+  kind: Delay
+  magnitude: ~2_weeks
+- id: t_hourly
+  kind: TimeScale
+  period: hourly
+- id: t_daily
+  kind: TimeScale
+  period: daily
+- id: t_fortnightly
+  kind: TimeScale
+  period: fortnightly
+- id: beds
+  kind: Resource
+  depletable: true
+  contended: true
+- id: four_hour_target
+  kind: Constraint
+  external: true
+  financial: true
 edges:
-  - {from: flow, to: edge, rel: contains}
-
-  - {from: consultant, to: c_readmission, rel: bears}
-  - {from: nurse, to: n_unsafe, rel: bears}
-  - {from: coordinator, to: co_blocked, rel: bears}
-  - {from: bed_manager, to: b_breach, rel: bears}
-  - {from: patient, to: p_harm, rel: bears}
-
-  - {from: ward_round_obs, to: clinical_stability, rel: measures}
-  - {from: continuous_presence, to: functional_capacity, rel: measures}
-  - {from: placement_state, to: logistical_readiness, rel: measures}
-  - {from: bed_board, to: marginal_bed_value, rel: measures}
-
-  - {from: clinical_judgement, to: e_clinical, rel: estimates}
-  - {from: nursing_judgement, to: e_functional, rel: estimates}
-  - {from: bed_triage, to: e_bedvalue, rel: estimates}
-
-  - {from: consultant, to: e_clinical, rel: holds}
-  - {from: nurse, to: e_functional, rel: holds}
-  - {from: coordinator, to: e_logistics, rel: holds}
-  - {from: bed_manager, to: e_bedvalue, rel: holds}
-  - {from: patient, to: e_preference, rel: holds}
-
-  - {from: bed_manager, to: throughput_target, rel: holds}
-  - {from: nurse, to: safety_target, rel: holds}
-
-  - {from: consultant, to: discharge, rel: authorizes}
-  - {from: nurse, to: block_by_documenting, rel: authorizes}
-  - {from: coordinator, to: withhold_transport, rel: authorizes}
-  - {from: bed_manager, to: apply_pressure, rel: authorizes}
-
-  - {from: four_hour_target, to: apply_pressure, rel: constrains}
-  - {from: readmission_lag, to: discharge, rel: delays}
-  - {from: discharge, to: beds, rel: consumes}
-  - {from: ward_round_policy, to: discharge, rel: closes}
-  - {from: adjust_threshold, to: ward_round_policy, rel: revises}
-
+- from: flow
+  to: edge
+  rel: contains
+- from: consultant
+  to: c_readmission
+  rel: bears
+- from: nurse
+  to: n_unsafe
+  rel: bears
+- from: coordinator
+  to: co_blocked
+  rel: bears
+- from: bed_manager
+  to: b_breach
+  rel: bears
+- from: patient
+  to: p_harm
+  rel: bears
+- from: ward_round_obs
+  to: clinical_stability
+  rel: measures
+- from: continuous_presence
+  to: functional_capacity
+  rel: measures
+- from: placement_state
+  to: logistical_readiness
+  rel: measures
+- from: bed_board
+  to: marginal_bed_value
+  rel: measures
+- from: clinical_judgement
+  to: e_clinical
+  rel: estimates
+- from: nursing_judgement
+  to: e_functional
+  rel: estimates
+- from: bed_triage
+  to: e_bedvalue
+  rel: estimates
+- from: consultant
+  to: e_clinical
+  rel: holds
+- from: nurse
+  to: e_functional
+  rel: holds
+- from: coordinator
+  to: e_logistics
+  rel: holds
+- from: bed_manager
+  to: e_bedvalue
+  rel: holds
+- from: patient
+  to: e_preference
+  rel: holds
+- from: bed_manager
+  to: throughput_target
+  rel: holds
+- from: nurse
+  to: safety_target
+  rel: holds
+- from: consultant
+  to: discharge
+  rel: authorizes
+- from: nurse
+  to: block_by_documenting
+  rel: authorizes
+- from: coordinator
+  to: withhold_transport
+  rel: authorizes
+- from: bed_manager
+  to: apply_pressure
+  rel: authorizes
+- from: four_hour_target
+  to: apply_pressure
+  rel: constrains
+- from: readmission_lag
+  to: discharge
+  rel: delays
+- from: discharge
+  to: beds
+  rel: consumes
+- from: ward_round_policy
+  to: discharge
+  rel: closes
+- from: adjust_threshold
+  to: ward_round_policy
+  rel: revises
 loops:
-  - {id: discharge_decision, timescale: t_daily, signal: ward_round_obs, intervention: discharge}
-  - {id: bed_allocation, timescale: t_hourly, signal: bed_board, intervention: apply_pressure}
-  - {id: readmission_feedback, timescale: t_fortnightly, signal: readmission_event,
-     intervention: adjust_threshold}
-
-excluded_variables: [night_callable_consultants, friday_placement_willingness,
-                     arrival_time_recording_practice, whose_concern_carries_weight]
-
-breaks_declared: [single_estimate_per_quantity, authority_follows_information,
-                  single_objective, shared_error_costs, complete_specification]
-breaks_handled: [single_estimate_per_quantity, authority_follows_information,
-                 single_objective, shared_error_costs]
-surfaced: []
+- id: discharge_decision
+  timescale: t_daily
+  signal: ward_round_obs
+  intervention: discharge
+- id: bed_allocation
+  timescale: t_hourly
+  signal: bed_board
+  intervention: apply_pressure
+- id: readmission_feedback
+  timescale: t_fortnightly
+  signal: readmission_event
+  intervention: adjust_threshold
+excluded_variables:
+- night_callable_consultants
+- friday_placement_willingness
+- arrival_time_recording_practice
+- whose_concern_carries_weight
+breaks_declared:
+- single_estimate_per_quantity
+- authority_follows_information
+- single_objective
+- shared_error_costs
+- complete_specification
+breaks_handled:
+- single_estimate_per_quantity
+- authority_follows_information
+- single_objective
+- shared_error_costs
+surfaced:
+- id: D06
+  claim: Estimand `patient_preference` has no signal measuring it. Any estimate of it is formed from
+    something the encoding does not record.
+  pattern: unmeasured_estimand
+  derived: true
+  verdict: genuine
+  audited: true
+- id: D07
+  claim: Intervention `discharge` is delayed and authorised by ['consultant'], while `nurse` bears
+    consequence `n_unsafe` which is unmeasured. The lag falls on a party with neither authority over
+    the act nor a measured record of the harm.
+  pattern: delayed_harm_to_unauthorised_party
+  derived: true
+  verdict: unsupported
+  audited: true
+- id: D04
+  claim: '`coordinator` holds estimate `e_logistics` with no declared estimator: the encoding records
+    the belief but not the process producing it, so nothing constrains how it updates or whether
+    it is idempotent.'
+  pattern: estimate_without_estimator
+  derived: true
+  verdict: genuine
+  audited: true
+- id: D01
+  claim: '`patient` bears a consequence of severity `total` while holding no authority over any intervention.
+    Its exposure is structurally unhedgeable: it cannot act to reduce its own risk.'
+  pattern: consequence_without_authority
+  derived: true
+  verdict: unsupported
+  audited: true
+- id: D02
+  claim: '`patient` holds 1 estimate(s) but authorises no intervention at all — its assessment can
+    enter the system only through another party choosing to act on it.'
+  pattern: estimate_without_authority
+  derived: true
+  verdict: restatement
+  audited: true
+- id: D08
+  claim: Intervention `discharge` is delayed and authorised by ['consultant'], while `patient` bears
+    consequence `p_harm` which is unmeasured. The lag falls on a party with neither authority over
+    the act nor a measured record of the harm.
+  pattern: delayed_harm_to_unauthorised_party
+  derived: true
+  verdict: unsupported
+  audited: true
+- id: D05
+  claim: '`patient` holds estimate `e_preference` with no declared estimator: the encoding records
+    the belief but not the process producing it, so nothing constrains how it updates or whether
+    it is idempotent.'
+  pattern: estimate_without_estimator
+  derived: true
+  verdict: trivial
+  audited: true
+- id: D03
+  claim: Loop `discharge_decision` (daily) and loop `readmission_feedback` (fortnightly) both act
+    on `ward_round_policy`, and their interventions are authorised by disjoint parties (['consultant']
+    vs none). No party holds authority over both, so the tradeoff between them is not anyone's decision.
+  pattern: unowned_cross_timescale_coupling
+  derived: true
+  verdict: unsupported
+  audited: true
 reduces_to: null

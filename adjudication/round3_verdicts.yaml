@@ -1,0 +1,244 @@
+surfaced:
+- id: D06
+  verdict: genuine
+  reason: The graph puts patient_preference in the tradeoffs, marks it often-unelicited, and provides
+    no measuring signal, exposing a decision-relevant evidential gap not stated plainly in the prose.
+  prose_states_it: false
+- id: D07
+  verdict: unsupported
+  reason: No edge connects discharge or its delay to n_unsafe, and the prose instead describes the nurse's
+    unsafe-discharge consequence as immediate.
+  prose_states_it: false
+- id: D09
+  verdict: unsupported
+  reason: The graph separately records boiler lag and householder discomfort but never relates the intervention
+    or delay to that consequence, so it does not establish that the lag falls on the householder.
+  prose_states_it: false
+- id: D04
+  verdict: genuine
+  reason: The missing estimator for e_logistics is explicit, is not stated in the prose, and leaves the
+    production of a discharge-blocking assessment unspecified.
+  prose_states_it: false
+- id: D01
+  verdict: unsupported
+  reason: The graph records total severity and no patient authorization edges, but it has no relation
+    showing that every risk-reducing act is unavailable, so unhedgeability does not follow.
+  prose_states_it: false
+- id: D02
+  verdict: restatement
+  reason: The graph supports the authority asymmetry, but the prose already says that the patient has
+    the least ability to make its assessment count while discharge authority lies elsewhere.
+  prose_states_it: true
+- id: D08
+  verdict: unsupported
+  reason: No graph relation connects discharge or readmission_lag to p_harm, so the claim that the lag
+    falls on the patient is not established.
+  prose_states_it: false
+- id: D05
+  verdict: trivial
+  reason: The absent estimator edge is real, but the graph ties neither updating nor idempotence of the
+    patient's qualitative preference to an operational decision.
+  prose_states_it: false
+- id: D03
+  verdict: unsupported
+  reason: One relation has ward_round_policy close discharge while another has adjust_threshold revise
+    the policy, and neither those unlike roles nor a missing authorizer establishes a shared tradeoff
+    with no owner.
+  prose_states_it: false
+breaks:
+- id: B01
+  verdict: handled
+  reason: Full-profile flight evidence is structurally marked as costing a vehicle, irreversible, and
+    possibly available only once.
+- id: B02
+  verdict: handled
+  reason: Separate cost and reversibility fields distinguish the tethered test, full-profile flight, and
+    procurement decision.
+- id: B03
+  verdict: handled
+  reason: The Air Force is outside the boundary yet is explicitly the holder of the mission desired condition.
+- id: B04
+  verdict: handled
+  reason: Distinct loops and delays represent seconds, weeks or months, quarters, and years, including
+    the conflict between procurement response and runway.
+- id: B05
+  verdict: handled
+  reason: Licensing, range safety, and export control are encoded as constraints rather than desired conditions.
+- id: B06
+  verdict: handled
+  reason: Consequences are assigned separately by party, including the regulator's public-harm downside
+    with no upside.
+- id: B07
+  verdict: handled
+  reason: Five party-held estimates of distinct readiness dimensions feed a ward-round policy that reconciles
+    them before discharge.
+- id: B08
+  verdict: handled
+  reason: Evidence and estimates are represented separately from intervention authority, including consultant
+    discharge authority and the nurse's informal block.
+- id: B09
+  verdict: handled
+  reason: Party-specific preference orderings encode conflicting throughput, readmission, and patient
+    priorities without a single scalar objective.
+- id: B10
+  verdict: handled
+  reason: Each party bears a separately represented consequence tied to the kind of error relevant to
+    that party.
+- id: B11
+  verdict: handled
+  reason: Consultant off-hours availability is retained as a party attribute whose specification status
+    is deliberately unspecified rather than silently assumed.
+- id: B12
+  verdict: handled
+  reason: The encoding represents five party-specific estimands plus an explicitly contested, non-scalarized
+    aggregate resolved by negotiation.
+- id: B13
+  verdict: handled
+  reason: Each party's observations and estimates are structurally separate from its authority, including
+    the nurse-consultant inversion.
+- id: B14
+  verdict: handled
+  reason: The objective ordering is explicitly partial, non-scalarized, and spans five incommensurable
+    concerns.
+- id: B15
+  verdict: handled
+  reason: Consequences are separately assigned to each party and distinguish who bears readmission, unsafe
+    discharge, blockage, breach, and wrong-discharge costs.
+- id: B16
+  verdict: handled
+  reason: Five holder-specific estimates with distinct signals and estimands are explicit inputs to the
+    discharge policy.
+- id: B17
+  verdict: handled
+  reason: Party-specific signals and estimates are encoded independently of the authority attached to
+    interventions.
+- id: B18
+  verdict: handled
+  reason: The preference ordering is structurally partial and leaves exchange rates among the five objectives
+    unspecified.
+- id: B19
+  verdict: handled
+  reason: The consequence structure assigns materially different error costs to the consultant, nurse,
+    coordinator, bed manager, and patient.
+- id: B20
+  verdict: named_only
+  reason: The load-bearing informal variables are only listed under excluded variables and are not connected
+    to estimates, policies, authority, or outcomes.
+- id: B21
+  verdict: handled
+  reason: The encoding contains five separate party estimates based on their respective signals and readiness
+    dimensions.
+- id: B22
+  verdict: handled
+  reason: Observation cadence and estimate basis are represented separately from each party's intervention
+    authority.
+- id: B23
+  verdict: handled
+  reason: The consequence map distinguishes the different costs borne by every named party.
+- id: B24
+  verdict: handled
+  reason: Five party-specific estimate objects separately represent the clinical, functional, logistical,
+    bed-value, and patient perspectives.
+- id: B25
+  verdict: handled
+  reason: Estimate evidence and intervention authority are separate structures, preserving the mismatch
+    between nursing information and consultant authority.
+- id: B26
+  verdict: not_handled
+  reason: The encoding contains no desired conditions or preference ordering and therefore does not represent
+    the hospital's multiple incommensurable objectives.
+- id: B27
+  verdict: handled
+  reason: Separate consequence objects assign readmission, unsafe-discharge, stranded-patient, and breach
+    costs to different parties.
+- id: B28
+  verdict: named_only
+  reason: The unwritten variables are merely listed as excluded and have no represented role in how discharge
+    decisions are made.
+- id: B29
+  verdict: handled
+  reason: The boundary places the householder outside while the inside system contains no party required
+    to hold the desired condition.
+- id: B30
+  verdict: handled
+  reason: Room comfort is a distinct estimand from the hallway-air signal, so the measured quantity is
+    not collapsed into the quantity of interest.
+- id: B31
+  verdict: handled
+  reason: The householder is explicitly outside the boundary and holds the desired condition from there.
+- id: B32
+  verdict: named_only
+  reason: Although a deadband and anti-chatter hysteresis are mentioned, the deadband remains embedded
+    in the desired condition rather than being structurally tied to the policy as a non-goal constraint.
+- id: B33
+  verdict: handled
+  reason: The encoding gives room comfort and hallway temperature separate estimand and signal objects
+    instead of treating them as the same quantity.
+- id: B34
+  verdict: handled
+  reason: The householder is outside the system boundary yet explicitly holds the comfort desired condition.
+- id: B35
+  verdict: named_only
+  reason: The deadband appears only inside a numeric desired-condition specification and its structural
+    anti-oscillation role is not represented.
+- id: B36
+  verdict: handled
+  reason: The hallway signal is explicitly described as a proxy for room comfort and as a source of divergence
+    between the goal and reality.
+- id: B37
+  verdict: handled
+  reason: The inside controller is explicitly assigned no desired condition while the outside householder
+    holds it.
+- id: B38
+  verdict: handled
+  reason: The policy structurally represents two thresholds, state retention inside the deadband, and
+    the deadband's equipment-protection motive.
+- id: B39
+  verdict: handled
+  reason: A room-comfort estimate is explicitly based on the separate hallway-temperature signal with
+    proxy error recorded as unrepresented uncertainty.
+- id: B40
+  verdict: handled
+  reason: The only desired-condition holder is the householder, who is explicitly outside the boundary.
+- id: B41
+  verdict: handled
+  reason: The numeric comfort target and anti-chatter deadband are separate desired-condition and constraint
+    structures.
+- id: B42
+  verdict: handled
+  reason: The encoding represents the signal as a fallible proxy and the identity estimator as an explicit
+    flaw that cannot detect divergence.
+- id: B43
+  verdict: handled
+  reason: Direct worker observation is linked to worker authority to stop the line, independently of managerial
+    position.
+- id: B44
+  verdict: handled
+  reason: Separate desired conditions, a partial ordering, and an objective-negotiation loop structurally
+    preserve conflict across organizational levels.
+- id: B45
+  verdict: handled
+  reason: A routine-incremental revision regime and standard-improvement loop represent evidence-triggered
+    replacement of the current method.
+- id: B46
+  verdict: handled
+  reason: Reported and gemba conditions are separate signals, report drift is explicit, and the estimator
+    prefers physical observation.
+- id: B47
+  verdict: named_only
+  reason: A3 size is only listed as a one-sheet constraint, with no problem artifact or comprehensibility
+    mechanism to which that bound applies.
+summary:
+  harshest_observation: 'The derived claims repeatedly turn missing declarations or merely co-occurring
+    structures into causal, capability, and governance conclusions that the graphs do not encode.
+
+    '
+  best_claim: 'D06 comes closest to genuine insight because it identifies a consequential elicitation
+    gap for patient preference using both the estimand''s status and the absence of any measuring signal.
+
+    '
+  derivation_vs_assertion: 'From this evidence, computing claims from graph structure does not produce
+    better claims than writing them by hand: it makes the triggering pattern auditable, but most outputs
+    still restate the prose, lack decision relevance, or overinterpret missing and unrelated edges.
+
+    '
