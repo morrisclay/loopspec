@@ -592,11 +592,11 @@ Document level only. Per-node provenance is not worth its weight.
 ```
 benchmarks/
 
-  seed/
-    thermostat.yaml
-    immune_system.yaml
-    hospital.yaml
-    startup.yaml
+  seed/                     <- prose (.md) by design: written BEFORE primitives exist,
+    thermostat.md              so there is nothing to encode them in yet
+    immune_system.md
+    hospital.md
+    startup.md
 
   adversarial/
     financial_market.yaml

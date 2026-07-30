@@ -1,0 +1,277 @@
+# URAS Primitive Catalog — v0
+#
+# DERIVED from the four seed descriptions in benchmarks/seed/, not from the charter's
+# candidate list and not from prior-art vocabulary. Where derivation disagreed with an
+# earlier guess, the derivation wins and the disagreement is recorded.
+#
+# Machine-readable source of truth. tools/score.py reads this file.
+#
+# tier: core | provisional | extension
+# depth: composition depth (0 = irreducible)
+# demanded_by: which seed descriptions forced this to exist
+# not_in_charter / renamed_from: where derivation departed from the earlier list
+
+version: 0
+budget: 20
+
+primitives:
+
+  - name: System
+    tier: core
+    depth: 0
+    definition: >
+      A bounded region of the world under description. Recursive: a system may contain
+      systems. Not required to hold goals or beliefs — see the immune system.
+    demanded_by: [thermostat, immune_system, hospital, startup]
+
+  - name: Boundary
+    tier: core
+    depth: 1
+    definition: >
+      What is inside a system and what is outside. A simple property for now, holding
+      multiple declared boundaries where they conflict. The immune system establishes its
+      own boundary during development and can establish it wrongly, which is the strongest
+      pressure toward making this a first-class relation — deferred until a benchmark
+      forces it.
+    demanded_by: [immune_system, startup]
+    note: >
+      The startup's advisor and lead investor are more inside than one employee, for
+      purposes of predicting behaviour. Membership is graded, not binary.
+
+  - name: Party
+    tier: core
+    depth: 1
+    renamed_from: Observer
+    definition: >
+      A locus that may hold estimates, hold desired conditions, exercise authority, and
+      bear consequences. Need not be a person: a lymphocyte population is a party in the
+      estimate-holding sense only.
+    demanded_by: [hospital, startup, thermostat]
+    rename_rationale: >
+      Derivation contradicted the earlier guess. "Observer" names only the sensing role,
+      but the hospital demands a construct that simultaneously holds estimates, holds
+      goals, has authority, and bears asymmetric error costs. Those four attach to the
+      same entity and separating them produced four parallel registries keyed by the same
+      identity — which is one construct wearing four names.
+
+  - name: Estimand
+    tier: core
+    depth: 1
+    definition: >
+      A quantity of interest, typically not directly observable. Room comfort. Discharge
+      readiness. Whether anyone is buying.
+    demanded_by: [thermostat, hospital, startup]
+
+  - name: Signal
+    tier: core
+    depth: 1
+    definition: >
+      What is actually measured, as opposed to what is cared about. Hallway air
+      temperature at 1.5m. A ward round observation once daily. Pipeline volume at low n.
+    demanded_by: [thermostat, hospital, startup]
+    note: >
+      The Signal/Estimand split is the thermostat's central lesson and the easiest thing
+      to omit. Collapsing them would make the most important fact about the simplest
+      benchmark inexpressible.
+
+  - name: Estimate
+    tier: core
+    depth: 2
+    definition: >
+      A party's assessment of an estimand, carrying uncertainty. Uncertainty need not be
+      numeric — the startup shows that demanding numeric priors produces theatre. Ordinal
+      and qualitative confidence are first-class.
+    demanded_by: [hospital, startup, thermostat]
+    note: >
+      Necessarily indexed by party. The hospital has five estimates of one estimand, none
+      of which is noise around a truth. Permitting only one estimate per estimand makes
+      institutions inexpressible.
+
+  - name: Evidence
+    tier: core
+    depth: 2
+    definition: >
+      An identified item that moves estimates. Carries stable identity and provenance.
+    demanded_by: [hospital, startup]
+    note: >
+      Stable identity is a correctness requirement, not bookkeeping. Under at-least-once
+      execution (see research/flue_notes.md) an un-identified evidence item can be applied
+      twice, silently double-counting into a well-formed but wrong posterior.
+
+  - name: Estimator
+    tier: core
+    depth: 2
+    definition: >
+      The process mapping evidence to an estimate. May have no locus: in the immune system
+      the population's composition IS the estimate, and no cell assesses anything.
+      Must declare its idempotency basis.
+    demanded_by: [immune_system, hospital, thermostat]
+
+  - name: DesiredCondition
+    tier: core
+    depth: 2
+    definition: >
+      A target on an estimand, held by a party. May be held by a party OUTSIDE the
+      boundary (the householder at the dial), or by no party at all (the immune system
+      regulates without anyone wanting anything).
+    demanded_by: [thermostat, hospital, startup]
+    note: >
+      Includes structural tolerance — the thermostat's deadband is not measurement error,
+      it is a feature preventing oscillation. Modelling it as error gets it wrong.
+
+  - name: PreferenceOrdering
+    tier: core
+    depth: 2
+    definition: >
+      A ranking over conditions, explicitly permitted to be PARTIAL. Incommensurable
+      objectives are representable as such.
+    demanded_by: [hospital, startup]
+    note: >
+      Throughput, safety, cost and staff sustainability have no exchange rates in a real
+      hospital. Requiring a total order would invent information that does not exist.
+
+  - name: Consequence
+    tier: core
+    depth: 2
+    definition: >
+      What a party bears when an estimate is wrong. Asymmetric across parties.
+    demanded_by: [hospital]
+    note: >
+      Only one seed demands it, so it is at risk under the orphan rule and must earn
+      itself in the adversarial set. Retained because it appears explanatory rather than
+      descriptive: in the hospital the asymmetry of consequence is WHY the estimates
+      differ. Model the estimates without it and rational disagreement looks like
+      irrationality. Expected to be demanded by military_command and democracy.
+
+  - name: Intervention
+    tier: core
+    depth: 2
+    definition: >
+      An act intended to change the world. Authority over it is a relation to Party, not
+      a separate primitive.
+    demanded_by: [thermostat, hospital, startup]
+    note: >
+      The prior-art gate found legitimacy does not survive as an expressivity claim, while
+      the hospital seed insists authority is structural. Reconciled by making authority a
+      relation on Intervention x Party rather than a primitive — real, checkable, and not
+      costing budget.
+
+  - name: Policy
+    tier: core
+    depth: 3
+    definition: >
+      Mapping from estimates to choice of intervention.
+    demanded_by: [thermostat, hospital]
+
+  - name: Loop
+    tier: core
+    depth: 3
+    definition: >
+      A closed cycle: signal, estimate, policy, intervention, world, signal. Carries its
+      own time scale. Non-terminating by default.
+    demanded_by: [thermostat, immune_system, hospital, startup]
+    note: >
+      The unit that maps to one Cloudflare Durable Object, since one alarm per object
+      means a multi-timescale system cannot be a single object. System is therefore a
+      grouping over loops, which was not the obvious first guess.
+
+  - name: Delay
+    tier: core
+    depth: 1
+    definition: >
+      Lag between intervention and observable effect. Heat takes 15-40 minutes to reach
+      room air and keeps arriving after the boiler stops.
+    demanded_by: [thermostat, hospital]
+
+  - name: TimeScale
+    tier: core
+    depth: 1
+    definition: >
+      The cadence at which a loop runs. Multiple scales coexist and conflict: hourly bed
+      pressure against quarterly budget, minutes/days/decades in immunity.
+    demanded_by: [immune_system, hospital]
+
+  - name: Resource
+    tier: core
+    depth: 1
+    definition: >
+      A depletable stock that interventions consume. Runway. Beds. Staff hours. Finite
+      immunological repertoire.
+    demanded_by: [hospital, startup, immune_system]
+
+  - name: Constraint
+    tier: core
+    depth: 2
+    definition: >
+      An invariant that must hold, distinct from something merely desired.
+    demanded_by: [hospital, thermostat]
+
+  - name: Revision
+    tier: core
+    depth: 3
+    definition: >
+      Change to the schema of the system rather than to its values: a desired condition
+      replaced by choice, a new estimand admitted to the vocabulary, a boundary redrawn.
+      Records what changed, when, on whose recognition, and whether the prior condition
+      was refuted or merely abandoned.
+    demanded_by: [startup, immune_system]
+    note: >
+      The refuted/abandoned distinction is load-bearing. The startup's pivot left the old
+      question open — nobody proved late-delivery prediction was a bad business. Modelled
+      as Bayesian revision it is misdescribed, and the misdescription matters for whether
+      anyone should trust the next such decision.
+
+# ---------------------------------------------------------------------------
+# Fields, not primitives. Deliberately not costed against the budget.
+# ---------------------------------------------------------------------------
+
+fields:
+  - name: excluded_variables
+    on: System
+    definition: >
+      Variables known to exist and deliberately left out. The candidate set for Revision
+      when a system underperforms. The startup's "proving fault, not predicting lateness"
+      sat outside the vocabulary for eight months; this field is where it lands earlier.
+
+  - name: specification_status
+    on: any
+    values: [specified, unknown, deliberately-unspecified]
+    definition: >
+      Distinguishes not-yet-measured from intentionally-not-modelled. Different execution
+      semantics: an estimator should spend evidence-gathering budget reducing the former
+      and must not spend it on the latter.
+
+  - name: authority
+    on: Intervention
+    definition: Which parties may perform this intervention. Deliberately independent of who holds relevant estimates.
+
+# ---------------------------------------------------------------------------
+
+honest_notes:
+  count: >
+    19 core primitives against a budget of 20. Landing just inside on first derivation is
+    a warning sign, not an achievement — it suggests the derivation was calibrated to the
+    budget rather than to the seeds. Treat 19 as an unverified upper bound.
+
+  merge_candidates:
+    - Signal and Evidence may be one construct at different stages of processing.
+    - Delay and TimeScale are both temporal and may collapse.
+    - Policy and PreferenceOrdering are adjacent; a policy may just be an ordering plus a
+      selection rule.
+    - Constraint and DesiredCondition differ only in whether violation is permitted.
+
+  at_risk_under_orphan_rule:
+    - Consequence — one seed only
+    - Constraint — two seeds, thin
+    - Delay — two seeds, both engineering-adjacent
+
+  loci_hypothesis: >
+    research/prior_art_gate.md predicts Party, Revision and recursive System are one
+    capability at three scales. Derivation did NOT collapse them — they arrived as three
+    separate demands from the seeds. That is evidence against the unification, or evidence
+    that derivation from prose cannot see it. Unresolved, and the most important open
+    question in the ontology.
+
+  untested_against_seeds: >
+    Calibration was in the charter's list and no seed demanded it. Deliberately omitted
+    rather than carried forward on authority. Expect scientific_community to demand it.
