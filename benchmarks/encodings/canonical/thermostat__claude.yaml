@@ -50,9 +50,7 @@ nodes:
 - id: controller
   kind: System
   part_of: heating
-  note: holds authority over fire_boiler
-  bears no consequence — a sub-System: null
-  not a Party: null
+  note: holds authority over fire_boiler, bears no consequence — a sub-System, not a Party
 - id: room_comfort
   kind: Estimand
   observable: false

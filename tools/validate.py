@@ -119,6 +119,16 @@ def check_canonical(path, doc, allp, rep):
         ids[i] = n
         kinds.setdefault(n.get("kind"), []).append(i)
 
+    # phantom keys from unquoted commas inside YAML flow mappings. Writing
+    # `{id: x, note: a, b}` silently makes `b` a key with a null value and truncates the
+    # note. Silent data loss, and it happened in real encodings.
+    for n in nodes:
+        for k, v in n.items():
+            if v is None and isinstance(k, str) and (" " in k or len(k) > 30):
+                rep.err(where, f"node `{n.get('id')}` has key `{k[:50]}` with a null value — "
+                               f"almost certainly an unquoted comma inside a flow mapping "
+                               f"splitting a prose value into a phantom key")
+
     # kinds must be catalogued
     for k in sorted(kinds):
         if k and k not in allp:

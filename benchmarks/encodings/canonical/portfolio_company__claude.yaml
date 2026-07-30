@@ -5,117 +5,216 @@ domain: frontier_venture
 encoded_by: claude-opus-5
 encoder_role: author-intent
 shape: canonical-graph
-
-# Canonical-IR form of the textual DSL example. The DSL is a third projection alongside the
-# loop-centric YAML and this flat graph — same model, three surfaces.
-
-uses: [System, Boundary, Party, Estimand, Signal, Estimate, Estimator, DesiredCondition,
-       Consequence, Intervention, Policy, Loop, TimeScale, Resource, Constraint]
-estimands: [runway, product_velocity]
-parties: [founders, investor]
-
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- Estimate
+- Estimator
+- DesiredCondition
+- Consequence
+- Intervention
+- Policy
+- Loop
+- TimeScale
+- Resource
+- Constraint
+estimands:
+- runway
+- product_velocity
+parties:
+- founders
+- investor
 nodes:
-  - {id: portco, kind: System, name: PortfolioCompany}
-  - {id: edge, kind: Boundary, inside: [team, product], outside: [investor, market]}
-
-  - {id: founders, kind: Party}
-  - {id: investor, kind: Party, location: outside_boundary}
-  - {id: c_founders, kind: Consequence, borne_by: founders, measured: false,
-     severity: company}
-  - {id: c_investor, kind: Consequence, borne_by: investor, measured: true,
-     severity: one_position}
-
-  # runway is COMPUTED — a deterministic function of two observed signals.
-  - {id: runway, kind: Estimand, determination: computed, criticality: existential,
-     resolution_condition: cash_balance and burn_rate are both observed, so it settles monthly}
-  # product_velocity is referenced by an invariant but never observed. See the derived claim.
-  - {id: product_velocity, kind: Estimand, determination: latent, criticality: high,
-     resolution_condition: shipped scope per unit time, measured against a declared baseline}
-
-  - {id: cash_balance, kind: Signal, frequency: monthly, cost: none,
-     reversibility: repeatable}
-  - {id: burn_rate, kind: Signal, frequency: monthly, cost: none,
-     reversibility: repeatable}
-
-  - {id: e_runway, kind: Estimate, held_by: founders, uncertainty_kind: none,
-     note: no uncertainty of its own — it is arithmetic over two measured quantities}
-
-  - {id: runway_calc, kind: Estimator, form: expression,
-     expression: cash_balance / burn_rate,
-     idempotency_basis: per_month_close_id}
-
-  - {id: runway_goal, kind: DesiredCondition, held_by: founders,
-     target_type: threshold, value: 18_months, comparator: greater_than}
-
-  - {id: reduce_hiring, kind: Intervention, target: world}
-  - {id: preserve_runway, kind: Policy,
-     guard: runway < 12 months,
-     based_on: [runway]}
-
-  - {id: minimum_viable_rate, kind: Constraint,
-     rule: product_velocity >= minimum_viable_rate, tradeable: false,
-     note: an invariant, not a preference — below this the company is not a going concern
-       regardless of how much runway it has}
-
-  - {id: t_monthly, kind: TimeScale, period: monthly}
-  - {id: cash, kind: Resource, depletable: true}
-
+- id: portco
+  kind: System
+  name: PortfolioCompany
+- id: edge
+  kind: Boundary
+  inside:
+  - team
+  - product
+  outside:
+  - investor
+  - market
+- id: founders
+  kind: Party
+- id: investor
+  kind: Party
+  location: outside_boundary
+- id: c_founders
+  kind: Consequence
+  borne_by: founders
+  measured: false
+  severity: company
+- id: c_investor
+  kind: Consequence
+  borne_by: investor
+  measured: true
+  severity: one_position
+- id: runway
+  kind: Estimand
+  determination: computed
+  criticality: existential
+  resolution_condition: cash_balance and burn_rate are both observed, so it settles monthly
+- id: product_velocity
+  kind: Estimand
+  determination: latent
+  criticality: high
+  resolution_condition: shipped scope per unit time, measured against a declared baseline
+- id: cash_balance
+  kind: Signal
+  frequency: monthly
+  cost: none
+  reversibility: repeatable
+- id: burn_rate
+  kind: Signal
+  frequency: monthly
+  cost: none
+  reversibility: repeatable
+- id: e_runway
+  kind: Estimate
+  held_by: founders
+  uncertainty_kind: none
+  note: no uncertainty of its own — it is arithmetic over two measured quantities
+- id: runway_calc
+  kind: Estimator
+  form: expression
+  expression: cash_balance / burn_rate
+  idempotency_basis: per_month_close_id
+- id: runway_goal
+  kind: DesiredCondition
+  held_by: founders
+  target_type: threshold
+  value: 18_months
+  comparator: greater_than
+- id: reduce_hiring
+  kind: Intervention
+  target: world
+- id: preserve_runway
+  kind: Policy
+  guard: runway < 12 months
+  based_on:
+  - runway
+- id: minimum_viable_rate
+  kind: Constraint
+  rule: product_velocity >= minimum_viable_rate
+  tradeable: false
+  note: an invariant, not a preference — below this the company is not a going concern regardless
+    of how much runway it has
+- id: t_monthly
+  kind: TimeScale
+  period: monthly
+- id: cash
+  kind: Resource
+  depletable: true
 edges:
-  - {from: portco, to: edge, rel: contains}
-  - {from: founders, to: c_founders, rel: bears}
-  - {from: investor, to: c_investor, rel: bears}
-  - {from: cash_balance, to: runway, rel: measures}
-  - {from: burn_rate, to: runway, rel: measures}
-  - {from: runway_calc, to: e_runway, rel: estimates}
-  - {from: founders, to: e_runway, rel: holds}
-  - {from: founders, to: runway_goal, rel: holds}
-  - {from: runway_goal, to: runway, rel: targets}
-  - {from: founders, to: reduce_hiring, rel: authorizes}
-  - {from: preserve_runway, to: reduce_hiring, rel: closes}
-  - {from: minimum_viable_rate, to: reduce_hiring, rel: constrains}
-  - {from: reduce_hiring, to: cash, rel: consumes}
-
+- from: portco
+  to: edge
+  rel: contains
+- from: founders
+  to: c_founders
+  rel: bears
+- from: investor
+  to: c_investor
+  rel: bears
+- from: cash_balance
+  to: runway
+  rel: measures
+- from: burn_rate
+  to: runway
+  rel: measures
+- from: runway_calc
+  to: e_runway
+  rel: estimates
+- from: founders
+  to: e_runway
+  rel: holds
+- from: founders
+  to: runway_goal
+  rel: holds
+- from: runway_goal
+  to: runway
+  rel: targets
+- from: founders
+  to: reduce_hiring
+  rel: authorizes
+- from: preserve_runway
+  to: reduce_hiring
+  rel: closes
+- from: minimum_viable_rate
+  to: reduce_hiring
+  rel: constrains
+- from: reduce_hiring
+  to: cash
+  rel: consumes
 loops:
-  - {id: runway_preservation, timescale: t_monthly, signal: cash_balance,
-     intervention: reduce_hiring}
-
-excluded_variables: [whether_the_hiring_cut_costs_the_senior_engineer,
-                     investor_appetite_for_a_bridge]
-
-breaks_declared: [invariant_on_unmeasured_quantity, computed_vs_latent_conflation,
-                  single_lever_policy]
-breaks_handled: [computed_vs_latent_conflation, single_lever_policy]
-surfaced: []
+- id: runway_preservation
+  timescale: t_monthly
+  signal: cash_balance
+  intervention: reduce_hiring
+excluded_variables:
+- whether_the_hiring_cut_costs_the_senior_engineer
+- investor_appetite_for_a_bridge
+breaks_declared:
+- invariant_on_unmeasured_quantity
+- computed_vs_latent_conflation
+- single_lever_policy
+breaks_handled:
+- computed_vs_latent_conflation
+- single_lever_policy
+surfaced:
+- id: E09
+  claim: '`investor` bears consequence `c_investor` (severity `one_position`) and the encoding records
+    no `authorizes` edge from it to any intervention.'
+  pattern: consequence_without_authority
+  derived: true
+  verdict: trivial
+  audited: true
+- id: E08
+  claim: Constraint `minimum_viable_rate` states `product_velocity >= minimum_viable_rate`, which
+    names estimand(s) ['product_velocity'] that no signal measures. The invariant cannot be checked
+    — nothing in the system would detect its violation.
+  pattern: invariant_on_unmeasured
+  derived: true
+  verdict: restatement
+  audited: true
+- id: E10
+  claim: Estimand `product_velocity` has no signal measuring it. Any estimate of it is formed from
+    something the encoding does not record.
+  pattern: unmeasured_estimand
+  derived: true
+  verdict: restatement
+  audited: true
 reduces_to: classical_control_loop
-
 new_primitives_needed: []
-
-notes_on_the_source_example: >
-  Every construct in the DSL mapped: `loop` to Loop, `goal` to a threshold
-  DesiredCondition, `observe X every month` to a Signal plus TimeScale, `estimate X = expr`
-  to an Estimator with an expression, `policy { when P do A }` to a Policy with a guard, and
-  `invariant` to a Constraint.
+notes_on_the_source_example: 'Every construct in the DSL mapped: `loop` to Loop, `goal` to a threshold
+  DesiredCondition, `observe X every month` to a Signal plus TimeScale, `estimate X = expr` to an
+  Estimator with an expression, `policy { when P do A }` to a Policy with a guard, and `invariant`
+  to a Constraint.
 
   TWO GAPS IT EXPOSED, both now closed as attributes rather than primitives:
 
-  COMPUTED VERSUS LATENT. `runway = cash_balance / burn_rate` is arithmetic over two measured
-  quantities. `willingness_to_pay` in the other example is inferred and irreducibly
-  uncertain. The catalog had no way to say which, and the difference is load-bearing: a
-  computed estimand needs no Calibration because there is no prediction to score. Without the
-  distinction a venture calibrates an arithmetic identity while leaving the actual bet
-  unscored.
+  COMPUTED VERSUS LATENT. `runway = cash_balance / burn_rate` is arithmetic over two measured quantities.
+  `willingness_to_pay` in the other example is inferred and irreducibly uncertain. The catalog had
+  no way to say which, and the difference is load-bearing: a computed estimand needs no Calibration
+  because there is no prediction to score. Without the distinction a venture calibrates an arithmetic
+  identity while leaving the actual bet unscored.
 
-  POLICY GUARD. `when runway < 12 months do reduce_hiring` separates the firing condition
-  from the quantities read. Policy previously had only `based_on`.
+  POLICY GUARD. `when runway < 12 months do reduce_hiring` separates the firing condition from the
+  quantities read. Policy previously had only `based_on`.
 
-  THE INVARIANT REFERENCES SOMETHING NOTHING OBSERVES. `product_velocity >=
-  minimum_viable_rate` names a quantity that no `observe` statement collects. It is the same
-  defect the other example had — a decision rule reading an unmeasured quantity — appearing
-  here in an invariant rather than a policy. In the DSL the two lines sit four lines apart
-  and the gap is invisible; in the graph it is one query. Deliberately left unfixed so the
-  derivation catches it.
+  THE INVARIANT REFERENCES SOMETHING NOTHING OBSERVES. `product_velocity >= minimum_viable_rate`
+  names a quantity that no `observe` statement collects. It is the same defect the other example
+  had — a decision rule reading an unmeasured quantity — appearing here in an invariant rather than
+  a policy. In the DSL the two lines sit four lines apart and the gap is invisible; in the graph
+  it is one query. Deliberately left unfixed so the derivation catches it.
 
-  ON THE GOAL. `runway > 18 months` is a threshold with a comparator, and the policy fires at
-  12. The gap between the target and the trigger is the deadband — the same structure as the
-  thermostat's, and worth noticing that a venture's financial policy and a domestic heating
-  controller have the identical shape.
+  ON THE GOAL. `runway > 18 months` is a threshold with a comparator, and the policy fires at 12.
+  The gap between the target and the trigger is the deadband — the same structure as the thermostat''s,
+  and worth noticing that a venture''s financial policy and a domestic heating controller have the
+  identical shape.
+
+  '

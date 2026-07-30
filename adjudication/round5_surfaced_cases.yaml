@@ -1,0 +1,109 @@
+surfaced_cases:
+- id: E11
+  system: venture_acme
+  encoding: venture_acme
+  claim: "Policy `choose_intervention` selects interventions using 3 inputs ['willingness_to_pay', 'sales_cycle',\
+    \ 'implementation_cost'], but 2 of them ['sales_cycle', 'implementation_cost'] have no signal measuring\
+    \ them. The decision rule cannot run as specified \u2014 it reads quantities the system does not collect."
+  pattern: policy_on_unmeasured_inputs
+  decision_affected: structural consequence of the encoding
+- id: E07
+  system: hospital
+  encoding: hospital
+  claim: Estimand `patient_preference` has no signal measuring it. Any estimate of it is formed from something
+    the encoding does not record.
+  pattern: unmeasured_estimand
+  decision_affected: structural consequence of the encoding
+- id: E06
+  system: hospital
+  encoding: hospital
+  claim: '`patient` holds estimate `e_preference` with no declared estimator: the encoding records the
+    belief but not the process producing it, so nothing constrains how it updates or whether it is idempotent.'
+  pattern: estimate_without_estimator
+  decision_affected: structural consequence of the encoding
+- id: E15
+  system: venture_acme
+  encoding: venture_acme
+  claim: Estimand `implementation_cost` has no signal measuring it. Any estimate of it is formed from
+    something the encoding does not record.
+  pattern: unmeasured_estimand
+  decision_affected: structural consequence of the encoding
+- id: E14
+  system: venture_acme
+  encoding: venture_acme
+  claim: Estimand `sales_cycle` has no signal measuring it. Any estimate of it is formed from something
+    the encoding does not record.
+  pattern: unmeasured_estimand
+  decision_affected: structural consequence of the encoding
+- id: E03
+  system: hospital
+  encoding: hospital
+  claim: '`patient` bears consequence `p_harm` (severity `total`) and the encoding records no `authorizes`
+    edge from it to any intervention.'
+  pattern: consequence_without_authority
+  decision_affected: structural consequence of the encoding
+- id: E09
+  system: portfolio_company
+  encoding: portfolio_company
+  claim: '`investor` bears consequence `c_investor` (severity `one_position`) and the encoding records
+    no `authorizes` edge from it to any intervention.'
+  pattern: consequence_without_authority
+  decision_affected: structural consequence of the encoding
+- id: E08
+  system: portfolio_company
+  encoding: portfolio_company
+  claim: "Constraint `minimum_viable_rate` states `product_velocity >= minimum_viable_rate`, which names\
+    \ estimand(s) ['product_velocity'] that no signal measures. The invariant cannot be checked \u2014\
+    \ nothing in the system would detect its violation."
+  pattern: invariant_on_unmeasured
+  decision_affected: structural consequence of the encoding
+- id: E02
+  system: hop_aero
+  encoding: hop_aero
+  claim: '`investors` bears consequence `investor_loss` (severity `None`) and the encoding records no
+    `authorizes` edge from it to any intervention.'
+  pattern: consequence_without_authority
+  decision_affected: structural consequence of the encoding
+- id: E13
+  system: venture_acme
+  encoding: venture_acme
+  claim: Estimand `validated_customer_demand` has no signal measuring it. Any estimate of it is formed
+    from something the encoding does not record.
+  pattern: unmeasured_estimand
+  decision_affected: structural consequence of the encoding
+- id: E10
+  system: portfolio_company
+  encoding: portfolio_company
+  claim: Estimand `product_velocity` has no signal measuring it. Any estimate of it is formed from something
+    the encoding does not record.
+  pattern: unmeasured_estimand
+  decision_affected: structural consequence of the encoding
+- id: E04
+  system: hospital
+  encoding: hospital
+  claim: "`patient` holds 1 estimate(s) but authorises no intervention at all \u2014 its assessment can\
+    \ enter the system only through another party choosing to act on it."
+  pattern: estimate_without_authority
+  decision_affected: structural consequence of the encoding
+- id: E12
+  system: venture_acme
+  encoding: venture_acme
+  claim: '`buyer` bears consequence `c_buyer` (severity `a_failed_internal_project`) and the encoding
+    records no `authorizes` edge from it to any intervention.'
+  pattern: consequence_without_authority
+  decision_affected: structural consequence of the encoding
+- id: E05
+  system: hospital
+  encoding: hospital
+  claim: '`coordinator` holds estimate `e_logistics` with no declared estimator: the encoding records
+    the belief but not the process producing it, so nothing constrains how it updates or whether it is
+    idempotent.'
+  pattern: estimate_without_estimator
+  decision_affected: structural consequence of the encoding
+- id: E01
+  system: hop_aero
+  encoding: hop_aero
+  claim: '`regulator` bears consequence `regulator_loss` (severity `None`) and the encoding records no
+    `authorizes` edge from it to any intervention.'
+  pattern: consequence_without_authority
+  decision_affected: structural consequence of the encoding

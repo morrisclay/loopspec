@@ -130,6 +130,39 @@ primitives:
          with MULTIPLE estimates, indexed by Party.
       3. If NO conceivable observation would settle it, it is NOT AN ESTIMAND. It is a
          decision, and it belongs to Policy.
+    individuation_rule_DID_NOT_FIX_DETERMINACY: >
+      NEGATIVE RESULT, recorded because the rule was adopted partly to fix determinacy and
+      did not.
+
+      Measured on two independent encoder pairs across three adversarial systems, with the
+      rule shipped in the catalog versus absent:
+        gemini vs deepseek   0.122 -> 0.111
+        codex  vs gemini     0.111 -> 0.111
+      Estimand count discipline was also unchanged at 4.0 per encoding.
+
+      DIAGNOSIS. The divergence is not about individuation. Encoders following the rule
+      perfectly still disagree about ALTITUDE. On the same system one produced three
+      doctrine-level estimands (defect_present, process_is_optimal, report_matches_reality)
+      and another produced six operational ones (defect_rate, station_cycle_time,
+      line_stoppage_frequency, ...). Both are internally consistent and both obey the rule.
+      The rule constrains individuation WITHIN a chosen altitude and says nothing about which
+      altitude to choose.
+
+      A second fix was tried and was worse: anchoring estimands to those measured by a signal
+      closing a declared loop took agreement from 0.111 to 0.000, because encoders then
+      disagree about which loops exist AND which estimands anchor to them.
+
+      The rule is RETAINED regardless, because it earned itself on a different axis: it
+      settled the discharge_readiness question by showing that an aggregate nobody can observe
+      is a Policy output rather than an Estimand. That was a real correction. It simply does
+      not do the job it was also hoped to do.
+
+      OPEN. Whether encoding altitude is specifiable at all, or is irreducibly a modelling
+      choice like selecting a coordinate system. If the latter, altitude should become a
+      declared parameter of an encoding and D should compare only within an altitude. Two
+      rule-shaped attempts have now failed, which is weak evidence this is not a rule-shaped
+      problem.
+
     individuation_rationale: >
       Resolves the worst remaining determinacy divergence — estimand agreement was
       0.43-0.67 across independent encoders on the institutional benchmark, against 1.00 on

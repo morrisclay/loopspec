@@ -322,52 +322,14 @@ breaks_handled:
 - single_objective
 - shared_error_costs
 surfaced:
-- id: D06
+- id: E07
   claim: Estimand `patient_preference` has no signal measuring it. Any estimate of it is formed from
     something the encoding does not record.
   pattern: unmeasured_estimand
   derived: true
   verdict: genuine
   audited: true
-- id: D07
-  claim: Intervention `discharge` is delayed and authorised by ['consultant'], while `nurse` bears
-    consequence `n_unsafe` which is unmeasured. The lag falls on a party with neither authority over
-    the act nor a measured record of the harm.
-  pattern: delayed_harm_to_unauthorised_party
-  derived: true
-  verdict: unsupported
-  audited: true
-- id: D04
-  claim: '`coordinator` holds estimate `e_logistics` with no declared estimator: the encoding records
-    the belief but not the process producing it, so nothing constrains how it updates or whether
-    it is idempotent.'
-  pattern: estimate_without_estimator
-  derived: true
-  verdict: genuine
-  audited: true
-- id: D01
-  claim: '`patient` bears a consequence of severity `total` while holding no authority over any intervention.
-    Its exposure is structurally unhedgeable: it cannot act to reduce its own risk.'
-  pattern: consequence_without_authority
-  derived: true
-  verdict: unsupported
-  audited: true
-- id: D02
-  claim: '`patient` holds 1 estimate(s) but authorises no intervention at all — its assessment can
-    enter the system only through another party choosing to act on it.'
-  pattern: estimate_without_authority
-  derived: true
-  verdict: restatement
-  audited: true
-- id: D08
-  claim: Intervention `discharge` is delayed and authorised by ['consultant'], while `patient` bears
-    consequence `p_harm` which is unmeasured. The lag falls on a party with neither authority over
-    the act nor a measured record of the harm.
-  pattern: delayed_harm_to_unauthorised_party
-  derived: true
-  verdict: unsupported
-  audited: true
-- id: D05
+- id: E06
   claim: '`patient` holds estimate `e_preference` with no declared estimator: the encoding records
     the belief but not the process producing it, so nothing constrains how it updates or whether
     it is idempotent.'
@@ -375,13 +337,27 @@ surfaced:
   derived: true
   verdict: trivial
   audited: true
-- id: D03
-  claim: Loop `discharge_decision` (daily) and loop `readmission_feedback` (fortnightly) both act
-    on `ward_round_policy`, and their interventions are authorised by disjoint parties (['consultant']
-    vs none). No party holds authority over both, so the tradeoff between them is not anyone's decision.
-  pattern: unowned_cross_timescale_coupling
+- id: E03
+  claim: '`patient` bears consequence `p_harm` (severity `total`) and the encoding records no `authorizes`
+    edge from it to any intervention.'
+  pattern: consequence_without_authority
   derived: true
-  verdict: unsupported
+  verdict: restatement
+  audited: true
+- id: E04
+  claim: '`patient` holds 1 estimate(s) but authorises no intervention at all — its assessment can
+    enter the system only through another party choosing to act on it.'
+  pattern: estimate_without_authority
+  derived: true
+  verdict: restatement
+  audited: true
+- id: E05
+  claim: '`coordinator` holds estimate `e_logistics` with no declared estimator: the encoding records
+    the belief but not the process producing it, so nothing constrains how it updates or whether
+    it is idempotent.'
+  pattern: estimate_without_estimator
+  derived: true
+  verdict: genuine
   audited: true
 reduces_to: null
 individuation_note: 'discharge_readiness removed under the adopted settling-observation rule: no
