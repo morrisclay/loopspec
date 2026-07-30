@@ -98,6 +98,19 @@ primitives:
     definition: >
       A quantity of interest, typically not directly observable, for which at least one
       conceivable observation would settle the matter.
+    attributes:
+      - criticality: >
+          existential | high | moderate | low. How much of the system's viability rests on
+          this quantity. An Estimand with criticality `existential` is what practitioners
+          call a HINGE — the whole thing turns on it.
+      - resolution_condition: >
+          The observation, declared IN ADVANCE, that would settle this estimand. Required
+          when criticality is existential.
+
+          This is the individuation rule's settling observation, written down before the
+          fact rather than reconstructed after. Declaring it early is what makes a hinge
+          actionable: it converts "we are betting on this" into "here is what would tell us,
+          and here is whether anyone is watching for it."
     individuation_rule: >
       ADOPTED. The settling-observation test, in three parts:
 
@@ -328,6 +341,36 @@ primitives:
       amount of speed that compensates. A representation able to express only strong
       preference cannot say this, and treating them as heavily weighted objectives is a
       category error rather than an approximation.
+
+  - name: Calibration
+    tier: core
+    depth: 3
+    definition: >
+      A loop that closes on an ESTIMATOR rather than on the world: it compares what the
+      estimator predicted against what later happened, over a declared window, and adjusts
+      the estimator's trust rather than the system's actions.
+    attributes:
+      - window: >
+          The period over which prediction and outcome are compared. Necessarily longer than
+          the loop being calibrated, which is why calibration is usually the slowest loop in
+          any system and the first to be dropped under pressure.
+    restored_in: round4
+    restoration_reason: >
+      Calibration was in the charter's candidate list, was DROPPED in the v0 derivation
+      because none of the four seed descriptions demanded it, and is now restored because
+      that was a corpus gap rather than a real absence.
+
+      Four systems demand it, across three domains, and the demand is central rather than
+      incidental in each. A fusion venture's entire epistemic risk is whether its simulation
+      codes are trustworthy in a regime never reached — which is a calibration question and
+      nothing else. A frontier lab's evals are a calibration apparatus whose incompleteness
+      everyone acknowledges. A materials venture's real asset IS the accumulated record of
+      where its model predictions broke against experiment. And a venture's belief-update
+      discipline is worthless without a window over which its own past estimates are scored.
+
+      This is the second time a gap in the seed corpus produced a wrong conclusion about the
+      ontology; the first was the loci hypothesis, which Toyota overturned. Both times the
+      corpus was missing a system that does the thing WELL.
 
   - name: Revision
     tier: core

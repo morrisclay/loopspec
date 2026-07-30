@@ -275,7 +275,121 @@ def q_delay_without_feedback_owner(d, nodes, edges):
     return out
 
 
+def q_hinge_without_sensor(d, nodes, edges):
+    """
+    Existential hinges with nothing observing them.
+
+    The startup seed argued that a representation earns its keep by "naming which
+    assumptions the strategy rests on, and whether anyone is tracking them". This is that,
+    computed: an Estimand marked criticality: existential, with no Signal measuring it.
+    """
+    measured = {b for _, b in rel(edges, "measures")}
+    out = []
+    for i, n in nodes.items():
+        if n.get("kind") != "Estimand":
+            continue
+        crit = (n.get("criticality") or "").lower()
+        if crit != "existential":
+            continue
+        if i not in measured:
+            out.append({
+                "pattern": "hinge_without_sensor",
+                "claim": (f"`{i}` is marked existential — the venture's viability turns on it — "
+                          f"and NO signal in the encoding observes it. Its declared resolution "
+                          f"condition is \"{n.get('resolution_condition')}\", and nothing is "
+                          f"currently positioned to produce that observation."),
+                "evidence": {"estimand": i, "criticality": crit,
+                             "resolution_condition": n.get("resolution_condition"),
+                             "measuring_signals": []},
+            })
+    return out
+
+
+def q_hinge_without_resolution(d, nodes, edges):
+    """Existential hinges with no declared resolution condition — an untestable bet."""
+    out = []
+    for i, n in nodes.items():
+        if n.get("kind") != "Estimand":
+            continue
+        if (n.get("criticality") or "").lower() != "existential":
+            continue
+        if not n.get("resolution_condition"):
+            out.append({
+                "pattern": "hinge_without_resolution",
+                "claim": (f"`{i}` is marked existential but declares no resolution condition. "
+                          f"Nothing has been written down that would settle it, so no evidence "
+                          f"can be recognised as settling it when it arrives."),
+                "evidence": {"estimand": i},
+            })
+    return out
+
+
+def q_uncalibrated_estimator(d, nodes, edges):
+    """Estimators feeding an existential hinge with no Calibration closing on them."""
+    calibrated = {b for a, b in rel(edges, "revises")
+                  if nodes.get(a, {}).get("kind") == "Calibration"}
+    hinge_ests = {i for i, n in nodes.items()
+                  if n.get("kind") == "Estimand"
+                  and (n.get("criticality") or "").lower() == "existential"}
+    if not hinge_ests:
+        return []
+    out = []
+    for i, n in nodes.items():
+        if n.get("kind") != "Estimator" or i in calibrated:
+            continue
+        out.append({
+            "pattern": "uncalibrated_estimator",
+            "claim": (f"Estimator `{i}` has no Calibration closing on it, while the encoding "
+                      f"contains {len(hinge_ests)} existential hinge(s). Nothing scores its "
+                      f"past predictions against outcomes, so its trust level is unearned."),
+            "evidence": {"estimator": i, "hinges": sorted(hinge_ests)},
+        })
+    return out
+
+
+def q_policy_on_unmeasured_inputs(d, nodes, edges):
+    """
+    A Policy whose decision inputs include estimands nothing observes.
+
+    Found by encoding a real venture example: the decision rule read three quantities and
+    only one of them had a sensor. The policy is specified against inputs the system does
+    not collect, so it cannot actually run as written — and nothing in a prose description
+    makes that visible, because the policy and the sensor list live in different paragraphs.
+    """
+    measured = {b for _, b in rel(edges, "measures")}
+    out = []
+    for i, n in nodes.items():
+        if n.get("kind") != "Policy":
+            continue
+        inputs = n.get("based_on") or []
+        blind = [x for x in inputs
+                 if nodes.get(x, {}).get("kind") == "Estimand" and x not in measured]
+        if blind and len(blind) < len(inputs):
+            out.append({
+                "pattern": "policy_on_unmeasured_inputs",
+                "claim": (f"Policy `{i}` selects interventions using {len(inputs)} inputs "
+                          f"{inputs}, but {len(blind)} of them {blind} have no signal "
+                          f"measuring them. The decision rule cannot run as specified — it "
+                          f"reads quantities the system does not collect."),
+                "evidence": {"policy": i, "inputs": inputs, "unmeasured": blind,
+                             "measured": [x for x in inputs if x in measured]},
+            })
+        elif blind and len(blind) == len(inputs):
+            out.append({
+                "pattern": "policy_entirely_blind",
+                "claim": (f"Policy `{i}` selects interventions using inputs {inputs}, and NONE "
+                          f"of them is measured by any signal. The decision rule is entirely "
+                          f"disconnected from observation."),
+                "evidence": {"policy": i, "inputs": inputs},
+            })
+    return out
+
+
 QUERIES = [
+    q_policy_on_unmeasured_inputs,
+    q_hinge_without_sensor,
+    q_hinge_without_resolution,
+    q_uncalibrated_estimator,
     q_consequence_without_authority,
     q_estimate_without_authority,
     q_shared_intervention_across_timescales,

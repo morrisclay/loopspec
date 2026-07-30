@@ -1,0 +1,137 @@
+uras_version: 0
+encodes: venture_acme
+set: adversarial
+domain: frontier_venture
+encoded_by: claude-opus-5
+encoder_role: author-intent
+shape: canonical-graph
+
+# Canonical-IR form of the loop-centric example. Both are the same model: the loop-centric
+# view is a PROJECTION, per the charter's own architecture, and tools/project.py renders it.
+
+uses: [System, Boundary, Party, Estimand, Signal, Estimate, Estimator, DesiredCondition,
+       Consequence, Intervention, Policy, Loop, Delay, TimeScale, Resource, Calibration]
+estimands: [validated_customer_demand, willingness_to_pay, budget_owner_exists,
+            sales_cycle, implementation_cost]
+parties: [founders, buyer]
+
+nodes:
+  - {id: acme, kind: System, name: venture.acme,
+     mission: reduce industrial energy waste}
+  - {id: edge, kind: Boundary, inside: [founders, sales, product],
+     outside: [buyer, procurement, incumbent_vendors]}
+
+  - {id: founders, kind: Party}
+  - {id: buyer, kind: Party, location: outside_boundary}
+  - {id: c_founders, kind: Consequence, borne_by: founders, measured: false,
+     severity: company}
+  - {id: c_buyer, kind: Consequence, borne_by: buyer, measured: false,
+     severity: a_failed_internal_project}
+
+  # --- estimands. criticality: existential marks a HINGE.
+  - {id: validated_customer_demand, kind: Estimand, type: latent, criticality: high,
+     resolution_condition: sustained conversion at list price across three unrelated accounts}
+  - {id: willingness_to_pay, kind: Estimand, type: latent, criticality: existential,
+     resolution_condition: a buyer pays list price without a pilot discount}
+  - {id: budget_owner_exists, kind: Estimand, type: latent, criticality: existential,
+     resolution_condition: three signed pilots with named budget holders}
+  - {id: sales_cycle, kind: Estimand, type: latent, criticality: moderate,
+     resolution_condition: ten closed-won opportunities with dated stage transitions}
+  - {id: implementation_cost, kind: Estimand, type: latent, criticality: moderate,
+     resolution_condition: two completed deployments measured end to end}
+
+  - {id: customer_interviews, kind: Signal, frequency: weekly, cost: low,
+     reversibility: repeatable}
+  - {id: paid_pilots, kind: Signal, frequency: rare, cost: high,
+     reversibility: repeatable}
+
+  - {id: e_demand, kind: Estimate, held_by: founders, uncertainty: 0.42,
+     uncertainty_kind: numeric,
+     note: numeric here because the source example specified it; see the caveat below}
+
+  - {id: demand_estimator, kind: Estimator, form: bayesian,
+     idempotency_basis: per_interview_id}
+
+  - {id: demand_target, kind: DesiredCondition, held_by: founders,
+     target_type: threshold, value: 0.75}
+
+  - {id: narrow_icp, kind: Intervention, target: own-structure,
+     motive: reduce the population the estimand ranges over so the same evidence resolves it faster}
+  - {id: change_pricing, kind: Intervention, target: world}
+  - {id: stop_market, kind: Intervention, target: own-structure,
+     motive: abandon the goal rather than continue estimating — the exit branch}
+
+  - {id: choose_intervention, kind: Policy,
+     based_on: [willingness_to_pay, sales_cycle, implementation_cost]}
+
+  - {id: interview_lag, kind: Delay, magnitude: 2d}
+  - {id: t_weekly, kind: TimeScale, period: weekly}
+  - {id: t_quarterly, kind: TimeScale, period: 90d}
+  - {id: runway, kind: Resource, depletable: true}
+  - {id: demand_calibration, kind: Calibration, window: 90d,
+     note: scores what demand_estimator predicted against what actually closed}
+
+edges:
+  - {from: acme, to: edge, rel: contains}
+  - {from: founders, to: c_founders, rel: bears}
+  - {from: buyer, to: c_buyer, rel: bears}
+
+  - {from: customer_interviews, to: willingness_to_pay, rel: measures}
+  - {from: paid_pilots, to: budget_owner_exists, rel: measures}
+  - {from: demand_estimator, to: e_demand, rel: estimates}
+  - {from: founders, to: e_demand, rel: holds}
+  - {from: founders, to: demand_target, rel: holds}
+  - {from: demand_target, to: validated_customer_demand, rel: targets}
+
+  - {from: founders, to: narrow_icp, rel: authorizes}
+  - {from: founders, to: change_pricing, rel: authorizes}
+  - {from: founders, to: stop_market, rel: authorizes}
+  - {from: choose_intervention, to: change_pricing, rel: closes}
+  - {from: interview_lag, to: customer_interviews, rel: delays}
+  - {from: change_pricing, to: runway, rel: consumes}
+  - {from: demand_calibration, to: demand_estimator, rel: revises}
+  - {from: narrow_icp, to: choose_intervention, rel: revises}
+
+loops:
+  - {id: customer_learning, timescale: t_weekly, signal: customer_interviews,
+     intervention: change_pricing}
+  - {id: demand_calibration_loop, timescale: t_quarterly, signal: paid_pilots,
+     intervention: narrow_icp}
+
+excluded_variables: [incumbent_vendor_response, buyer_internal_politics,
+                     whether_the_champion_survives_reorg]
+
+breaks_declared: [hinge_without_sensor, numeric_confidence_theatre,
+                  exit_branch_as_intervention]
+breaks_handled: [hinge_without_sensor, exit_branch_as_intervention]
+surfaced: []
+reduces_to: null
+
+new_primitives_needed: []
+
+notes_on_the_source_example: >
+  Twelve of the example's constructs mapped onto existing primitives unchanged. Two did not,
+  and both were real gaps:
+
+  HINGES. Now expressed as Estimand.criticality: existential plus a required
+  resolution_condition, rather than as a new primitive. That keeps the budget untouched and
+  makes hinges QUERYABLE — see the hinge_without_sensor derivation, which asks which
+  existential hinges have nothing observing them. That query is the most direct route from
+  this representation to something a founder does not already have written down.
+
+  CALIBRATION. Restored to the catalog. It had been dropped in the v0 derivation because
+  none of the four seed descriptions demanded it — a corpus gap, not a real absence. The
+  example's `calibration_window: 90d` had nowhere to live.
+
+  ON NESTING. The source example nests everything inside a loop, which reads far better than
+  a flat graph and matches the finding that a Loop is the unit that maps to one Durable
+  Object. The flat form is kept as the canonical IR because five independent encoders
+  produced five incompatible nested shapes and nesting drove the worst comprehensibility
+  scores. Both are the same model: loop-centric is a projection, per the charter's own
+  "the IR is canonical, everything else is a projection" architecture.
+
+  ON NUMERIC CONFIDENCE. The example gives `confidence: 0.42`. The startup seed argued that
+  founders do not hold calibrated probabilities and that demanding numbers produces theatre.
+  Both are honoured: uncertainty_kind is explicit, so a numeric estimate is permitted and
+  marked as such rather than being either forced or forbidden. The honest test is whether
+  0.42 ever changes a decision that 0.4 or 0.45 would not.
