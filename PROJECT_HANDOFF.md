@@ -179,6 +179,53 @@ Research:
 
 Represent findings as comparison tables.
 
+### The prior-art gate
+
+Phase 1 is a **gate**, not a survey. It exists to answer one question, and the project
+does not proceed until it has an answer that survives adversarial reading:
+
+> **Why is URAS not a Dec-POMDP with better ergonomics?**
+
+Take this seriously, because most of the candidate primitive list already has names.
+`State Estimate`/`Belief` is a belief state. `Sensor`/`Observation` is an observation
+function. `Model` is a transition function. `Estimator` is a Bayes filter. `Policy` and
+`Intervention` are π and A. `Preference Ordering` is a reward function. `Constraint` is
+a constrained MDP. `Learning Rule` is model-based RL. System nesting is hierarchical RL
+with options. Factored state is a dynamic Bayesian network. Multiple actors is a
+Dec-POMDP.
+
+That accounts for the large majority of the list using formalisms between thirty and
+sixty years old, all of which already have execution semantics and composition rules.
+POMDPs are listed above as one item among nineteen. They are in fact the primary
+competitor and should be read first.
+
+The defensible residue — the current best answer, to be attacked rather than assumed:
+
+| Capability | Why classical formalisms cannot express it |
+|---|---|
+| **Goal revision** | Reward is exogenous and fixed. Adaptive systems change what they want. |
+| **State-space revision** | `S` is fixed at specification time. Real systems discover variables they did not know existed. |
+| **Observer plurality** | Dec-POMDPs give actors separate beliefs but have no object representing *disagreement itself*. |
+| **Negotiable boundary** | The agent/environment split is stipulated by fiat and cannot move. |
+| **Evidence provenance** | Records that a belief moved, never why, from what, or on whose authority. |
+| **Recursive viability** | Each level is a sub-policy, not a full regulator in Beer's sense. |
+| **Legitimacy** | No representation of who is *permitted* to intervene. |
+
+If that residue collapses under scrutiny — if each item turns out to be expressible
+with known machinery plus notation — **the correct outcome is to stop**, and to write
+the ergonomics layer over an existing formalism instead. That is a real possible
+result, and a cheap one to reach at this stage rather than at Phase 7.
+
+### The reduction floor
+
+The complement of the gate. URAS must **degrade cleanly**: the thermostat encoding has
+to reduce mechanically to a classical control loop, and a single-actor benchmark has to
+reduce to a POMDP.
+
+This is a two-sided test and both sides matter. Failing to reduce means the
+representation has drifted into abstraction that buys nothing. Reducing *completely*,
+with no residue, means it is a POMDP with extra words.
+
 ### Deliverable 1
 
 Create
@@ -195,6 +242,8 @@ comparison.md
 missing_capabilities.md
 
 design_principles.md
+
+prior_art_gate.md        <- the POMDP question, answered or conceded
 ```
 
 ---
@@ -202,6 +251,58 @@ design_principles.md
 ## Phase 2 — Ontology Discovery
 
 This is the most important phase.
+
+### Phases 2 through 4 are one loop
+
+A charter about feedback should not itself be an open-loop pipeline. Phases 2, 3 and 4
+do not run once in sequence — they cycle:
+
+```
+        ┌──────────────────────────────────────────┐
+        │                                          │
+        ▼                                          │
+   2. Ontology  ──▶  3. Encode benchmark  ──▶  4. Contradiction
+                                                   │
+                                          revise ──┘
+```
+
+Each turn of the loop: encode the next adversarial benchmark using the current
+ontology, record every point where it does not fit, then revise. Revision means adding,
+merging, splitting, or **deleting** primitives.
+
+**Convergence criterion:** three consecutive adversarial benchmarks encode with no new
+primitive required and no unresolved contradiction. Until that holds, the ontology is
+not a candidate for Phase 5.
+
+Log every turn. The sequence of revisions is itself a finding — a primitive that is
+added, removed, and re-added is telling you something the catalog is not.
+
+### The primitive budget
+
+**Twenty core primitives. Hard ceiling.**
+
+Exceeding it is not a warning, it is a stop condition: merge or delete something before
+continuing. The charter already says "prefer deleting concepts over adding them," but
+exhortation does not delete anything. A budget does, because it forces the comparison —
+*which existing primitive is worth less than this new one?*
+
+Anything beyond twenty lives in an extension namespace, explicitly marked, and the
+core/extension ratio is tracked as a project metric. LLVM IR and SQL both achieved
+reach with a small core plus target-specific constructs; neither achieved it by being
+extension-free.
+
+Every core primitive must appear in **at least three** benchmark encodings from
+**at least two** different domains. This is checked mechanically, not by judgement —
+see the coverage matrix below.
+
+### Machine-readable from the start
+
+The primitive catalog carries YAML front-matter per primitive, so the coverage matrix
+is generated rather than maintained by hand, and orphan primitives — those appearing in
+too few benchmarks — fail the check automatically.
+
+Phases 2 through 4 otherwise produce only prose, which means four phases with no
+mechanical signal. This is the cheapest available fix.
 
 Derive candidate primitives.
 
@@ -376,39 +477,90 @@ composition_rules.md
 
 Represent many different systems.
 
-At least
+### Three sets, not one
 
-Thermostat
+The corpus does two different jobs — grounding the ontology and falsifying it — and a
+single undifferentiated set does neither well. Worse, encoding all sixteen while
+designing guarantees overfitting to all sixteen with no way to detect it.
 
-Immune System
+**Seed set — 4 systems, encoded BEFORE the ontology exists.**
 
-Startup
+Informal prose descriptions, written first. Primitives are then derived from what these
+descriptions actually needed. You cannot derive an ontology from a literature survey
+alone; that is the classic failure of ontology engineering, and it produces primitives
+that fit the theory and not the data.
 
-Investment Fund
+```
+Thermostat            (minimal, continuous, single-actor)
+Immune System         (no designer, no explicit goal, evolved)
+Hospital              (multi-actor, conflicting estimates, institutional)
+Startup               (revises its own goals and state space)
+```
 
-Autonomous Vehicle
+**Adversarial set — 8 systems, encoded DURING the 2–4 loop.**
 
-Hospital
+Chosen to attack specific weaknesses, not for variety's sake.
 
-Factory
+```
+Financial Market      (reflexive — observation changes the observed)
+Military Command      (legitimacy and authority are structural)
+Supply Chain          (boundary genuinely ambiguous)
+Scientific Community  (metis-dominated; should hurt)
+Biological Cell       (recursive viability, autopoietic boundary)
+Democracy             (incommensurable goals, no scalarization possible)
+Autonomous Vehicle    (hard real-time, safety invariants)
+Market Maker vs Traders  (adversarial — systems modelling each other)
+```
 
-Supply Chain
+**Held-out set — 4 systems, SEALED.**
 
-Scientific Community
+Not opened, not read, not discussed until the ontology is frozen at the end of the
+2–4 loop. First-encounter encoding cost on these is the only honest measure of
+generalization available. Everything else measures how well the ontology fits what it
+was built against.
 
-Financial Market
-
-Democracy
-
-Biological Cell
-
+```
 Ecosystem
-
 Family
-
-Military Command
-
+Factory
 LLM Agent System
+```
+
+### Coverage axes
+
+The original list had near-duplicates on the axes that matter — Factory and Supply
+Chain, Startup and Investment Fund — and gaps on several. The corpus should span:
+
+```
+continuous  ⟷  discrete
+fast loop   ⟷  slow loop
+single actor ⟷ many actors
+cooperative ⟷  adversarial
+observable  ⟷  deeply latent
+stationary  ⟷  non-stationary
+engineered  ⟷  evolved
+single goal ⟷  incommensurable goals
+designed    ⟷  no designer
+```
+
+Three additions above close real gaps: **Market Maker vs Traders** (two systems
+modelling each other — genuinely adversarial), **Financial Market** (reflexivity), and
+**Immune System** (no designer, no stated goal).
+
+`Investment Fund` is deliberately *not* in the corpus. It appears in Phase 8 as the
+demonstrator, and having it in both would let venture-shaped assumptions enter the
+ontology through the front door.
+
+### Negative control
+
+**A sorting algorithm.** URAS must *fail* to represent it in any useful way — it
+computes, it does not adapt: no goal it could fail to meet, no state it estimates, no
+evidence, no learning.
+
+A representation that fits everything describes nothing. Without at least one system
+the ontology explicitly cannot express, "domain independent" is unfalsifiable. If a
+sorting algorithm encodes cleanly, the primitives have become so general they have
+stopped meaning anything.
 
 For each
 
@@ -440,13 +592,32 @@ Document level only. Per-node provenance is not worth its weight.
 ```
 benchmarks/
 
-thermostat.yaml
+  seed/
+    thermostat.yaml
+    immune_system.yaml
+    hospital.yaml
+    startup.yaml
 
-startup.yaml
+  adversarial/
+    financial_market.yaml
+    military_command.yaml
+    supply_chain.yaml
+    scientific_community.yaml
+    biological_cell.yaml
+    democracy.yaml
+    autonomous_vehicle.yaml
+    market_maker.yaml
 
-hospital.yaml
+  held_out/            <- SEALED until the ontology is frozen
+    ecosystem.yaml
+    family.yaml
+    factory.yaml
+    llm_agent_system.yaml
 
-...
+  negative/
+    sorting_algorithm.md    <- a record of why this cannot be encoded
+
+  coverage_matrix.md        <- generated, never hand-maintained
 ```
 
 ---
@@ -489,7 +660,35 @@ ontology_failures.md
 
 Design the canonical IR.
 
-Prefer JSON schema.
+### The IR is a typed graph; JSON Schema is one serialization of it
+
+"Prefer JSON Schema" is a premature commitment, and following it directly will hit a
+wall. JSON Schema validates *shape* — it cannot express the constraints that actually
+matter here:
+
+- every feedback loop must close
+- every referenced observer, sensor and estimand must exist
+- probability mass must be well-formed
+- recursion must terminate
+- no estimator may depend on its own output without a `Delay`
+- every core primitive must be reachable from some `System`
+
+So: define the IR abstractly first, as a typed graph with named node and edge kinds.
+JSON Schema then becomes *a* serialization — the wire format — rather than the
+definition. YAML is a second serialization of the identical graph.
+
+Getting this order wrong means graph-level invariants get encoded as informal prose in
+the schema description fields, where nothing enforces them.
+
+### The Semantic Validator is a Phase 5 deliverable
+
+It appears in the architecture diagram and, until now, in no phase's deliverables.
+That was a hole: the diagram promised a component nobody owned.
+
+It is the enforcement point for every constraint above, and it is what makes Phases 2–4
+mechanically checkable rather than a matter of taste. Structural invariants belong in
+executable form, checked on every encoding — not in a document describing what a valid
+encoding would look like.
 
 Must support
 
@@ -541,12 +740,32 @@ system:
 
 The exact schema should evolve.
 
+### Schema evolution policy
+
+The charter requires encodings to be versionable. That covers instances. It says nothing
+about the *ontology itself* changing — and since "prefer deleting concepts" is a standing
+rule, deletion will happen repeatedly, breaking existing encodings each time.
+
+For something intended to remain coherent over thirty years this is core, not clerical:
+
+- every primitive gets a stability tier — `core`, `provisional`, or `extension`
+- deletions and renames ship with a mechanical migration for existing encodings
+- `provisional` carries no compatibility promise; `core` does
+- the coverage matrix records which benchmarks a revision invalidated
+
 ### Deliverables
 
 ```
 schema/
 
-uras.schema.json
+uras.graph.md            <- the typed graph: node kinds, edge kinds, invariants
+                            (the definition)
+
+uras.schema.json         <- wire serialization (a projection, not the definition)
+
+validator/               <- executable invariant checks
+
+migrations/              <- one per breaking ontology revision
 
 examples/
 ```
@@ -638,6 +857,73 @@ Intervention Selection
 
 Map every primitive.
 
+### One backend cannot validate engine independence
+
+Engine independence is a stated success criterion, and mapping to Flue alone cannot
+establish it — it can only produce a representation shaped like Flue while everyone
+believes otherwise. Overfitting to a single target is invisible from inside that target.
+
+So sketch a **second backend on paper only**, deliberately unlike Flue. A discrete-event
+simulator is the best candidate: no LLMs, no agents, no sessions, synchronous, and
+strong on exactly the continuous-time regulation Flue is weak on.
+
+It is never implemented. The mapping exercise alone is what pays, because every place
+the second mapping is awkward marks a Flue assumption that leaked into the
+representation.
+
+### Firewall URAS semantics from Flue accidents
+
+Flue is 2026 technology and the top-of-repository directive says to prefer concepts that
+survive the replacement of today's LLMs. `Skills`-as-markdown-modules and `Subagents`
+are current-generation framing. They may not exist in ten years; `Estimator` and
+`Feedback` will.
+
+The mapping document keeps two columns separate throughout: what URAS *means*, and how
+Flue happens to *execute* it today. Nothing from the right column is permitted to flow
+back into the ontology.
+
+### What is already known about the fit
+
+Flue (flueframework.com) is a TypeScript framework for durable AI agents built on the
+Pi harness. Its primitives are `Agents` (via `defineAgent()`), `Workflows`, `Sandboxes`,
+`Skills`, `Tools`, `Subagents`, and `Sessions`, with durable execution via persistent
+session recording in durable streams.
+
+Three genuine affordances:
+
+- **Durable session recording maps almost exactly onto evidence provenance.** "Evidence
+  becomes traceable" and an append-only durable stream are close to the same
+  requirement. This is the strongest single point of fit, and it is not a coincidence —
+  both are audit structures.
+- **A Flue `Agent` holds its own context, which is a natural `Observer`.** Per-agent
+  context is per-observer belief. The mapping is nearly direct.
+- **`Tools` split cleanly into `Sensor` (read) and `Actuator` (write).**
+
+Four gaps that must be built *over* Flue rather than mapped onto it:
+
+- **No uncertainty anywhere.** Flue has no belief-with-distribution, no probability, no
+  confidence. Every URAS estimand needs a representation Flue does not supply. This is
+  the largest gap.
+- **No `Resource`.** No budget, cost, or attention accounting visible.
+- **No `Learning Rule` or `Calibration`.** Nothing closes a loop on the estimator.
+- **No `Constraint` or `Invariant` as structure** — expressible only as workflow code.
+
+And one structural mismatch, which is the most important finding and should be resolved
+before Phase 7 produces anything else:
+
+> A Flue `Workflow` runs "from a clear input to a finished result." It **terminates**.
+> A URAS system is a **non-terminating regulator** — a thermostat has no finished
+> result.
+
+These are different shapes: Flue workflows are transformations, URAS loops are
+homeostats. Mapping a continuous regulator onto a terminating workflow requires either
+an outer scheduler that re-invokes it, or a long-lived `Agent` whose prose goal is the
+regulation. Neither is natural, and the choice will leak into the representation if it
+is made implicitly.
+
+This is exactly the class of problem the second-backend sketch exists to catch — a
+discrete-event simulator has no trouble with non-termination at all.
+
 ### Deliverable
 
 ```
@@ -722,7 +1008,56 @@ The project succeeds if:
 - diagrams, YAML and execution are all projections of the same IR
 - Flue can execute meaningful subsets without changing the representation
 - the ontology is significantly simpler than the systems it describes
-- experts from multiple domains recognize their systems without requiring domain-specific extensions
+- experts from multiple domains recognize their systems
+
+Note the deletion: the original criterion read "…recognize their systems *without
+requiring domain-specific extensions*." That target was wrong. Ashby's Law — cited in
+Phase 1 — holds that a regulator needs variety matching what it regulates, so an
+extension-free universal representation is either vacuous or false. The charter's own
+analogies agree: LLVM IR has target intrinsics and address spaces, SQL has dialects.
+The goal is a small stable core plus a disciplined extension mechanism, measured by
+ratio rather than by absence.
+
+### Making these measurable
+
+Every criterion above is currently unfalsifiable. "Significantly simpler" and
+"understandable by humans" cannot be passed or failed as written, which means the
+project cannot tell whether it is succeeding.
+
+| Criterion | Measure | Target |
+|---|---|---|
+| Ontology is simple | Core primitive count | ≤ 20, hard ceiling |
+| Primitives are earned | Coverage matrix: benchmarks per primitive | ≥ 3, across ≥ 2 domains |
+| Representation is determinate | **Inter-encoder agreement** — two encoders, same source, independently | High structural overlap |
+| It generalizes | Encoding cost on the sealed held-out set | No new core primitives |
+| Domain independence | Core / extension ratio per domain | Core dominates everywhere |
+| Not vacuous | Negative control stays unencodable | Sorting algorithm fails |
+| Experts recognize it | Structured walkthrough, fixed rubric, ≥ 2 domains | Recognition without translation |
+| Degrades cleanly | Thermostat reduces to a control loop | Mechanical reduction |
+| Not a POMDP in disguise | Residue survives the Phase 1 gate | Named, defended capabilities |
+
+**Inter-encoder agreement is the most important row.** Give two independent encoders the
+same source material and compare results. If the ontology is determinate, they converge;
+if it is merely suggestive, they diverge, and no amount of documentation will fix that —
+divergence means the primitives do not have single meanings. This is standard
+inter-rater reliability practice, and it is the only proposed measure that tests whether
+the representation *means* anything as opposed to being expressive enough to say
+anything.
+
+### Kill criteria
+
+Stated so they can be recognized rather than rationalized:
+
+- the Phase 1 residue collapses — everything reduces to known formalisms plus notation
+- the 2–4 loop cannot converge: primitive count keeps climbing past 20 with each new
+  benchmark
+- inter-encoder agreement stays low after two rounds of catalog clarification
+- the held-out set requires new core primitives, meaning the ontology only ever fit
+  what it was built against
+- domain experts consistently need the encoding translated back to their own vocabulary
+
+Any one of these is a result worth having. Reaching it in Phase 1 costs weeks; reaching
+it at Phase 7 costs the project.
 
 ---
 
