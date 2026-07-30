@@ -108,6 +108,77 @@ absorbed silently.
 
 ---
 
+## Cloudflare Durable Objects largely resolve the termination mismatch
+
+Flue deploys to Cloudflare, so the regulator can be a **Durable Object** rather than a
+Workflow. Verified against the DO alarms API documentation.
+
+A DO is a long-lived, addressable, single-instance stateful entity with SQLite storage
+and an `alarm()` handler that can reschedule itself. That changes the picture materially:
+the two options recorded above were an external scheduler (loop lives outside the
+representation) or a long-lived agent with a prose goal (inspectability lost). A
+self-rescheduling DO alarm is a **third option that removes the objection to the first** —
+the tick period becomes part of the object's own persisted state rather than external
+infrastructure, so the loop stays inside the representation.
+
+Confirmed properties and their consequences:
+
+| DO property | Consequence for URAS |
+|---|---|
+| Long-lived, addressable by `getByName()`, deterministic routing | DO identity is a natural `Observer` or `System` identity — stable, addressable, one instance |
+| SQLite storage per object | Per-observer belief store, queryable |
+| `alarm()` can reschedule itself | Non-terminating regulation without external infrastructure |
+| **One alarm per DO** — `setAlarm()` replaces any existing alarm | See below: pushes the mapping toward one DO per *loop*, not per *system* |
+| **At-least-once execution**, retried with exponential backoff, up to 6 attempts | See below: forces idempotent estimators |
+| Only one `alarm()` instance runs at a time per object | Belief updates serialize — no lost-update race on a posterior. Genuinely useful. |
+| DO-to-DO RPC | Inter-system and inter-observer communication |
+| Billed on wall-clock and requests | A real `Resource` accounting hook, which Flue itself does not supply |
+
+### Consequence 1: map loops to DOs, not systems
+
+One alarm per object means a system with several loops running at different time scales
+inside one boundary cannot be one DO with one alarm. Either one DO per loop, or a
+schedule table in storage that the handler drains and reschedules from.
+
+This is a Phase 7 architecture decision that should be made explicitly. The natural
+reading is that a URAS **feedback loop** is the unit that maps to a DO, and `System` is a
+grouping over DOs — which is not the obvious first guess.
+
+### Consequence 2: at-least-once delivery forces idempotent estimators
+
+The important finding, and it flows *upward* into the representation.
+
+Alarms are guaranteed **at-least-once**, not exactly-once, and are retried automatically
+when the handler throws. A Bayesian update applied twice double-counts the evidence. So
+under retry, a naive `Estimator` silently corrupts its own posterior — and the corruption
+is invisible, because the result is a well-formed distribution that is simply wrong.
+
+Therefore:
+
+- **`Evidence` requires stable identity.** Not a convenience — a correctness requirement.
+- **`Estimator` application must be idempotent with respect to evidence identity.**
+  Applying the same evidence twice must equal applying it once.
+- The validator should be able to check that an estimator declares its idempotency basis.
+
+This is exactly the class of finding Phase 7 exists to produce, and it argues for doing a
+thin slice of Phase 7 early rather than strictly last: an execution constraint has
+revealed a requirement on the representation that pure ontology work would not have
+surfaced.
+
+### What DOs do not solve
+
+- **Still no uncertainty representation.** A DO gives durable *storage* for a posterior,
+  not belief *semantics*. The uncertainty layer remains entirely URAS-side. This was the
+  largest gap and it is untouched.
+- **Fast loops remain out of scope.** Alarms are wall-clock scheduled with no documented
+  minimum granularity, but the practical floor and the per-invocation cost make
+  high-frequency regulation impractical. Slow institutional loops — a fund reassessing
+  quarterly, a hospital daily — fit well. The `Autonomous Vehicle` benchmark at control
+  frequency does not, and should be encoded knowing its execution target is elsewhere.
+- **No learning or calibration primitives** appear at the platform layer either.
+
+---
+
 ## Firewall
 
 Flue is 2026 technology, and the top-of-repository directive requires preferring concepts
