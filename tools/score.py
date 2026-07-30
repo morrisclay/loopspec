@@ -140,6 +140,39 @@ def relation_usage(encodings):
     return {r: {"uses": use.get(r, 0), "domains": len(dom.get(r, ()))} for r in CANONICAL_RELS}
 
 
+def edge_determinacy(encodings):
+    """
+    Given both endpoint kinds, is the relation determined?
+
+    The canonical graph was introduced to make encodings comparable, and D compares primitive
+    sets, estimands and loop counts — but never edges, which is where the ambiguity actually
+    lives. A vocabulary that permits two tokens for one kind-pair means successful validation
+    proves only that an encoder picked SOME permitted word, not that two encoders represented
+    the same relationship the same way.
+    """
+    from collections import defaultdict, Counter
+    pairs = defaultdict(Counter)
+    for enc in encodings:
+        if "error" in enc or "edges" not in enc:
+            continue
+        kinds = {n.get("id"): n.get("kind") for n in (enc.get("nodes") or [])}
+        for e in enc.get("edges") or []:
+            a, b, r = kinds.get(e.get("from")), kinds.get(e.get("to")), e.get("rel")
+            if a and b and r:
+                pairs[(a, b)][r] += 1
+    if not pairs:
+        return None, {}
+    amb = {k: v for k, v in pairs.items() if len(v) > 1}
+    tot = sum(sum(v.values()) for v in pairs.values())
+    ambn = sum(sum(v.values()) for v in amb.values())
+    return 1.0 - (ambn / tot if tot else 0.0), {
+        "kind_pairs": len(pairs), "ambiguous_pairs": len(amb),
+        "edges_in_ambiguous_pairs": ambn, "total_edges": tot,
+        "offenders": {f"{a} -> {b}": dict(v) for (a, b), v in
+                      sorted(amb.items(), key=lambda kv: -sum(kv[1].values()))},
+    }
+
+
 def term_simplicity(doc, encodings):
     prims = doc.get("primitives") or []
     core = [p for p in prims if p.get("tier") == "core"]
@@ -157,12 +190,15 @@ def term_simplicity(doc, encodings):
                or u["domains"] < MIN_DOMAINS_PER_PRIMITIVE]
     orphan_term = 1.0 - (len(orphans) / n) if n else 0.0
 
+    ed, ed_detail = edge_determinacy(encodings)
     rels = relation_usage(encodings)
     rel_orphans = [r for r, u in rels.items()
                    if u["uses"] < MIN_BENCHMARKS_PER_PRIMITIVE
                    or u["domains"] < MIN_DOMAINS_PER_PRIMITIVE]
 
     detail = {
+        "edge_determinacy": round(ed, 3) if ed is not None else None,
+        "edge_determinacy_detail": ed_detail,
         "relation_usage": {r: f"{u['uses']}u/{u['domains']}d" for r, u in rels.items()},
         "relation_orphans": rel_orphans,
         "core_count": n,
