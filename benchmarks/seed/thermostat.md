@@ -5,6 +5,21 @@ encoded_by: claude-opus-5
 encoded_from: general engineering knowledge
 vantage: external designer
 axes: [continuous, fast-loop, single-actor, observable, stationary, engineered, single-goal, designed]
+demands:
+  - System
+  - Boundary
+  - Party
+  - Estimand
+  - Signal
+  - Estimate
+  - Estimator
+  - DesiredCondition
+  - Intervention
+  - Policy
+  - Loop
+  - Delay
+  - TimeScale
+  - Constraint
 ---
 
 # Thermostat

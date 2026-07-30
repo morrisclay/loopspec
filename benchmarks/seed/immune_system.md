@@ -5,6 +5,22 @@ encoded_by: claude-opus-5
 encoded_from: general immunology knowledge
 vantage: external observer; no internal vantage exists
 axes: [discrete, multi-timescale, population-of-actors, latent, non-stationary, evolved, no-stated-goal, no-designer]
+demands:
+  - System
+  - Boundary
+  - Party
+  - Estimand
+  - Signal
+  - Estimate
+  - Estimator
+  - Evidence
+  - Intervention
+  - Policy
+  - Loop
+  - Delay
+  - TimeScale
+  - Resource
+  - Revision
 ---
 
 # Immune System

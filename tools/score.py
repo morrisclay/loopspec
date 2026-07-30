@@ -27,6 +27,7 @@ except ImportError:
     sys.exit("needs pyyaml: pip install pyyaml")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SOURCES = []
 
 VALID_TIERS = {"core", "provisional", "extension"}
 MIN_BENCHMARKS_PER_PRIMITIVE = 3
@@ -116,7 +117,8 @@ def term_simplicity(doc, encodings):
     depths = [p.get("depth", 0) for p in core] or [0]
     depth_term = clamp((5 - (sum(depths) / len(depths))) / 3.0)
 
-    usage = primitive_usage(core, encodings)
+    usage = primitive_usage(core, encodings, SOURCES)
+    undeclared = usage.pop("_undeclared", [])
     orphans = [name for name, u in usage.items()
                if u["benchmarks"] < MIN_BENCHMARKS_PER_PRIMITIVE
                or u["domains"] < MIN_DOMAINS_PER_PRIMITIVE]
@@ -129,6 +131,9 @@ def term_simplicity(doc, encodings):
         "mean_depth": round(sum(depths) / len(depths), 2),
         "orphans": orphans,
         "orphan_count": len(orphans),
+        "usage": {k: f"{v['benchmarks']}b/{v['domains']}d" for k, v in sorted(
+            usage.items(), key=lambda kv: kv[1]["benchmarks"])},
+        "undeclared_primitives": undeclared,
         "components": {
             "budget_term": round(budget_term, 3),
             "depth_term": round(depth_term, 3),
@@ -139,21 +144,42 @@ def term_simplicity(doc, encodings):
     return value, detail
 
 
-def primitive_usage(core, encodings):
-    """How many encodings and distinct domains use each core primitive."""
+def primitive_usage(core, encodings, sources=()):
+    """
+    How many benchmarks and distinct domains demand each core primitive.
+
+    Counts BOTH prose benchmark descriptions (which declare `demands:`) and formal
+    encodings (which declare `uses:`). Coverage is declared benchmark-side on purpose:
+    the earlier design kept `demanded_by` on each primitive, which meant the orphan
+    metric measured the maintainer's diligence in updating that field rather than real
+    coverage. The benchmark author is the one who knows what their system needs.
+    """
     usage = {p["name"]: {"benchmarks": 0, "domains": 0, "_domains": set()} for p in core}
-    for enc in encodings:
-        if "error" in enc:
-            continue
-        domain = enc.get("domain", "unknown")
-        used = set(enc.get("uses") or [])
+
+    def record(doc, key):
+        domain = doc.get("domain", "unknown")
+        used = set(doc.get(key) or [])
         for name in usage:
             if name in used:
                 usage[name]["benchmarks"] += 1
                 usage[name]["_domains"].add(domain)
+        return used
+
+    unknown = set()
+    for src in sources:
+        if src.get("set") == "negative":
+            continue  # the negative control must NOT contribute coverage
+        unknown |= record(src, "demands") - set(usage)
+    for enc in encodings:
+        if "error" in enc:
+            continue
+        unknown |= record(enc, "uses") - set(usage)
+
     for name in usage:
         usage[name]["domains"] = len(usage[name]["_domains"])
         del usage[name]["_domains"]
+    if unknown:
+        usage["_undeclared"] = sorted(unknown)
     return usage
 
 
@@ -333,6 +359,8 @@ def main():
 
     encodings = load_encodings()
     sources = load_seed_sources()
+    global SOURCES
+    SOURCES = sources
 
     S, s_d = term_simplicity(doc, encodings)
     E, e_d = term_expressivity(encodings)
@@ -405,6 +433,12 @@ def main():
     print(f"  mean depth        {s_d['mean_depth']}")
     print(f"  orphans           {s_d['orphan_count']}" +
           (f"  {s_d['orphans']}" if s_d["orphans"] else ""))
+    if s_d.get("undeclared_primitives"):
+        print(f"  UNDECLARED        {s_d['undeclared_primitives']}  <- demanded but not in catalog")
+    print("\n  coverage (benchmarks/domains per primitive, thinnest first)")
+    for k, v in list(s_d["usage"].items()):
+        flag = "  ORPHAN" if k in s_d["orphans"] else ""
+        print(f"    {k:22s} {v}{flag}")
     print(f"  encodings         {len([e for e in encodings if 'error' not in e])}")
     print(f"  seed sources      {len(sources)}")
     if hard:

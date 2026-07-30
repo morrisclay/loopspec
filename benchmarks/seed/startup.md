@@ -5,6 +5,23 @@ encoded_by: claude-opus-5
 encoded_from: general knowledge of early-stage company operation
 vantage: founder/CEO
 axes: [discrete, multi-timescale, few-actors, deeply-latent, non-stationary, organization, revisable-goals, designed]
+demands:
+  - System
+  - Boundary
+  - Party
+  - Estimand
+  - Signal
+  - Estimate
+  - Evidence
+  - Estimator
+  - DesiredCondition
+  - PreferenceOrdering
+  - Intervention
+  - Policy
+  - Loop
+  - TimeScale
+  - Resource
+  - Revision
 ---
 
 # Startup — Seed Stage, Pre-Product-Market-Fit

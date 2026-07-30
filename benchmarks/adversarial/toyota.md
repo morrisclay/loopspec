@@ -6,6 +6,25 @@ encoded_from: general knowledge of the Toyota Production System
 vantage: plant management, with explicit line-worker counterpoint
 axes: [discrete, multi-timescale, many-actors, observable-by-design, non-stationary, engineered, nested-goals, designed]
 attacks: [loci-hypothesis, authority-relation, revision-regime, comprehensibility-ceiling]
+demands:
+  - System
+  - Boundary
+  - Party
+  - Estimand
+  - Signal
+  - Estimate
+  - Evidence
+  - Estimator
+  - DesiredCondition
+  - PreferenceOrdering
+  - Intervention
+  - Policy
+  - Loop
+  - Delay
+  - TimeScale
+  - Resource
+  - Constraint
+  - Revision
 ---
 
 # Toyota Production System

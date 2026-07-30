@@ -5,6 +5,25 @@ encoded_by: claude-opus-5
 encoded_from: general knowledge of hospital operations
 vantage: DELIBERATELY AMBIGUOUS — see note
 axes: [discrete, multi-timescale, many-actors, latent, non-stationary, institutional, incommensurable-goals, designed]
+demands:
+  - System
+  - Boundary
+  - Party
+  - Estimand
+  - Signal
+  - Estimate
+  - Evidence
+  - Estimator
+  - DesiredCondition
+  - PreferenceOrdering
+  - Consequence
+  - Intervention
+  - Policy
+  - Loop
+  - Delay
+  - TimeScale
+  - Resource
+  - Constraint
 ---
 
 # Hospital — Patient Flow and Discharge
