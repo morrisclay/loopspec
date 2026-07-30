@@ -183,7 +183,14 @@ def primitive_usage(core, encodings, sources=()):
     return usage
 
 
-def term_expressivity(encodings):
+def term_expressivity(encodings, adj=None):
+    """
+    Uses ADJUDICATED handled counts where available, self-assessed otherwise.
+
+    Self-assessment rewards optimism: in round 1 an encoder claimed 5/5 breaks handled
+    including one that an independent adjudicator judged `named_only` — an encoding that
+    lists something under an "excluded" key has named it, not handled it.
+    """
     if not encodings:
         return None, {"reason": "no formal encodings yet"}
     num = den = 0.0
@@ -193,17 +200,26 @@ def term_expressivity(encodings):
             continue
         declared = enc.get("breaks_declared")
         handled = enc.get("breaks_handled")
-        if declared is None or handled is None:
+        if declared is None or handled is None or not declared:
             continue
+        key = (enc.get("encodes"), enc.get("encoded_by"))
+        rec = (adj or {}).get("by_encoding", {}).get(key)
+        if rec and rec["breaks_total"]:
+            n_handled, source = rec["handled"], "adjudicated"
+        else:
+            n_handled, source = len(handled), "self-assessed"
         w = SET_WEIGHTS.get(enc.get("set", "adversarial"), 1.0)
-        if not declared:
-            continue
-        num += w * (len(handled) / len(declared))
+        num += w * (n_handled / len(declared))
         den += w
-        per.append({"path": enc["_path"], "handled": len(handled), "declared": len(declared)})
+        per.append({"path": os.path.basename(enc["_path"]), "handled": n_handled,
+                    "declared": len(declared), "source": source})
     if den == 0:
         return None, {"reason": "encodings do not declare breaks_declared/breaks_handled"}
-    return num / den, {"per_encoding": per}
+    unadj = [p for p in per if p["source"] == "self-assessed"]
+    return num / den, {"per_encoding": per,
+                       "unadjudicated": len(unadj),
+                       "caveat": ("%d encoding(s) still self-assessed — optimism inflates E"
+                                  % len(unadj)) if unadj else None}
 
 
 def term_determinacy(encodings):
@@ -241,13 +257,24 @@ def term_determinacy(encodings):
             })
     if not scores:
         return None, {"reason": "duplicate encodings exist but share an encoder", "detail": detail}
+    # Is D inflated by including the author of the ontology? Measure rather than assume.
+    AUTHOR = "claude-opus-5"
+    auth = [d["score"] for d in detail if "score" in d and AUTHOR in d.get("pair", "")]
+    indep = [d["score"] for d in detail if "score" in d and AUTHOR not in d.get("pair", "")]
+    d_indep = (sum(indep) / len(indep)) if indep else None
+    d_auth = (sum(auth) / len(auth)) if auth else None
+
     caveat = None
     if len(vendors) < 2:
         caveat = (f"ALL encoders are from one vendor family ({sorted(vendors)}). Shared training "
                   "bias inflates agreement, so this D is optimistic. A genuinely different "
                   "family is needed for a trustworthy figure.")
-    return sum(scores) / len(scores), {"pairs": detail, "vendors": sorted(vendors),
-                                       "caveat": caveat}
+    return sum(scores) / len(scores), {
+        "pairs": detail, "vendors": sorted(vendors), "caveat": caveat,
+        "D_author_pairs": rnd(d_auth), "D_independent_pairs": rnd(d_indep),
+        "n_author": len(auth), "n_independent": len(indep),
+        "author_effect": rnd((d_auth - d_indep)) if (d_auth is not None and d_indep is not None) else None,
+    }
 
 
 def vendor_of(model):
@@ -267,28 +294,96 @@ def jaccard(a, b):
     return len(a & b) / len(a | b) if (a | b) else 0.0
 
 
-def term_usefulness(encodings):
+def load_adjudications():
+    """
+    Independent verdicts on surfaced claims and breaks_handled claims.
+
+    Both were self-assessed in round 1 and both were therefore untrustworthy: `U` rewarded
+    an encoder for asserting insight, and `E` rewarded an encoder for asserting coverage.
+    Adjudication is done blind by a model that wrote neither the encodings, the ontology,
+    nor the prose, on anonymised claims.
+    """
+    out = {"surfaced": {}, "breaks": {}, "by_encoding": {}}
+    vpath = os.path.join(ROOT, "adjudication", "round1_verdicts.yaml")
+    lpath = os.path.join(ROOT, "adjudication", "round1_label_map.json")
+    spath = os.path.join(ROOT, "adjudication", "surfaced_cases.yaml")
+    bpath = os.path.join(ROOT, "adjudication", "breaks_cases.yaml")
+    if not all(os.path.exists(p) for p in (vpath, lpath, spath, bpath)):
+        return None
+    v = yaml.safe_load(open(vpath))
+    lab = json.load(open(lpath))
+    scases = {c["id"]: c for c in yaml.safe_load(open(spath))["surfaced_cases"]}
+    bcases = {c["id"]: c for c in yaml.safe_load(open(bpath))["breaks_cases"]}
+
+    def owner(label):
+        e = lab.get(label) or {}
+        return (e.get("system"), e.get("encoded_by"))
+
+    for r in v.get("surfaced") or []:
+        c = scases.get(r["id"])
+        if not c:
+            continue
+        key = owner(c["encoding"])
+        rec = out["by_encoding"].setdefault(key, {"genuine": 0, "surfaced_total": 0,
+                                                  "handled": 0, "breaks_total": 0})
+        rec["surfaced_total"] += 1
+        if r.get("verdict") == "genuine":
+            rec["genuine"] += 1
+        out["surfaced"][r["id"]] = r.get("verdict")
+    for r in v.get("breaks") or []:
+        c = bcases.get(r["id"])
+        if not c:
+            continue
+        key = owner(c["encoding"])
+        rec = out["by_encoding"].setdefault(key, {"genuine": 0, "surfaced_total": 0,
+                                                  "handled": 0, "breaks_total": 0})
+        rec["breaks_total"] += 1
+        if r.get("verdict") == "handled":
+            rec["handled"] += 1
+        out["breaks"][r["id"]] = r.get("verdict")
+    out["summary"] = v.get("summary") or {}
+    return out
+
+
+def term_usefulness(encodings, adj=None):
+    """
+    U = clamp(mean genuine claims per encoding / 2) * audit_coverage
+
+    MULTIPLICATIVE, not additive. The original formula added an audit-fraction term, which
+    meant that submitting claims for audit raised the score even when every claim was
+    rejected — the term rewarded being audited rather than passing. That flaw was invisible
+    until real verdicts existed. Unaudited claims now contribute nothing at all: usefulness
+    cannot be self-asserted.
+    """
     if not encodings:
         return None, {"reason": "no formal encodings yet"}
-    total = audited = 0
-    counts = []
+    per, total, audited, genuine = [], 0, 0, 0
     for enc in encodings:
         if "error" in enc:
             continue
         surfaced = enc.get("surfaced") or []
-        counts.append(len(surfaced))
-        for s in surfaced:
-            total += 1
-            if isinstance(s, dict) and s.get("audited"):
-                audited += 1
-    if not counts:
+        total += len(surfaced)
+        key = (enc.get("encodes"), enc.get("encoded_by"))
+        rec = (adj or {}).get("by_encoding", {}).get(key)
+        if rec and rec["surfaced_total"]:
+            audited += rec["surfaced_total"]
+            genuine += rec["genuine"]
+            per.append(rec["genuine"])
+        else:
+            per.append(0)          # unaudited claims count as zero genuine
+    if not per:
         return None, {"reason": "no encoding declares surfaced:"}
-    mean = sum(counts) / len(counts)
-    audit_frac = (audited / total) if total else 0.0
-    value = 0.6 * clamp(mean / 3.0) + 0.4 * audit_frac
-    return value, {"mean_surfaced": round(mean, 2), "total": total,
-                   "audited": audited, "audit_fraction": round(audit_frac, 3),
-                   "note": "audit requires a domain party; see ontology/score.md"}
+    coverage = (audited / total) if total else 0.0
+    mean_genuine = sum(per) / len(per)
+    value = clamp(mean_genuine / 2.0) * coverage
+    return value, {
+        "mean_genuine_per_encoding": round(mean_genuine, 2),
+        "genuine": genuine, "claims_total": total, "claims_audited": audited,
+        "audit_coverage": round(coverage, 3),
+        "note": ("multiplicative: unaudited claims contribute nothing, and a rejected claim "
+                 "contributes nothing. U=0 means no encoding has been shown to surface "
+                 "anything a practitioner did not already have."),
+    }
 
 
 def term_comprehensibility(encodings, sources, doc):
@@ -386,10 +481,11 @@ def main():
     global SOURCES
     SOURCES = sources
 
+    adj = load_adjudications()
     S, s_d = term_simplicity(doc, encodings)
-    E, e_d = term_expressivity(encodings)
+    E, e_d = term_expressivity(encodings, adj)
     D, d_d = term_determinacy(encodings)
-    U, u_d = term_usefulness(encodings)
+    U, u_d = term_usefulness(encodings, adj)
     C, c_d = term_comprehensibility(encodings, sources, doc)
 
     terms = {"S_simplicity": (S, s_d), "E_expressivity": (E, e_d),
@@ -449,6 +545,19 @@ def main():
         print(f"  SCORE                     n/a   (only {len(available)}/5 terms computable)")
     else:
         print(f"  SCORE                     {score:.3f}" + ("   PARTIAL" if partial else ""))
+        # A zero term correctly collapses the geometric mean, but that destroys gradient.
+        # Report the sub-score too so progress on the other terms stays visible. This is a
+        # DIAGNOSTIC, never the headline: it is the score with a failing term deleted.
+        zeros = [k for k, v in available.items() if v is not None and v < 1e-9]
+        if zeros and gate_mult:
+            rest = {k: v for k, v in available.items() if k not in zeros}
+            if rest:
+                sub = (math.prod(rest.values())) ** (1.0 / len(rest))
+                print(f"  sub-score (excl. {', '.join(z.split('_')[0] for z in zeros)})"
+                      f"{'':<4} {sub:.3f}   DIAGNOSTIC ONLY — this is the score with a")
+                print(f"  {'':<26}failing term removed, not an achievement")
+        dominant = min(available.items(), key=lambda kv: kv[1])
+        print(f"  binding term              {dominant[0]} = {dominant[1]:.3f}")
     if partial:
         print(f"\n  PARTIAL ({len(available)}/5 terms). Unavailable terms are EXCLUDED, not")
         print("  defaulted to 1.0. Do not compare a partial score against a full one.")

@@ -1,0 +1,74 @@
+surfaced:
+  - id: S01
+    verdict: restatement
+    reason: The encoding supports the separation of observation and discharge authority, but the source states this inverse distribution plainly.
+  - id: S02
+    verdict: unsupported
+    reason: The encoding distinguishes both evidence and consequences, so it does not establish that consequences alone explain disagreement or that shared information would not help.
+  - id: S03
+    verdict: unsupported
+    reason: The encoding gives the hourly and fortnightly loops different interventions and assigns neither loop an owner, so it does not establish opposite gradients on one intervention or absent joint ownership.
+  - id: S04
+    verdict: restatement
+    reason: The identity estimator and undetectable proxy divergence are encoded, but they directly restate the source's explanation that the controller cannot detect separation of hallway temperature from comfort.
+  - id: S05
+    verdict: restatement
+    reason: The encoding correctly makes the deadband a relay-protection constraint, but the source explicitly explains both that role and the equipment-versus-comfort tradeoff.
+  - id: S06
+    verdict: restatement
+    reason: The external goal-holder and inability to judge the target are represented, but both are stated explicitly in the source.
+breaks:
+  - id: B01
+    verdict: handled
+    reason: The encoding structurally records five holder-specific estimates over distinct aspects of discharge readiness and feeds them into the policy without aggregation.
+  - id: B02
+    verdict: handled
+    reason: Party-specific signals are represented separately from intervention authorities and policy powers.
+  - id: B03
+    verdict: handled
+    reason: The preference ordering is explicitly partial over five objectives with exchange rates left unspecified.
+  - id: B04
+    verdict: handled
+    reason: Consequences are structurally keyed to individual parties and differ in kind, timing, formality, and measurement.
+  - id: B05
+    verdict: named_only
+    reason: The load-bearing unwritten facts appear only as excluded variables with unknown status rather than as rules that can affect system behavior.
+  - id: B06
+    verdict: handled
+    reason: The encoding gives each party a holder-specific estimate relation to a distinct estimand and represents overall discharge readiness as an unresolved contested aggregate.
+  - id: B07
+    verdict: handled
+    reason: Each party's observations and authorities are separate fields, allowing continuous nursing observation to coexist with consultant-only discharge power.
+  - id: B08
+    verdict: handled
+    reason: The encoding represents five objectives with a partial, explicitly unscalarized preference ordering.
+  - id: B09
+    verdict: handled
+    reason: Each party record couples its estimate-bearing role to a distinct consequence with different bearing and measurement properties.
+  - id: B10
+    verdict: handled
+    reason: The householder holds the desired condition outside the boundary while no inside component is made a goal-holder.
+  - id: B11
+    verdict: handled
+    reason: The numeric comfort target and the relay-protection deadband are separate structures and both enter the control policy.
+  - id: B12
+    verdict: handled
+    reason: The encoding separates room comfort from hallway temperature through an explicit proxy signal and identity estimator with enumerated divergence causes.
+  - id: B13
+    verdict: handled
+    reason: The inside controller explicitly has no desired condition while the outside householder holds it.
+  - id: B14
+    verdict: handled
+    reason: The setpoint is separated from policy thresholds whose deadband is explicitly motivated by relay chatter and equipment damage.
+  - id: B15
+    verdict: handled
+    reason: Separate estimand, signal, estimator, and estimate structures preserve the proxy gap and identify its unrepresented uncertainty.
+summary:
+  harshest_observation: >
+    The encodings mostly relabel facts already explicit in the prose as surfaced insights,
+    while their stronger hospital conclusions about causal disagreement and cross-timescale
+    ownership are not structurally established.
+  ontology_gap: >
+    The ontology appears to lack a way to represent load-bearing tacit institutional rules,
+    contextual exceptions, and informal credibility, forcing both hospital encodings to
+    relegate them to excluded variables rather than make them behaviorally operative.

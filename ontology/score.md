@@ -98,21 +98,54 @@ The term added because every other term can be satisfied by a representation nob
 choose to write.
 
 Each encoding declares `surfaced:` — things the encoding makes explicit that the source
-prose left implicit **and** that are decision-relevant. Each declaration needs a named
-decision or question it affects.
+prose left implicit **and** that are decision-relevant.
 
 ```
-U = 0.6 · clamp(mean_surfaced_per_encoding / 3)
-  + 0.4 · (audited_surfaced / total_surfaced)
+U = clamp(mean_GENUINE_claims_per_encoding / 2) × audit_coverage
 ```
 
-The audit fraction is the anti-inflation term. An unaudited claim contributes to the
-denominator only, so padding the list lowers the score. Audit is currently a human step —
-see *Where you are needed*.
+**Multiplicative, and only adjudicated-genuine claims count.** Unaudited claims contribute
+nothing; rejected claims contribute nothing. Usefulness cannot be self-asserted.
+
+#### The original formula was broken, and only real data revealed it
+
+The first version was additive:
+
+```
+U = 0.6 · clamp(mean_surfaced / 3) + 0.4 · (audited / total)      # WRONG
+```
+
+That second term rewarded *having been audited* rather than *passing audit*. When round 1's
+verdicts arrived — all six claims rejected — this formula would have moved `U` from 0.3 to
+0.7. **Submitting failing claims for review would have raised the score.**
+
+Worth recording as a general caution: the flaw was invisible under synthetic reasoning and
+appeared immediately on contact with real verdicts. Any term with a coverage or process
+component should be checked for whether it rewards the process or the outcome.
 
 **The honest bar, per the startup seed:** an encoding must surface at least one thing the
 domain party did not already know, or force one question they were avoiding. Reorganizing
-what a good board deck already says scores zero.
+what a good board deck already says scores zero — and in round 1, four of six claims were
+adjudicated exactly that: `restatement`.
+
+### Adjudication protocol
+
+`E` and `U` were both self-assessed in round 1, which made both untrustworthy in the same
+way: an encoder scoring its own coverage and its own insight.
+
+Both are now adjudicated by a model that wrote neither the encodings, the ontology, nor the
+prose, on **anonymised** claims with encoder identity stripped. See
+`adjudication/round1_protocol.md`.
+
+Verdicts are deliberately asymmetric — three ways to fail, one way to pass, with instructions
+to prefer the harsher verdict under uncertainty:
+
+- surfaced: `genuine` | `restatement` | `unsupported` | `trivial`
+- breaks: `handled` | `named_only` | `not_handled`
+
+`named_only` exists because listing something under an "excluded" or "unwritten" key is
+naming it, not representing it. In round 1 it caught exactly one over-claim, agreeing with
+the author's dissent against the other encoder's self-assessment.
 
 ### C — Comprehensibility
 

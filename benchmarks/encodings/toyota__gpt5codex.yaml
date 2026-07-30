@@ -1,0 +1,181 @@
+encodes: toyota
+set: adversarial
+domain: organization
+encoded_by: gpt-5-codex
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- Estimate
+- Evidence
+- Estimator
+- DesiredCondition
+- PreferenceOrdering
+- Consequence
+- Intervention
+- Policy
+- Loop
+- TimeScale
+- Resource
+- Constraint
+- Revision
+estimands:
+- actual_process_condition
+- defect_origin
+- parts_needed
+- standard_method_performance
+- target_feasibility
+parties:
+- plant_management
+- department_teams
+- supervisors
+- line_workers
+- suppliers
+loops:
+- name: station_quality
+  timescale: minutes
+  signal: local_abnormality
+  intervention: stop_line_and_contain
+- name: pull_replenishment
+  timescale: station_cycles
+  signal: bin_consumed
+  intervention: replenish_exact_quantity
+- name: standard_improvement
+  timescale: days
+  signal: result_against_standard
+  intervention: adopt_revised_standard
+- name: objective_negotiation
+  timescale: annual
+  signal: target_pushback
+  intervention: renegotiate_target_or_resources
+breaks_declared:
+- authority_observation_independence
+- multiple_conflicting_goals
+- continuous_method_revision
+- report_reality_drift
+- bounded_encoding
+breaks_handled:
+- authority_observation_independence
+- multiple_conflicting_goals
+- continuous_method_revision
+- report_reality_drift
+- bounded_encoding
+surfaced: []
+reduces_to: null
+loop_rule_note: 'I count only a cycle with a returning measured signal and an intervention that changes
+  the source of the next signal. Andon, kanban, kaizen, and objective negotiation qualify; gemba,
+  A3, and listed cadences do not independently close.
+
+  '
+system:
+  System:
+    name: toyota_plant
+    Boundary:
+      inside: plant and documented methods
+      outside: customers and suppliers
+    excluded_variables:
+      supervisor_response_to_andon: unknown
+      monthly_output_pressure: unknown
+      supplier_schedule_tolerance: unknown
+    Signal:
+      local_abnormality:
+      - actual_process_condition
+      - defect_origin
+      bin_consumed: parts_needed
+      result_against_standard: standard_method_performance
+      target_pushback: target_feasibility
+      reported_condition:
+        measures: actual_process_condition
+        bias: assumed drift
+      gemba_condition:
+        measures: actual_process_condition
+        source: physical place
+    Evidence:
+      worker_station_observation:
+        provenance: worker at station
+        cost: low acquisition but possible stoppage
+        reversibility: origin is lost downstream
+      kanban_card:
+        provenance: consumed downstream bin
+        cost: low
+        reversibility: repeatable per bin
+      gemba_observation:
+        provenance: manager at physical process
+        cost: low
+        reversibility: repeatable but time-specific
+    Estimate:
+      current_condition:
+        party:
+        - line_workers
+        - plant_management
+        of: actual_process_condition
+        uncertainty: qualitative
+    Estimator:
+      name: direct_observation_against_baseline
+      inputs:
+      - worker_station_observation
+      - gemba_observation
+      rule: prefer physical observation over report
+      idempotency_basis: same evidence identities and baseline version; a new visit is new evidence
+    DesiredCondition:
+    - holder: plant_management
+      true: actual_process_condition
+      target: contain defects while sustaining flow
+    - holder: department_teams
+      true: target_feasibility
+      target: objectives matched by resources
+    PreferenceOrdering:
+    - holder: plant_management
+      ordering: passed defect worse than short stoppage
+    - holders:
+      - plant_management
+      - department_teams
+      ordering: local and platform effects remain partial until negotiation
+    Consequence:
+      plant_management: stopped output or downstream defects
+      line_workers: defective work or informal penalty for signaling
+      suppliers: schedule disruption
+    Intervention:
+      stop_line_and_contain:
+        target: world
+        authority:
+        - line_workers
+      replenish_exact_quantity:
+        target: world
+        authority:
+        - line_workers
+        - suppliers
+      adopt_revised_standard:
+        target: own-structure
+        motive: improve from a preserved baseline
+        authority:
+        - department_teams
+      renegotiate_target_or_resources:
+        target: own-structure
+        motive: reconcile goals and clocks
+        authority:
+        - plant_management
+        - department_teams
+    Policy:
+      andon_policy: suspected abnormality -> stop before transfer
+      kanban_policy: one consumed bin -> replace exactly one bin
+      kaizen_policy: demonstrated improvement -> revise standard
+      hoshin_policy: infeasible target -> negotiate target or resources upward
+    Resource:
+    - production_time
+    - parts_inventory
+    Constraint:
+      a3_size: one sheet per problem
+      station_cycle: defined work within fixed line pace
+    Revision:
+      standard_method:
+        regime: routine-incremental
+        trigger: improvement against baseline
+        prior_status: superseded by evidence
+      negotiated_objective:
+        regime: episodic-discontinuous
+        trigger: infeasibility or conflict
+        prior_status: abandoned or resourced rather than necessarily refuted
+encoder_role: independent

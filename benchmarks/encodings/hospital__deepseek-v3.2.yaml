@@ -1,0 +1,197 @@
+encodes: hospital
+set: seed
+domain: institution
+encoded_by: deepseek-v3.2
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- Estimate
+- Evidence
+- DesiredCondition
+- Consequence
+- Intervention
+- Policy
+- Loop
+- TimeScale
+- Resource
+- Constraint
+estimands:
+- clinical_stability
+- functional_capacity
+- logistical_readiness
+- bed_marginal_value
+- patient_preference
+parties:
+- consultant
+- nurse
+- discharge_coordinator
+- bed_manager
+- patient
+loops:
+- name: discharge_decision
+  timescale: daily
+  signal: ward_round_observations
+  intervention: discharge_patient
+- name: bed_pressure
+  timescale: hourly
+  signal: bed_occupancy
+  intervention: pressure_to_discharge
+breaks_declared:
+- single_estimate_per_quantity
+- authority_follows_information
+- single_objective
+- asymmetric_costs_unrepresented
+- complete_specification_required
+breaks_handled:
+- single_estimate_per_quantity
+- authority_follows_information
+- asymmetric_costs_unrepresented
+surfaced:
+- claim: The consultant's estimate is based on sparse daily observations but carries formal authority,
+    while the nurse's estimate is based on continuous presence but carries only informal blocking
+    power.
+  decision_affected: Discharge timing and readmission risk trade-off.
+  audited: false
+- claim: The four-hour target creates a separate loop (hourly) that pressures the daily discharge
+    loop, with financial consequences attached.
+  decision_affected: Prioritization of emergency department waits versus discharge safety.
+  audited: false
+reduces_to: null
+system:
+  System:
+    Boundary:
+      inside:
+      - hospital_beds
+      - staff
+      - patients
+      outside:
+      - emergency_department
+      - care_homes
+      - families
+      - national_targets
+    Resource:
+      beds: fixed_number
+      staff_hours: depletable
+    Constraint:
+      four_hour_wait_target: invariant
+    Party:
+      consultant:
+        authority:
+        - discharge_patient
+      nurse:
+        authority:
+        - document_concern
+      discharge_coordinator:
+        authority:
+        - arrange_transport
+      bed_manager:
+        authority:
+        - apply_pressure
+      patient:
+        authority: []
+    Estimand:
+      clinical_stability:
+        specification_status: specified
+      functional_capacity:
+        specification_status: specified
+      logistical_readiness:
+        specification_status: specified
+      bed_marginal_value:
+        specification_status: specified
+      patient_preference:
+        specification_status: specified
+    Signal:
+      ward_round_observations:
+        cadence: daily
+      continuous_nursing_observations:
+        cadence: continuous
+      bed_occupancy:
+        cadence: hourly
+      care_home_availability:
+        cadence: episodic
+    Estimate:
+      consultant_estimate:
+        of: clinical_stability
+        based_on: ward_round_observations
+        uncertainty: ordinal
+      nurse_estimate:
+        of: functional_capacity
+        based_on: continuous_nursing_observations
+        uncertainty: qualitative
+      coordinator_estimate:
+        of: logistical_readiness
+        based_on:
+        - care_home_availability
+        - family_availability
+        - pharmacy_status
+        uncertainty: qualitative
+      bed_manager_estimate:
+        of: bed_marginal_value
+        based_on: bed_occupancy
+        uncertainty: ordinal
+      patient_estimate:
+        of: patient_preference
+        based_on: personal_state
+        uncertainty: qualitative
+    Consequence:
+      consultant: readmission_reflects_individual
+      nurse: unsafe_discharge_immediate
+      discharge_coordinator: patient_stuck_in_bed
+      bed_manager: four_hour_breach_financial
+      patient: unmet_preference
+    DesiredCondition:
+      targets:
+      - throughput: high
+      - safety: high
+      - cost: low
+      - staff_sustainability: high
+      - patient_preference: met
+      preference_ordering: partial
+    Intervention:
+      discharge_patient:
+        target: world
+        authority: consultant
+      document_concern:
+        target: world
+        authority: nurse
+      arrange_transport:
+        target: world
+        authority: discharge_coordinator
+      apply_pressure:
+        target: world
+        authority: bed_manager
+    Policy:
+      discharge_decision_policy:
+        mapping: reconcile multiple estimates under distributed authority
+    Loop:
+      discharge_decision:
+        sequence:
+        - ward_round_observations
+        - multiple_estimates
+        - reconciliation
+        - discharge_patient
+        - bed_availability
+        - ward_round_observations
+      bed_pressure:
+        sequence:
+        - bed_occupancy
+        - bed_manager_estimate
+        - pressure_to_discharge
+        - discharge_decisions
+        - bed_availability
+        - bed_occupancy
+    TimeScale:
+      bed_pressure: hourly
+      ward_round: daily
+      staffing_rotas: weekly
+      budgets: quarterly
+      accreditation: multi_year
+  excluded_variables:
+  - unwritten_knowledge
+  - consultant_night_availability
+  - friday_care_home_acceptance
+  - arrival_time_recording_practices
+encoder_role: independent

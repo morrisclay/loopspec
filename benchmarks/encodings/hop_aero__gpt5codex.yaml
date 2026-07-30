@@ -1,0 +1,221 @@
+encodes: hop_aero
+set: adversarial
+domain: aerospace
+encoded_by: gpt-5-codex
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- Estimate
+- Evidence
+- Estimator
+- DesiredCondition
+- Consequence
+- Intervention
+- Policy
+- Loop
+- Delay
+- TimeScale
+- Resource
+- Constraint
+estimands:
+- guidance_stability
+- propulsion_behavior
+- thermal_survivability
+- separation_reliability
+- mission_delivery_capability
+- runway_sufficiency
+- procurement_viability
+- public_safety_risk
+parties:
+- founders
+- air_force_program_office
+- regulator
+- investors
+loops:
+- name: vehicle_control
+  timescale: seconds
+  signal: vehicle_state_telemetry
+  intervention: guidance_command
+- name: staged_test_learning
+  timescale: weeks_to_months
+  signal: test_outcome
+  intervention: conduct_selected_test
+- name: venture_survival
+  timescale: quarterly
+  signal: milestone_and_runway_status
+  intervention: prioritize_next_milestone
+- name: customer_procurement
+  timescale: years
+  signal: procurement_feedback
+  intervention: submit_formal_argument_and_demo
+breaks_declared:
+- noncheap_nonrepeatable_observation
+- cost_irreversibility_independence
+- external_goal_holder
+- multiple_clocks
+- constraints_not_objectives
+- asymmetric_error_costs
+breaks_handled:
+- noncheap_nonrepeatable_observation
+- cost_irreversibility_independence
+- external_goal_holder
+- multiple_clocks
+- constraints_not_objectives
+- asymmetric_error_costs
+surfaced: []
+reduces_to: null
+loop_rule_note: 'I count only a measured result returning through policy to an intervention that
+  changes the next result''s source. Physical control, staged learning, venture survival, and procurement
+  qualify; regulatory conditions and cadences alone do not.
+
+  '
+system:
+  System:
+    name: rook_development_program
+    Boundary:
+      inside: Hop Aero and its test architecture
+      outside: Air Force
+      regulators: null
+      investors: null
+      and operating environment: null
+    excluded_variables:
+      internal_program_champion: unknown
+      contract_procurement_path: unknown
+      acceptable_failure_narrative: unknown
+      customer_commitment_to_container_form: unknown
+    Party:
+      founders: inside
+      air_force_program_office: outside
+      regulator: outside
+      investors: outside
+    Estimand:
+    - guidance_stability
+    - propulsion_behavior
+    - thermal_survivability
+    - separation_reliability
+    - mission_delivery_capability
+    - runway_sufficiency
+    - procurement_viability
+    - public_safety_risk
+    Signal:
+      vehicle_state_telemetry:
+      - guidance_stability
+      - propulsion_behavior
+      test_outcome: test-specific vehicle estimands
+      milestone_and_runway_status: runway_sufficiency
+      procurement_feedback:
+      - procurement_viability
+      - mission_delivery_capability
+      regulatory_status: operating constraints
+    Evidence:
+      tethered_flight:
+        provenance: recoverable small-scale prototype
+        cost: low relative to free flight
+        reversibility: repeatable and contained
+      full_profile_flight:
+        provenance: full-profile vehicle
+        cost: one costly vehicle
+        reversibility: irreversible and possibly once-only
+      procurement_decision:
+        provenance: Air Force process
+        cost: cheap to observe
+        reversibility: irreversible for the relevant funding window
+    Estimate:
+      vehicle_readiness:
+        party: founders
+        of:
+        - guidance_stability
+        - propulsion_behavior
+        - thermal_survivability
+        - separation_reliability
+        uncertainty: high and test-regime-dependent
+      company_survival:
+        party: founders
+        of: runway_sufficiency
+        uncertainty: milestone-dependent
+      acquisition_outlook:
+        party:
+        - founders
+        - air_force_program_office
+        of: procurement_viability
+        uncertainty: party-dependent
+    Estimator:
+      name: staged_test_and_decision_update
+      inputs:
+      - tethered_flight
+      - full_profile_flight
+      - procurement_decision
+      idempotency_basis: same evidence identities and analysis version; another flight is new evidence
+    DesiredCondition:
+    - holder: air_force_program_office
+      true: mission_delivery_capability
+      target: rapid cargo delivery into contested environments
+    - holder: founders
+      true: runway_sufficiency
+      target: survive through next credible milestone
+    - holder: regulator
+      true: public_safety_risk
+      target: no unapproved public exposure
+    Consequence:
+      founders: company and years
+      air_force_program_office: failed bet and lasting political exposure
+      regulator: public harm with no upside from success
+      investors: one portfolio position
+    Intervention:
+      guidance_command:
+        target: world
+        authority:
+        - founders
+      configure_test_instrument:
+        target: own-structure
+        motive: lower evidence cost and contain failure
+        authority:
+        - founders
+      conduct_selected_test:
+        target: world
+        authority:
+        - founders
+      prioritize_next_milestone:
+        target: own-structure
+        motive: preserve runway while producing evidence
+        authority:
+        - founders
+      submit_formal_argument_and_demo:
+        target: world
+        authority:
+        - founders
+    Policy:
+      flight_control: vehicle state -> guidance command
+      test_sequence: uncertainty and remaining vehicles -> least costly informative test
+      survival: runway and milestone estimate -> work priority
+      customer: procurement outlook -> formal argument and demonstration
+    Loop:
+    - vehicle_control
+    - staged_test_learning
+    - venture_survival
+    - customer_procurement
+    Delay:
+      procurement_response:
+        lag: years
+        conflicts_with: quarterly runway
+      test_to_readiness:
+        lag: preparation and analysis
+        conflicts_with: monthly progress
+    TimeScale:
+      vehicle_control: seconds
+      staged_test_learning: weeks_to_months
+      venture_survival: quarterly
+      customer_procurement: years
+    Resource:
+    - flight_vehicles
+    - runway
+    - engineering_time
+    - remaining_test_opportunities
+    Constraint:
+    - range_safety_approval_must_hold
+    - launch_license_must_hold
+    - export_control_must_hold
+encoder_role: independent

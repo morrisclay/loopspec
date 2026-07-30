@@ -1,0 +1,86 @@
+encodes: thermostat
+set: seed
+domain: engineering
+encoded_by: deepseek-v3.2
+uses:
+- System
+- Boundary
+- Estimand
+- Signal
+- DesiredCondition
+- Intervention
+- Policy
+- Loop
+- Delay
+- TimeScale
+estimands:
+- room_comfort
+parties: []
+loops:
+- name: temperature_regulation
+  timescale: seconds
+  signal: hallway_air_temperature
+  intervention: boiler_on_off
+breaks_declared:
+- goal_holding_mandatory
+- target_must_be_number
+- measured_quantity_must_be_quantity_of_interest
+breaks_handled:
+- goal_holding_mandatory
+- measured_quantity_must_be_quantity_of_interest
+surfaced:
+- claim: The deadband is a structural feature to prevent oscillation, not a measurement tolerance.
+  decision_affected: Controller design choice between hysteresis and proportional control.
+  audited: false
+reduces_to: classical_control_loop
+system:
+  System:
+    Boundary:
+      inside:
+      - sensor
+      - controller
+      - boiler
+      - relay
+      outside:
+      - householder
+      - rooms
+      - external_conditions
+    Estimand:
+      room_comfort:
+        specification_status: deliberately-unspecified
+    Signal:
+      hallway_air_temperature:
+        measured_at: 1.5m up wall
+        cadence: every few seconds
+    DesiredCondition:
+      target_temperature: 20°C
+      deadband: 0.5°C
+      held_by: householder
+    Intervention:
+      boiler_on_off:
+        target: world
+        authority: controller
+    Policy:
+      mapping:
+        if: signal > target + deadband/2
+        then: open relay, boiler off
+    Loop:
+      temperature_regulation:
+        sequence:
+        - signal
+        - estimate
+        - policy
+        - intervention
+        - world
+        - signal
+    Delay:
+      heat_transfer: 15-40 minutes
+    TimeScale:
+      control_cycle: seconds
+      thermal_response: minutes
+  excluded_variables:
+  - sensor_drift
+  - house_thermal_properties
+  - external_weather
+  - occupancy_patterns
+encoder_role: independent

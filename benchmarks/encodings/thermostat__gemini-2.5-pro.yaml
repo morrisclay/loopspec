@@ -1,0 +1,98 @@
+encodes: thermostat
+set: seed
+domain: engineering
+encoded_by: gemini-2.5-pro
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- Estimate
+- Estimator
+- DesiredCondition
+- Policy
+- Intervention
+- Delay
+- Loop
+estimands:
+- room_comfort
+parties:
+- householder
+loops:
+- name: temperature_regulation_loop
+  timescale: seconds
+  signal: hallway_air_temperature
+  intervention: toggle_boiler
+breaks_declared:
+- goal-holding-mandatory
+- target-is-a-number
+- measured-is-interest
+breaks_handled:
+- goal-holding-mandatory
+- target-is-a-number
+- measured-is-interest
+surfaced:
+- claim: The system's failure to regulate room comfort is a structural consequence of using hallway
+    temperature as a proxy signal, not a fault in the control logic itself.
+  decision_affected: Deciding where to place the sensor, or whether to add more sensors, to improve
+    performance.
+  audited: false
+reduces_to: classical_control_loop
+system:
+  name: heating_system
+  boundary:
+    inside:
+    - controller
+    - sensor
+    - boiler
+    outside:
+    - householder
+    - rooms
+  has:
+  - name: householder
+    type: Party
+    holds:
+    - name: comfort_preference
+      type: DesiredCondition
+      true: room_comfort
+      specification: approximately 20°C
+  - name: controller
+    type: System
+    has:
+    - name: hallway_air_temperature
+      type: Signal
+      description: Proxy for room_comfort. Source of divergence between goal and reality.
+    - name: temperature_sensor
+      type: Estimator
+      maps: hallway_air_temperature
+      to:
+      - name: current_temperature
+        type: Estimate
+        of: hallway_air_temperature
+    - name: control_policy
+      type: Policy
+      maps: current_temperature
+      to: toggle_boiler
+      using:
+      - name: dial_setting
+        type: DesiredCondition
+        true: hallway_air_temperature
+        held_by: householder
+        specification: 'target: 20°C, deadband: +/- 0.5°C'
+    - name: toggle_boiler
+      type: Intervention
+      target: world
+      description: Fires or stops the boiler.
+      authority:
+      - controller
+  - name: heat_propagation
+    type: Delay
+    from: toggle_boiler
+    to: hallway_air_temperature
+    duration: 15-40 minutes
+  excluded_variables:
+  - sensor_drift
+  - external_weather_effects
+  - occupancy_schedule
+encoder_role: independent

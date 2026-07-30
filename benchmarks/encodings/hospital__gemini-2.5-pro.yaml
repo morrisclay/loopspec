@@ -1,0 +1,160 @@
+encodes: hospital
+set: seed
+domain: institution
+encoded_by: gemini-2.5-pro
+uses:
+- System
+- Party
+- Estimand
+- Estimate
+- Evidence
+- Consequence
+- Intervention
+- Policy
+- Loop
+- TimeScale
+- Resource
+- Constraint
+- PreferenceOrdering
+estimands:
+- clinical_stability
+- functional_capacity
+- logistical_readiness
+- marginal_bed_value
+- patient_wellbeing_at_home
+parties:
+- consultant
+- nurse
+- discharge_coordinator
+- bed_manager
+- patient
+loops:
+- name: patient_discharge_loop
+  timescale: daily
+  signal: patient_state_observations
+  intervention: discharge_patient
+breaks_declared:
+- single-estimate-per-quantity
+- authority-follows-information
+- single-objective
+- shared-error-costs
+- complete-specification
+breaks_handled:
+- single-estimate-per-quantity
+- authority-follows-information
+- single-objective
+- shared-error-costs
+- complete-specification
+surfaced:
+- claim: The daily, synchronous ward round is the primary bottleneck for integrating the nurse's
+    continuous observations, creating a structural lag and information loss in assessing functional
+    capacity.
+  decision_affected: Whether to invest in asynchronous communication tools to allow nurses' concerns
+    to be registered and seen by consultants outside the ward round.
+  audited: false
+system:
+  name: patient_flow_system
+  has:
+  - name: hospital_beds
+    type: Resource
+    quantity: fixed
+  - name: four_hour_ed_target
+    type: Constraint
+    description: National target with financial consequences for breaches.
+  - name: discharge_patient
+    type: Intervention
+    target: world
+    authority:
+    - consultant
+    description: Requires multiple conditions to be met, creating de-facto vetoes.
+  - name: ward_round
+    type: Policy
+    timescale: daily
+    description: Process to reconcile estimates and decide on discharge. Maps multiple partial estimates
+      to a single intervention.
+  timescales_in_conflict:
+  - hourly: bed_pressure
+  - daily: ward_rounds
+  - weekly: staffing_rotas
+  - quarterly: budgets
+  contains:
+  - name: consultant
+    type: Party
+    holds:
+    - type: Estimate
+      of: clinical_stability
+      based_on:
+      - type: Evidence
+        name: ward_round_observations
+        timescale: daily
+    - type: PreferenceOrdering
+      ranks:
+      - low_readmissions > high_throughput
+    bears:
+    - type: Consequence
+      of: incorrect_clinical_stability_estimate
+      description: Measured individual readmission rates.
+    attributes:
+    - name: off_hours_availability
+      specification_status: deliberately-unspecified
+      description: Informal knowledge of who can be called at night.
+  - name: nurse
+    type: Party
+    holds:
+    - type: Estimate
+      of: functional_capacity
+      based_on:
+      - type: Evidence
+        name: continuous_observation
+        timescale: continuous
+    bears:
+    - type: Consequence
+      of: incorrect_functional_capacity_estimate
+      description: Immediate, informal consequence of an unsafe discharge.
+    has_authority_over:
+    - name: block_discharge_informally
+      type: Intervention
+      target: own-structure
+      description: Can block discharge by documenting a concern, a de-facto veto.
+  - name: discharge_coordinator
+    type: Party
+    holds:
+    - type: Estimate
+      of: logistical_readiness
+      based_on:
+      - type: Evidence
+        name: care_home_and_family_availability
+    bears:
+    - type: Consequence
+      of: incorrect_logistical_readiness_estimate
+      description: A patient occupying a bed who cannot physically leave.
+  - name: bed_manager
+    type: Party
+    holds:
+    - type: Estimate
+      of: marginal_bed_value
+      based_on:
+      - type: Evidence
+        name: ed_queue_length
+        timescale: hourly
+    - type: PreferenceOrdering
+      ranks:
+      - high_throughput > low_readmissions
+    bears:
+    - type: Consequence
+      of: low_throughput
+      description: Breaching the four-hour ED target.
+  - name: patient
+    type: Party
+    holds:
+    - type: Estimate
+      of: patient_wellbeing_at_home
+    - type: PreferenceOrdering
+      ranks:
+      - go_home > stay_in_hospital
+      specification_status: unknown
+    bears:
+    - type: Consequence
+      of: any_incorrect_estimate
+      description: All direct health and wellbeing outcomes.
+encoder_role: independent

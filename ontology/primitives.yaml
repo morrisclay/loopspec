@@ -60,15 +60,26 @@ primitives:
     tier: core
     depth: 1
     renamed_from: Observer
-    OPEN_QUESTION: >
-      The definition is broader than its author's own use of it. In independent encoding round
-      1, gpt-5-codex counted a thermostat's controller as a Party because it exercises
-      authority over an intervention; I counted only the householder. By the definition as
-      written, CODEX IS RIGHT — it admits any authority-exercising locus. I had been using it
-      to mean something narrower, closer to "an interested party that bears a consequence".
-      Either the definition narrows or the usage corrects. Unresolved.
-      Note the counter-evidence: parties on the hospital were identical 5/5 across encoders,
-      so the concept is well transmitted even where its edge is not.
+    discriminator: >
+      RESOLVED by narrowing. A Party MUST bear a consequence. It may additionally hold
+      estimates, hold desired conditions, and exercise authority, but consequence-bearing is
+      what makes it a party rather than a mechanism.
+    discriminator_rationale: >
+      Round 1 exposed that the definition was broader than its author'"'"'s use of it: gpt-5-codex
+      counted a thermostat controller as a Party because it exercises authority, and by the
+      definition as written codex was right.
+
+      Narrowing rather than broadening, because the alternative makes every relay and actuator
+      a Party, which dilutes the construct to nothing. Party was introduced to carry
+      INTERESTED parties with asymmetric stakes; a relay has no stake.
+
+      Authority is therefore delegable to a non-Party component. The thermostat controller
+      holds authority over fire_boiler and is a component; the householder bears the
+      consequence of being cold and is the Party.
+
+      Side benefit: this links Party to Consequence constitutively, which independently
+      justifies Consequence beyond its coverage count — it is not an optional annotation but
+      the thing that makes a Party identifiable.
     definition: >
       A locus that may hold estimates, hold desired conditions, exercise authority, and
       bear consequences. Need not be a person: a lymphocyte population is a party in the
@@ -244,17 +255,29 @@ primitives:
   - name: Loop
     tier: core
     depth: 3
-    OPEN_QUESTION: >
-      Granularity is undetermined and it is the worst divergence measured so far (0.333). On
-      the hospital I identified three loops by timescale; gpt-5-codex identified one. Both are
-      defensible from the prose because the catalog says nothing about where one loop ends and
-      another begins.
-      This is not a matter of taste: per research/flue_notes.md, one alarm per Durable Object
-      makes Loop the unit that maps to a DO, so a 3-vs-1 disagreement is a disagreement about
-      deployed architecture.
-      CANDIDATE RULE, not yet adopted: one loop per (timescale, closing intervention) pair.
-      Gives three here and matches the DO mapping. Must be tested against Toyota first, which
-      has five timescales and would fragment heavily under it.
+    identity_rule: >
+      ADOPTED. One loop per distinct (timescale, closing intervention) pair. Two candidate
+      loops sharing both are one loop; differing in either are two.
+    identity_rule_rationale: >
+      Resolves the worst measured divergence (0.333 — three loops vs one on the hospital,
+      both defensible because the catalog previously said nothing about where a loop ends).
+      Not a matter of taste: per research/flue_notes.md, one alarm per Durable Object makes
+      Loop the unit that maps to a DO, so 3-vs-1 was a disagreement about deployed
+      architecture.
+
+      TESTED AGAINST TOYOTA, which was the stated risk — five timescales that might fragment
+      under the rule. It gives five loops: station cycle (takt / assemble), line stoppage
+      (defect signal / stop-and-fix), improvement (worker proposal / change standard), quality
+      (field defect data / design change), and platform (strategy / platform decision).
+
+      That is not over-fragmentation. Those five have different signals, different closing
+      interventions, and different authorities, and Toyota itself treats them as separate
+      named mechanisms — jidoka, kaizen and hoshin kanri are not one loop in Toyota'"'"'s own
+      account. The rule reproduces the distinctions the organisation already draws, which is
+      the strongest evidence available that it carves at a real joint.
+
+      Cross-checks: thermostat gives one loop, matching both independent encoders. Hospital
+      gives three. Both consistent.
     definition: >
       A closed cycle: signal, estimate, policy, intervention, world, signal. Carries its
       own time scale. Non-terminating by default.
@@ -345,8 +368,34 @@ fields:
       and must not spend it on the latter.
 
   - name: authority
-    on: Intervention
+    applies_to: Intervention
     definition: Which parties may perform this intervention. Deliberately independent of who holds relevant estimates.
+
+  - name: informal_influence
+    applies_to: Party
+    definition: >
+      Influence over outcomes not accounted for by declared authority. Records THAT a
+      discrepancy exists and its direction, not its content.
+    rationale: >
+      Added because two fully independent routes found the same gap.
+
+      (1) The Scott critique in research/external_critiques.md predicted that metis — local
+      unwritten practical knowledge — is load-bearing and would be the thing the
+      representation could not hold.
+
+      (2) The round-1 adjudicator, a model that never saw that critique and worked only from
+      the encodings, independently reported: the ontology "appears to lack a way to represent
+      load-bearing tacit institutional rules, contextual exceptions, and informal
+      credibility, forcing both hospital encodings to relegate them to excluded variables
+      rather than make them behaviorally operative."
+
+      Scott is right that the CONTENT of metis cannot be codified without destroying it, so
+      this field deliberately does not try. It records the discrepancy — this party's
+      concerns carry weight beyond their formal authority — which is enough to make it
+      operative in a policy without codifying which person, or why.
+
+      A field rather than a primitive: no budget cost, and it is a property of a Party
+      rather than a thing in its own right.
 
 # ---------------------------------------------------------------------------
 
