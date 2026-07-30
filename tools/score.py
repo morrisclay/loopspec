@@ -114,7 +114,7 @@ def load_seed_sources():
 
 CANONICAL_RELS = ["measures", "estimates", "holds", "targets", "closes", "delays",
                   "constrains", "authorizes", "consumes", "revises", "contains", "bears",
-                  "asserts", "replenishes", "produces"]
+                  "asserts", "replenishes", "produces", "explains", "causes"]
 
 
 def relation_usage(encodings):

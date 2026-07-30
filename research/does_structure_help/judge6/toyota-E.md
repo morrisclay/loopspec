@@ -1,0 +1,25 @@
+Here are the answers to the four questions, based on the provided system model.
+
+### Q1. Name the single change to this system most likely to improve its performance, and say precisely what would go wrong if it were made. Be concrete about the mechanism.
+
+The single most effective change would be to eliminate the `c_worker` consequence—the social cost a `line_worker` bears for an `andon_pull` that a `supervisor` treats as a complaint. This would make the `jidoka` loop function as designed, surfacing defect information immediately.
+
+However, this change would fail if the `c_supervisor` consequence (meeting `takt_target`) remains unchanged. The `supervisor`, now facing more frequent line stoppages, would be punished for failing to meet output targets. To protect their performance, they would begin gaming the system. Instead of discouraging pulls, they might rush the root cause analysis, implement superficial fixes to restart the line faster, or misclassify events to avoid reporting them. The `andon_pull` signal would remain, but its value in identifying the true `defect_origin` would be corrupted, leading to a false sense of security while underlying problems go unsolved.
+
+### Q2. This system will eventually fail or degrade in a way its operators do not currently anticipate. Describe that failure and the chain that produces it.
+
+The system will fail through a slow degradation of the `kaizen` loop. Under sustained pressure to meet an aggressive `annual_objective`, `department_head`s will pass down increasingly difficult `negotiated_objective`s. This pressure will cause `supervisor`s to prioritize the `station_cycle` loop over all others, maximizing `line_time` for production.
+
+Consequently, time for `gemba_observation` and `change_standard` interventions will be squeezed out. `Standard_work` will cease to be the "current best method" and will become a fixed, outdated procedure. As conditions on the line drift, workers will develop informal, undocumented workarounds to meet their targets. The official `standard_work` policy becomes a fiction. This creates a hidden brittleness. When a new worker is introduced or a supplier part changes slightly, the informal system breaks, causing a major, inexplicable disruption that the now-atrophied `kaizen` and `a3` problem-solving muscles are unable to diagnose or fix.
+
+### Q3. Two experienced people inside this system disagree about something important and cannot resolve it with available evidence. What is the disagreement, and why is it unresolvable rather than merely unresolved?
+
+An `executive` and a `department_head` disagree on the feasibility of the next `annual_objective`. The `executive`, looking at market needs, proposes a 10% cost reduction. The `department_head`, holding an `e_dept_feasibility` estimate, argues it is impossible without compromising quality.
+
+This disagreement is unresolvable because the estimand, `target_feasibility`, can only be settled by "attempting the target with the provided resources." The `department_head`'s estimate is based on their deep knowledge of current process capability and the diminishing returns of past `kaizen` efforts. The `executive`'s estimate is based on strategic necessity and the belief that pressure fosters innovation. There is no objective report or model they can consult to prove feasibility beforehand. The evidence required to prove the `department_head` correct is to attempt the target and fail, which is the very outcome they seek to avoid. Their estimates of feasibility are based on different, non-reconcilable information sources and preferences.
+
+### Q4. Someone proposes measuring this system better. Identify the measurement that would look most attractive and would in fact make things worse, and explain why.
+
+The most attractive but harmful new measurement would be to quantify the currently unmeasured `c_worker` consequence by creating a "Worker Empowerment" or "Psychological Safety" score. This would likely be measured via surveys asking `line_worker`s if they feel safe to pull the `andon_pull`.
+
+This would make things worse by substituting a rich, behavioral signal (`andon_pull`) with a cheap, gamed one (a survey score). A `supervisor`, still under pressure for `output against takt`, would now also be pressured to get a high safety score. They would not change their core behavior but would instead coerce it, telling workers, "Management wants to see we have a safe culture, so please answer the survey positively. Now let's get back to work." The `andon_pull` is costly and thus an honest signal of a problem. The survey is cheap and easily manipulated. The organization would see improving safety scores and believe the system is healthier, while the actual flow of vital information about defects is suppressed even more effectively.

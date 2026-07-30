@@ -1,0 +1,142 @@
+{
+  "hospital": {
+    "A": {
+      "specificity": 5,
+      "causal_depth": 5,
+      "non_obviousness": 5,
+      "groundedness": 5,
+      "cross_level": 5
+    },
+    "B": {
+      "specificity": 4,
+      "causal_depth": 4,
+      "non_obviousness": 4,
+      "groundedness": 3,
+      "cross_level": 4
+    },
+    "C": {
+      "specificity": 5,
+      "causal_depth": 4,
+      "non_obviousness": 4,
+      "groundedness": 2,
+      "cross_level": 4
+    },
+    "D": {
+      "specificity": 2,
+      "causal_depth": 3,
+      "non_obviousness": 3,
+      "groundedness": 4,
+      "cross_level": 3
+    },
+    "E": {
+      "specificity": 5,
+      "causal_depth": 5,
+      "non_obviousness": 4,
+      "groundedness": 5,
+      "cross_level": 5
+    },
+    "F": {
+      "specificity": 5,
+      "causal_depth": 5,
+      "non_obviousness": 4,
+      "groundedness": 3,
+      "cross_level": 5
+    },
+    "best": "A",
+    "why": "A is the most consistently model-specific set, tracing nurse authority, tacit-knowledge loss, competing clocks, and declaration-timing games through to both patient and hospital outcomes without relying on invented precision."
+  },
+  "toyota": {
+    "A": {
+      "specificity": 5,
+      "causal_depth": 5,
+      "non_obviousness": 4,
+      "groundedness": 3,
+      "cross_level": 5
+    },
+    "B": {
+      "specificity": 0,
+      "causal_depth": 0,
+      "non_obviousness": 0,
+      "groundedness": 0,
+      "cross_level": 0
+    },
+    "C": {
+      "specificity": 5,
+      "causal_depth": 5,
+      "non_obviousness": 5,
+      "groundedness": 3,
+      "cross_level": 5
+    },
+    "D": {
+      "specificity": 5,
+      "causal_depth": 4,
+      "non_obviousness": 4,
+      "groundedness": 2,
+      "cross_level": 4
+    },
+    "E": {
+      "specificity": 4,
+      "causal_depth": 5,
+      "non_obviousness": 5,
+      "groundedness": 4,
+      "cross_level": 5
+    },
+    "F": {
+      "specificity": 5,
+      "causal_depth": 5,
+      "non_obviousness": 5,
+      "groundedness": 4,
+      "cross_level": 5
+    },
+    "best": "F",
+    "why": "F best connects local incentives around andon pulls and standard work to organization-wide information loss, platform risk, and adaptive failure while keeping its examples more disciplined than the other highly specific sets."
+  },
+  "hop_aero": {
+    "A": {
+      "specificity": 1,
+      "causal_depth": 1,
+      "non_obviousness": 0,
+      "groundedness": 2,
+      "cross_level": 1
+    },
+    "B": {
+      "specificity": 1,
+      "causal_depth": 0,
+      "non_obviousness": 0,
+      "groundedness": 0,
+      "cross_level": 0
+    },
+    "C": {
+      "specificity": 1,
+      "causal_depth": 1,
+      "non_obviousness": 0,
+      "groundedness": 1,
+      "cross_level": 1
+    },
+    "D": {
+      "specificity": 5,
+      "causal_depth": 4,
+      "non_obviousness": 4,
+      "groundedness": 1,
+      "cross_level": 4
+    },
+    "E": {
+      "specificity": 5,
+      "causal_depth": 5,
+      "non_obviousness": 5,
+      "groundedness": 3,
+      "cross_level": 5
+    },
+    "F": {
+      "specificity": 2,
+      "causal_depth": 2,
+      "non_obviousness": 1,
+      "groundedness": 2,
+      "cross_level": 2
+    },
+    "best": "E",
+    "why": "E is the only set that combines four complete answers with a sustained account of how funding clocks, costly vehicle-consuming tests, requirement creep, subsystem uncertainty, and investor-facing metrics interact."
+  },
+  "overall_observation": "The strongest sets treated formal authority, delayed feedback, tacit practice, and measurement as coupled mechanisms; polished specificity alone was not enough when exact quantities, technologies, policies, or failure modes were asserted without support.",
+  "what_separated_the_best_from_the_worst": "The best sets answered all four questions with explicit multi-step chains from a named local decision to a system-level consequence and distinguished irreducible value or position conflicts from missing evidence, whereas the worst were unfinished process notes or substituted elaborate invention for grounding."
+}

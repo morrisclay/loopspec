@@ -1,0 +1,234 @@
+forces:
+  - id: F1
+    name: Scarcity
+    description: Fundamental resource limitations.
+    elements:
+      - name: Fixed Number of Beds
+        description: The hospital has a finite capacity for inpatients.
+      - name: Limited Staff Time
+        description: Key personnel have constrained availability for decision-making.
+        details:
+          - "Consultant time is batched into daily ward rounds."
+          - "Nursing staff are present continuously but are a finite resource."
+      - name: Limited Downstream Capacity
+        description: External resources required for discharge are not always available.
+        details:
+          - "Availability of places in care homes (especially on Fridays)."
+          - "Availability of pharmacy dispensing."
+          - "Availability of family or transport for collection."
+
+  - id: F2
+    name: Pressures and Targets
+    description: External and internal goals that drive behavior, often with attached consequences.
+    elements:
+      - name: National Four-Hour Waiting Target
+        description: An externally imposed target for emergency departments with financial consequences for breaches. This creates intense, hourly pressure for beds.
+        role: "Primary driver of the 'administrator' vantage point's focus on throughput."
+      - name: Readmission Rate Measurement
+        description: Consultants are individually measured on patient readmissions, creating a personal incentive to avoid premature discharge.
+        role: "Primary driver of consultant caution and focus on clinical stability."
+      - name: Reportability of Trolley Waits
+        description: Waiting in the ED on a trolley is a reportable and dangerous event, creating pressure to admit patients to a proper bed.
+      - name: Administrator-Vantage Metrics
+        description: A set of goals foregrounded by management.
+        details:
+          - Throughput
+          - Breach rates
+          - Length-of-stay variance
+
+  - id: F3
+    name: Asymmetric Costs of Error
+    description: The consequences of a wrong decision are different for each party and are not shared. This is a primary driver of their differing perspectives.
+    elements:
+      - party: Consultant
+        cost_of_error: "A readmission, which reflects on them personally and is formally measured."
+      - party: Nurse
+        cost_of_error: "An unsafe discharge, with immediate but less formal consequences (moral, professional)."
+      - party: Discharge Coordinator
+        cost_of_error: "A 'stranded' patient occupying a bed, representing a logistical failure."
+      - party: Bed Manager
+        cost_of_error: "A four-hour breach, with formal reporting and financial consequences for the institution."
+      - party: Patient
+        cost_of_error: "Physical or psychological harm from a premature discharge, or distress from a delayed one."
+
+  - id: F4
+    name: Misaligned Timescales (Clocks)
+    description: The different cadences at which pressures, actions, and consequences operate, creating structural conflicts.
+    elements:
+      - name: Hourly
+        description: Bed pressure, ED queue length.
+      - name: Daily
+        description: Ward rounds, clinical decision-making.
+      - name: Weekly
+        description: Staffing rotas, resource planning.
+      - name: Quarterly
+        description: Budgets, financial reviews.
+      - name: Multi-year
+        description: Accreditation cycles, long-term quality improvement.
+    conflict_example: "A decision optimal on the hourly clock (discharge early to free a bed) is often bad on the quarterly one (causes a costly readmission)."
+
+  - id: F5
+    name: Distribution of Authority
+    description: The formal and informal power to make or block decisions.
+    elements:
+      - name: Formal Discharge Authority
+        holder: Consultant
+        description: "Only the consultant can sign off on a discharge."
+      - name: Effective Veto Power
+        holder: Nurse
+        description: "Can block a discharge by documenting a concern."
+      - name: De Facto Delay Power
+        holder: Discharge Coordinator
+        description: "Can delay a discharge indefinitely by not arranging logistics."
+      - name: Power of Influence
+        holder: Bed Manager
+        description: "Can apply pressure but cannot make the clinical or logistical decision."
+      - name: Minimal Formal Power
+        holder: Patient
+        description: "Has the least ability to make their preference count in the formal process."
+
+  - id: F6
+    name: Tacit Knowledge
+    description: Unwritten, informal rules and knowledge that are load-bearing for the system's actual operation.
+    elements:
+      - name: Social Network Heuristics
+        description: "Which consultants can be called at night and which cannot."
+      - name: Environmental Heuristics
+        description: "Which care homes will accept a patient on a Friday."
+      - name: Procedural Workarounds
+        description: "How arrival time gets recorded to 'manage' the four-hour target."
+      - name: Reputational Weighting
+        description: "Knowing that a particular nurse's concern is worth more than the notes suggest."
+
+interactions:
+  - id: I1
+    name: Estimating Patient State
+    description: Different parties assessing the same patient against different criteria, evidence, and costs of error. This is explicitly not noisy readings of one truth.
+    perspectives:
+      - party: Consultant
+        action: "Estimates clinical stability."
+        evidence: "Observations made once a day on a ward round."
+        question: "Is this patient clinically stable enough not to be readmitted?"
+      - party: Nurse
+        action: "Estimates functional capacity."
+        evidence: "Continuous presence and observation (e.g., did they walk to the bathroom, did they eat)."
+        question: "Is this patient functionally capable of surviving at home?"
+      - party: Discharge Coordinator
+        action: "Estimates logistical readiness."
+        evidence: "State of care home availability, transport, pharmacy."
+        question: "Can the system physically get this patient to their next destination?"
+      - party: Bed Manager
+        action: "Estimates marginal value of the bed."
+        evidence: "Live picture of the whole hospital bed state and ED queue."
+        question: "How much pressure does this occupied bed relieve if freed right now?"
+      - party: Patient
+        action: "Estimates personal readiness."
+        evidence: "Internal state of fear, desire, or physical feeling."
+        question: "Do I want to go home / Am I scared of going home?"
+
+  - id: I2
+    name: Reconciling and Deciding
+    description: The set of interactions where the different estimates meet and a course of action is determined.
+    elements:
+      - name: The Ward Round
+        description: The primary forum for reconciling the different estimates. It is a negotiation, not an averaging process.
+      - name: Applying Pressure
+        description: The Bed Manager communicates the high marginal value of a bed to the ward staff, attempting to influence their decision-making.
+      - name: Making the Formal Decision
+        description: The Consultant, having heard other inputs, formally decides to discharge the patient.
+      - name: Blocking and Delaying
+        description: The Nurse documents a concern, or the Discharge Coordinator fails to arrange logistics, effectively overriding or postponing the consultant's decision. These are exercises of informal or de facto power.
+
+  - id: I3
+    name: System "Gaming"
+    description: Actions taken to meet targets that involve manipulating the measurement process rather than changing the underlying reality.
+    elements:
+      - name: Managing Arrival Time
+        description: The recording of a patient's arrival time in the ED is adjusted to prevent a breach of the four-hour target.
+
+  - id: I4
+    name: Feedback Loops
+    description: How the output of an interaction cycles back to influence the system.
+    elements:
+      - name: The Discharge-Admission Loop (Short, Hourly/Daily)
+        description: "Discharging a patient frees a bed, which allows an admission from the ED, which reduces ED pressure but occupies a bed, renewing the pressure to discharge."
+      - name: The Readmission Loop (Long, Weekly/Monthly)
+        description: "An early discharge relieves pressure today but may lead to a readmission in a fortnight, which increases overall bed occupancy and cost, and negatively impacts the consultant's metrics."
+
+emergence:
+  - id: E1
+    name: Competing Vantage Points
+    description: The system constitutes and sustains two distinct, often conflicting, worldviews. The difference between them is a core property of the system.
+    vantage_points:
+      - name: Clinician Vantage
+        focus: "Patient safety, clinical stability, functional capacity, professional judgment."
+        arises_from: "Asymmetric costs related to patient harm and professional reputation (F3); daily/continuous observation clocks (F4)."
+        treats_disagreement_as: "Substance; a necessary reconciliation of different valid perspectives."
+      - name: Administrator Vantage
+        focus: "Throughput, breach rates, length-of-stay, cost, coordination overhead."
+        arises_from: "Pressures from external targets with financial consequences (F2); hourly/quarterly clocks (F4)."
+        treats_disagreement_as: "Coordination overhead; a friction to be minimized."
+
+  - id: E2
+    name: Institutional Behaviour
+    description: Stable, system-level patterns of action that are not the explicit goal of any single actor.
+    behaviours:
+      - name: Negotiated Reality
+        description: "The system does not operate on a single 'truth' about patient readiness. Instead, it produces a temporary, negotiated consensus through the interaction of its parts (I2). 'Ready for discharge' is an emergent outcome of this negotiation."
+      - name: Distributed Risk Management
+        description: "The system as a whole manages risk by having each party advocate fiercely from their own risk-averse position (driven by F3). The outcome is often cautious and slow, but robust against the specific failures each party is incentivized to prevent."
+      - name: Structural Inversion of Authority and Information
+        description: "A stable state where the party with the most continuous information (Nurse) has the least formal authority, and vice-versa (Consultant). This is a consequential, defining feature of the system's operation."
+
+  - id: E3
+    name: Emergent Properties and Roles
+    description: Concepts and roles that arise from the system's dynamics.
+    properties:
+      - name: The Marginal Value of a Bed
+        description: "This is not a fixed quantity. It is an emergent property that fluctuates hourly based on the dynamic interplay of ED demand, ward capacity, and potential discharges. It is 'sensed' and acted upon by the Bed Manager."
+        role_at_other_levels: "Acts as a component of the pressure force (F2) on the ward."
+      - name: The System's Boundary and Identity
+        description: "The hospital, in this loop, is defined by its function of balancing incommensurable objectives (throughput, safety, cost, etc.). This identity is not in a mission statement but emerges from the daily conflicts and negotiations."
+        role_at_other_levels: "This identity acts as a downward constraint (D1) on interactions, forcing parties to engage with objectives beyond their own."
+      - name: The "Party"
+        description: "The roles of 'Consultant', 'Nurse', 'Bed Manager' etc., are not just job titles. They are emergent roles defined by the unique intersection of forces (F2, F3, F5) and information they are exposed to within this specific system loop."
+
+upward:
+  - from: forces
+    to: interactions
+    causation: "Forces shape the landscape upon which interactions occur."
+    links:
+      - "Scarcity of beds (F1) and the 4-hour target (F2) directly cause the Bed Manager to apply pressure (I2)."
+      - "Asymmetric costs of error (F3) cause each party to generate a different, biased estimate of patient state (I1)."
+      - "The consultant's readmission metric (F2) causes them to be cautious in their formal decision (I2)."
+      - "The daily clock of ward rounds (F4) causes the reconciliation of estimates (I2) to be a batched, daily event, creating a lag."
+      - "The distribution of authority (F5) and tacit knowledge (F6) shapes *how* blocking and delaying occurs (I2) — a nurse uses documentation, a coordinator uses logistics."
+
+  - from: interactions
+    to: emergence
+    causation: "Repeated interactions give rise to stable, system-level properties."
+    links:
+      - "The interaction of multiple, biased estimates (I1) and their negotiation in the ward round (I2) produces a 'Negotiated Reality' (E2) instead of a single truth."
+      - "The interaction between parties with misaligned authority and information (I1, I2, F5) stabilizes the 'Structural Inversion' (E2) as a persistent feature."
+      - "The interaction of the Bed Manager's pressure and the clinicians' caution (I2) gives rise to the two competing 'Vantage Points' (E1) as a core system tension."
+      - "The 'Managing Arrival Time' interaction (I3) is the mechanism by which the institutional behavior of 'gaming' the system emerges."
+      - "The constant assessment of bed need versus discharge potential (I1, I2) is what makes the 'Marginal Value of a Bed' (E3) a real, fluctuating property."
+
+downward:
+  - from: emergence
+    to: interactions
+    causation: "Emergent properties constrain and shape the nature of ongoing interactions."
+    links:
+      - "The emergent 'Clinician' and 'Administrator' vantage points (E1) frame the entire ward round negotiation (I2), ensuring both throughput and safety are always on the table."
+      - "The emergent 'Structural Inversion' (E2) forces the nurse to use the specific interaction of 'documenting a concern' (I2) as their main channel of influence, as direct command is not available."
+      - "The emergent identity of the hospital as a balancer of goals (E3) constrains any single actor from purely optimizing their own metrics; they must interact and negotiate (I2)."
+      - "The fluctuating 'Marginal Value of a Bed' (E3) directly modulates the intensity of the 'Applying Pressure' interaction (I2) from the Bed Manager."
+
+  - from: interactions
+    to: forces
+    causation: "Interactions can modify or reinforce the forces acting on the system."
+    links:
+      - "The Readmission Loop (I4) — an interaction over time — directly reinforces the 'Readmission Rate' (F2) as a powerful force on the consultant."
+      - "A collective failure to discharge patients (I2), leading to a 4-hour breach, triggers the 'Financial Consequences' (F2), making that force more potent."
+      - "Repeatedly failing to arrange logistics (I2) can damage a relationship with a care home, reducing its reliability and thus strengthening the 'Limited Downstream Capacity' scarcity force (F1)."
+      - "The act of 'managing arrival times' (I3) is a direct response to the 4-hour target (F2), but it also reshapes it by creating a gap between the recorded force and the on-the-ground reality."

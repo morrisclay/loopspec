@@ -1,0 +1,585 @@
+I actually think Bhaskar is far more important for cybernetics than most cybernetic literature acknowledges. He provides the **ontological discipline** that cybernetics sometimes lacks, while cybernetics provides the **operational theory** that Bhaskar largely leaves unspecified.
+
+Here's how I would connect them.
+
+| Cybernetics | Bhaskar |
+|---|---|
+| Control loop | Generative mechanism |
+| State estimate | Transitive knowledge |
+| Physical system | Intransitive reality |
+| Sensor | Empirical domain |
+| State evolution | Actual domain |
+| Underlying dynamics | Real domain |
+| Model update | Judgmental rationality / explanatory refinement |
+
+The mapping is almost embarrassingly clean.
+
+---
+
+## First-order cybernetics assumes reality
+
+A thermostat doesn't ask whether temperature is socially constructed.
+
+It assumes
+
+- there is a room,
+- there is a temperature,
+- there is a sensor,
+- there are causal laws.
+
+Bhaskar would say:
+
+Excellent.
+
+Those are **real causal mechanisms**.
+
+Cybernetics therefore already presupposes a realist ontology.
+
+---
+
+## Where Bhaskar changes cybernetics
+
+He reminds us that
+
+**the controller never controls reality directly.**
+
+It controls
+
+
+
+=====
+
+So instead of
+
+```
+Reality
+ ↓
+Sensor
+ ↓
+Controller
+```
+
+Bhaskar inserts
+
+```
+Reality
+ ↓
+Events
+ ↓
+Observations
+ ↓
+Representation
+ ↓
+Controller
+```
+
+The controller never sees reality.
+
+It sees evidence.
+
+That sounds obvious today, but it has enormous implications.
+
+---
+
+# The missing loop
+
+Classical cybernetics mostly studies
+
+**How should I act?**
+
+Bhaskar asks another question:
+
+**Why do I believe this model in the first place?**
+
+So there are actually two loops.
+
+Operational loop
+
+```
+Sense
+Model
+Act
+```
+
+Epistemic loop
+
+```
+Observe
+Hypothesize
+Explain
+Revise ontology
+```
+
+Modern AI is finally making these converge.
+
+---
+
+# State estimation becomes retroduction
+
+In engineering
+
+you estimate hidden state.
+
+```
+Temperature
+↓
+
+Estimate
+```
+
+Bhaskar says
+
+scientists do something much deeper.
+
+They infer
+
+**unobservable mechanisms.**
+
+He calls this **retroduction**.
+
+Example
+
+Sensor
+
+```
+CPU = 92°C
+```
+
+Engineer
+
+```
+Fan broken.
+```
+
+The fan was never observed.
+
+Its existence is inferred because it best explains the observations.
+
+That is Bhaskar's philosophy of science.
+
+Interestingly,
+
+this is exactly what Bayesian inference, causal discovery and modern world models increasingly do.
+
+---
+
+# Open systems
+
+This may be Bhaskar's biggest contribution.
+
+Cybernetics began with
+
+```
+closed feedback systems
+```
+
+Bhaskar says
+
+the world is almost never closed.
+
+Reality looks more like
+
+```
+economy
+
+weather
+
+humans
+
+technology
+
+politics
+
+↓
+
+all interacting
+```
+
+Observed behaviour rarely comes from one loop.
+
+It comes from many overlapping mechanisms.
+
+That sounds much closer to
+
+- Stafford Beer
+- complex adaptive systems
+- ecological cybernetics
+- distributed AI
+
+than to the thermostat.
+
+---
+
+# Control becomes intervention on mechanisms
+
+Traditional control asks
+
+
+
+=====
+
+Which mechanism actually generated this behaviour?
+
+Suppose churn increases.
+
+Normal dashboard
+
+```
+Revenue ↓
+```
+
+Control
+
+```
+Increase marketing.
+```
+
+Bhaskar
+
+```
+What mechanism generated churn?
+
+Pricing?
+
+Competition?
+
+Product quality?
+
+Social norms?
+
+Network effects?
+```
+
+Interventions should target mechanisms,
+
+not merely variables.
+
+That is a profound difference.
+
+---
+
+# Models become fallible
+
+Cybernetics sometimes sounds as though
+
+better models simply converge toward truth.
+
+Bhaskar says
+
+No.
+
+Every model is
+
+- historically situated
+- incomplete
+- theory-laden
+- revisable.
+
+But
+
+some models explain reality better.
+
+So instead of
+
+```
+True / False
+```
+
+you get
+
+```
+More explanatory
+
+Less explanatory
+```
+
+This fits remarkably well with adaptive systems.
+
+---
+
+# Where this becomes exciting
+
+I actually think your venture work naturally wants a synthesis of **Ashby + Beer + Bhaskar + Deleuze**.
+
+The loop becomes
+
+```
+Reality
+(generative mechanisms)
+
+↓
+
+Signals
+
+↓
+
+Evidence
+
+↓
+
+World model
+(always provisional)
+
+↓
+
+Prediction
+
+↓
+
+Decision
+
+↓
+
+Intervention
+
+↓
+
+Reality changes
+
+↓
+
+Mechanisms evolve
+
+↓
+
+Model revised
+```
+
+Notice something subtle.
+
+The object of learning is **not merely prediction error.**
+
+The object is
+
+
+
+=====
+
+That last question is arguably the bridge between statistical intelligence and scientific intelligence. It also aligns strikingly well with your notion of **instrumentability**: the goal isn't simply to observe more signals or close feedback loops faster, but to instrument a system well enough that you can identify, test, and refine beliefs about the mechanisms that actually drive its behavior. That's a richer cybernetic objective than control alone—it is control through progressively better explanation.
+
+=====
+
+Bhaskar calls these the **transitive** and **intransitive** dimensions:
+
+- **Transitive:** theories, models, concepts, measurements and representations produced historically by humans.
+- **Intransitive:** the objects, structures and causal powers that exist and operate regardless of how we represent them.
+
+Knowledge is constructed; its object is not therefore constructed. citeturn493057search1turn493057search2turn493057search4
+
+## Representation, projection and reality
+
+For Bhaskar:
+
+### Representation
+
+A representation is a fallible, socially produced account of something real.
+
+It is neither a transparent mirror nor merely an arbitrary fabrication.
+
+
+
+=====
+
+That is one form of what Bhaskar calls the **epistemic fallacy**: reducing questions about being to questions about our knowledge of being. citeturn493057search2turn493057search4
+
+## Bhaskar's three levels
+
+His decisive contribution is the distinction between:
+
+| Domain | Contains |
+|---|---|
+| **Empirical** | What is experienced or measured |
+| **Actual** | Events that occur, observed or not |
+| **Real** | Structures, mechanisms and causal powers that generate events |
+
+So:
+
+
+
+=====
+
+A causal power can be real without being exercised. It can be exercised without producing its expected event because another mechanism counteracts it. And an event can occur without anyone observing it. citeturn493057search2turn493057search5
+
+This is highly relevant to your distinction:
+
+- **Representation** belongs primarily to the empirical and transitive domain.
+- **Projection** mistakes properties of that representation for properties of the real.
+- **Realist explanation** tries to infer the deeper generative mechanisms that make observed events possible.
+
+## Relation to Deleuze and Guattari
+
+Bhaskar and Deleuze–Guattari share more than it first appears.
+
+They all reject:
+
+- naïve representation as mirroring;
+- flat empiricism;
+- reduction of reality to observable events;
+- simple linear causality;
+- the idea that stable identities are philosophically primary.
+
+They also share an interest in **emergence, stratification, powers and generative processes**.
+
+But their emphases differ.
+
+### Deleuze and Guattari
+
+They ask:
+
+
+
+=====
+
+Deleuze and Guattari foreground the production of realities; Bhaskar foregrounds the reality of the mechanisms involved in that production.
+
+Bhaskar would accept that institutions, subjectivities and categories are socially produced. But once produced, they can become **real causal structures** with effects not reducible to anyone's representation of them.
+
+Money is socially constructed, for example, but a lack of money has real causal consequences.
+
+## A synthesis
+
+A useful combined model would be:
+
+
+
+=====
+
+The underlying real is not a warehouse of fixed substances; it consists of productive powers, relations and processes.
+
+In your cybernetic language:
+
+- **Bhaskar supplies the ontology beneath the loop.**
+- **Deleuze and Guattari explain the productive composition of the loop.**
+- **Cybernetics describes how sensing, modelling and intervention recursively alter the system.**
+
+The resulting principle would be:
+
+
+
+=====
+
+Reality is distorted.
+
+---
+
+### In Deleuze and Guattari
+
+Projection is usually criticized because it assumes the world is merely carrying our internal meanings.
+
+Instead of
+
+```
+mind
+ ↓
+projects meaning
+ ↓
+world
+```
+
+they argue
+
+```
+human
+machines
+language
+technology
+institutions
+biology
+economics
+
+↓ together
+
+produce reality
+```
+
+Neither representation nor projection is fundamental.
+
+Assemblages are.
+
+---
+
+## The deepest distinction
+
+Representation assumes
+
+```
+Reality
+     ↓
+Representation
+```
+
+Projection assumes
+
+```
+Mind
+     ↓
+World
+```
+
+Deleuze and Guattari instead propose something like
+
+```
+Forces
+   ↕
+Interactions
+   ↕
+Emergence
+```
+
+No one is simply representing or projecting.
+
+Everything is participating in continuous production.
+
+---
+
+## Why this matters for cybernetics
+
+This maps almost perfectly onto the shift you're interested in.
+
+A classical dashboard is representational.
+
+```
+Sensors
+   ↓
+Model
+   ↓
+Human observes
+```
+
+A cybernetic controller is productive.
+
+```
+Sensors
+ ↓
+Model
+ ↓
+Decision
+ ↓
+Action
+ ↓
+World changes
+ ↓
+New sensing
+```
+
+The model is no longer simply *about* the world.
+
+It becomes one component inside the loop that changes the world.
+
+In that sense, a control system is not merely a representation of reality—it is part of the causal machinery that continuously produces future states.
+
+---
+
+### One way to summarize the historical progression
+
+- **Leibniz:** Every perspective **expresses** the world.
+- **Kant:** Representation organizes experience through the mind's categories.
+- **Deleuze:** Representation suppresses genuine difference and becoming.
+- **Deleuze 
+
+=====
+
+Guattari:** Replace representation with **production**—assemblages generate realities rather than merely depicting them.
+- **Cybernetics:** Replace static representation with **operative models** embedded in feedback loops. Models exist to regulate, adapt, and transform, not just to describe.
+
+This last step is one reason cybernetics sits so naturally alongside Deleuze and Guattari: both are interested less in *what the world is* than in *how systems continuously produce and transform worlds*.

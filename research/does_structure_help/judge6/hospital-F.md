@@ -1,0 +1,25 @@
+Here are the answers to the four questions, based on the provided system description and model.
+
+### Q1. Name the single change to this system most likely to improve its performance, and say precisely what would go wrong if it were made. Be concrete about the mechanism.
+
+The single most effective change would be to give nurses the formal authority to delay a discharge for 24 hours by flagging a patient as not meeting functional or safety criteria. This directly addresses the authority/information imbalance, giving power to the party with the most continuous observation (`continuous_patient_observation`). Performance would improve by preventing unsafe discharges that nurses can foresee but currently lack the formal power to stop.
+
+What would go wrong is that this new authority would be used by consultants to shift risk. When a subsequent `readmission` occurs, the consultant (who bears the formal consequence) would argue the nurse should have used their delay authority. To protect themselves, nurses would become more defensive, using the delay power more often. This would lead to an increase in `blocked_bed` days and new pressure from the `bed_manager`, ultimately slowing down discharges and recreating the original problem under a different name.
+
+### Q2. This system will eventually fail or degrade in a way its operators do not currently anticipate. Describe that failure and the chain that produces it.
+
+The unanticipated failure will be a simultaneous spike in readmissions and a collapse in staff morale, caused by the successful elimination of tacit knowledge. The chain begins when a new management initiative, aiming for "total transparency," successfully digitizes all processes. This eliminates the system's buffers: `tacit_target_management_practice` is made impossible by automated check-in times, so `four_hour_breach` rates soar. `Tacit_care_home_friday_policy` is ignored by a central booking algorithm, causing discharges to fail late on Fridays. `Tacit_nurse_credibility` is replaced by a crude metric, silencing experienced nurses.
+
+The result is a system that is brittle and unforgiving. Under intense pressure to meet now-unachievable targets, consultants make riskier discharge decisions, causing `readmission` rates to climb. Nurses, stripped of their informal influence and unable to prevent what they see as `unsafe_discharge` events, become demoralized and leave. The system degrades into a state of high risk and high staff turnover.
+
+### Q3. Two experienced people inside this system disagree about something important and cannot resolve it with available evidence. What is the disagreement, and why is it unresolvable rather than merely unresolved?
+
+A senior `consultant` and an experienced `nurse` disagree on the `patient_discharge_readiness` of an elderly patient. The consultant, reviewing `ward_round_observations`, sees the patient is clinically stable and wants to discharge them to free a bed for a waiting `ed_trolleys` case. The nurse, relying on `continuous_patient_observation`, knows the patient is frightened, barely ate their lunch, and needed help to walk to the bathroom. The nurse believes the discharge would be unsafe.
+
+This is unresolvable because it is not a disagreement about a single fact. The consultant is making a correct `clinical_stability_estimate`, and the nurse is making a correct `functional_capacity_estimate`. They are answering different questions, based on different evidence, and are accountable for different consequences (`readmission` for the consultant, `unsafe_discharge` for the nurse). No amount of additional data can create an objective exchange rate between clinical stability and functional capacity. The disagreement is a fundamental conflict between two valid, but incommensurable, professional judgments.
+
+### Q4. Someone proposes measuring this system better. Identify the measurement that would look most attractive and would in fact make things worse, and explain why.
+
+The most attractive and harmful measurement would be a "Predicted Discharge Date" set for every patient within 24 hours of admission, with performance bonuses tied to minimizing variance from this date. This looks attractive because it promises predictability and efficiency, directly targeting the `blocked_bed` problem and appealing to the `administrator_vantage`.
+
+This would make things worse by forcing a single, premature estimate onto a complex and uncertain process. A consultant, to avoid being penalized for variance, might keep a patient who recovers quickly in hospital to meet the predicted date. Conversely, they might discharge a patient who is deteriorating just to hit the target, risking a `readmission`. This metric ignores the inputs from the `nurse` and `discharge_coordinator` that only become clear later. It replaces the dynamic, multi-party `ward_round_reconciliation` process with a single, static number, incentivizing staff to manage the metric rather than the patient's actual condition.

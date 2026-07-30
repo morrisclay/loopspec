@@ -433,6 +433,47 @@ primitives:
       ontology; the first was the loci hypothesis, which Toyota overturned. Both times the
       corpus was missing a system that does the thing WELL.
 
+  - name: Explanation
+    tier: core
+    depth: 3
+    definition: >
+      A proposed generative mechanism: what produces an estimand's behaviour. Distinct from
+      an Estimate, which is a VALUE. "Runway is nine months" is an estimate; "burn is high
+      because we hired ahead of revenue" is an explanation.
+    attributes:
+      - confidence: >
+          How strongly the mechanism is held. Ordinal or qualitative — the same discipline
+          that applies to Estimate.
+      - would_be_refuted_by: >
+          Required. The observation that would overturn this mechanism. An explanation with
+          no refutation condition is a story, and the field exists to make the difference
+          checkable rather than rhetorical.
+      - competing: >
+          Other explanations of the same estimand currently in play. Explanations compete;
+          estimates merely differ.
+    demanded_by: [third_order_loop, bhaskar_real_domain, startup, hop_aero]
+    rationale: >
+      THREE INDEPENDENT ROUTES arrived at this gap, which is the evidence standard used for
+      informal_influence and for restoring Calibration.
+
+      1. research/prior_art_gate.md identified the sole genuine expressivity gap against every
+         POMDP variant as their fixing S at specification time while real systems discover
+         variables nobody conceived. That was the differentiator the project proceeded on, and
+         it was never built.
+      2. Bhaskar's three domains map onto the catalog as Empirical -> Signal and Actual ->
+         Estimand, with REAL — the generative mechanism — absent entirely.
+      3. The operational loop observe -> explain -> intervene -> learn -> refine explanation ->
+         intervene better has two unrepresentable steps, and `explain` is the first.
+
+      WHY THE CORPUS DID NOT DEMAND IT. A direct search found three mechanism-language hits
+      across 35 encodings, all false positives. That test failed for the same reason it failed
+      for Calibration: encoders cannot demand what they have never been offered. The corpus is
+      evidence about a catalog that lacked this, not evidence that systems lack mechanisms.
+
+      WHY IT MATTERS OPERATIONALLY: you intervene on mechanisms, not on values. That is why
+      "intervene better" follows "refine explanation" and not "refine estimate", and it is why
+      an ontology with estimates but no explanations cannot express improvement at all.
+
   - name: Revision
     tier: core
     depth: 3

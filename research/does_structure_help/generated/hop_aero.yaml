@@ -1,0 +1,11 @@
+**Modeling Hop Aero Structure**
+
+I'm currently focusing on defining the foundational elements for the Hop Aero system model. My immediate goal is to establish the `nodes` structure within the YAML, detailing their unique `id` properties.
+
+**Defining System Nodes**
+
+I'm currently defining the core `nodes` for the Hop Aero system in YAML. My focus is on creating entries for `System` and `Party` kinds, establishing their unique IDs and initial descriptions.
+
+**Adding System and Party Nodes**
+
+I've successfully incorporated the `System` node for "Hop Aero" and the `Party` nodes representing "founders," "YC," and the "US Air Force." Each has been assigned a unique ID and a descriptive string.

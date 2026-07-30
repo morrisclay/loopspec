@@ -1,0 +1,221 @@
+nodes:
+  # System and Scope
+  - id: hospital_patient_flow
+    kind: System
+    description: The overall system of patient admission, treatment, and discharge in a hospital.
+  - id: discharge_decision_loop
+    kind: Boundary
+    description: The scoped sub-system focusing on the interplay between discharge decisions and bed availability.
+
+  # Parties (Actors and Viewpoints)
+  - id: consultant
+    kind: Party
+    description: A senior doctor responsible for clinical decisions, including discharge.
+  - id: nurse
+    kind: Party
+    description: Provides continuous care and observation of patients on the ward.
+  - id: discharge_coordinator
+    kind: Party
+    description: Manages the logistical aspects of patient discharge.
+  - id: bed_manager
+    kind: Party
+    description: Manages hospital bed allocation under pressure to maintain patient flow.
+  - id: patient
+    kind: Party
+    description: The individual receiving care, with personal preferences and experiences.
+  - id: emergency_department
+    kind: Party
+    description: The entry point for unscheduled admissions, under pressure from waiting time targets.
+  - id: clinician_vantage
+    kind: Party
+    description: A viewpoint prioritizing clinical outcomes, patient safety, and professional judgment.
+  - id: administrator_vantage
+    kind: Party
+    description: A viewpoint prioritizing throughput, efficiency, targets, and financial metrics.
+
+  # Resources and Constraints
+  - id: hospital_beds
+    kind: Resource
+    description: The fixed number of inpatient beds available in the hospital.
+  - id: fixed_bed_count
+    kind: Constraint
+    description: The number of hospital beds is finite, creating a bottleneck.
+  - id: ed_trolleys
+    kind: Resource
+    description: Trolleys used for patients waiting in the emergency department when no beds are available.
+
+  # Policies and Targets
+  - id: four_hour_wait_target
+    kind: Policy
+    description: A national target requiring patients in the emergency department to be seen, treated, admitted, or discharged within four hours.
+
+  # Core Estimand
+  - id: patient_discharge_readiness
+    kind: Estimand
+    description: The central, multi-faceted question of whether a patient is ready to be discharged.
+
+  # Estimates (The different "facts")
+  - id: clinical_stability_estimate
+    kind: Estimate
+    description: The consultant's judgment of the patient's medical stability for discharge.
+  - id: functional_capacity_estimate
+    kind: Estimate
+    description: The nurse's judgment of the patient's ability to cope functionally outside the hospital.
+  - id: logistical_readiness_estimate
+    kind: Estimate
+    description: The coordinator's judgment of whether external logistics (transport, care home) are in place.
+  - id: bed_value_estimate
+    kind: Estimate
+    description: The bed manager's assessment of the urgent need for this specific bed.
+  - id: patient_self_assessed_readiness
+    kind: Estimate
+    description: The patient's own feeling about whether they are ready to go home.
+
+  # Estimators (The logic behind the estimates)
+  - id: consultant_discharge_estimator
+    kind: Estimator
+    description: The consultant's decision-making process, based on daily observations and clinical data.
+  - id: nurse_discharge_estimator
+    kind: Estimator
+    description: The nurse's assessment process, based on continuous, close-contact observation.
+  - id: coordinator_discharge_estimator
+    kind: Estimator
+    description: The coordinator's process, based on checking availability of external services.
+  - id: bed_manager_value_estimator
+    kind: Estimator
+    description: The bed manager's process for prioritizing beds based on system-wide pressures.
+
+  # Signals (Information, both formal and tacit)
+  - id: ward_round_observations
+    kind: Signal
+    description: Clinical data and observations gathered by the consultant during daily ward rounds.
+  - id: continuous_patient_observation
+    kind: Signal
+    description: Information gathered by nurses, such as mobility, appetite, and emotional state.
+  - id: care_home_availability
+    kind: Signal
+    description: Information on whether a place is available in a suitable care home.
+  - id: family_transport_availability
+    kind: Signal
+    description: Information on whether the patient's family is able to collect them.
+  - id: pharmacy_dispensing_status
+    kind: Signal
+    description: Information on whether the patient's take-home medications have been dispensed.
+  - id: ed_queue_length
+    kind: Signal
+    description: The number of patients waiting on trolleys in the emergency department for a bed.
+  - id: hospital_bed_state
+    kind: Signal
+    description: A live overview of bed occupancy across the entire hospital.
+  - id: patient_subjective_state
+    kind: Signal
+    description: The patient's expressed feelings, fears, or desires about going home.
+  - id: readmission_data
+    kind: Signal
+    description: Measured data on patients who are readmitted to the hospital shortly after discharge.
+  - id: tacit_consultant_availability
+    kind: Signal
+    tacit: true
+    description: Unwritten knowledge about which consultants are willing to be contacted out of hours.
+  - id: tacit_care_home_friday_policy
+    kind: Signal
+    tacit: true
+    description: Unwritten knowledge about which care homes are reluctant to accept patients on a Friday.
+  - id: tacit_target_management_practice
+    kind: Signal
+    tacit: true
+    description: Unwritten knowledge about how patient arrival times are recorded to manage the 4-hour target.
+  - id: tacit_nurse_credibility
+    kind: Signal
+    tacit: true
+    description: The informal, reputation-based assessment of how seriously to take a particular nurse's concerns.
+
+  # Interventions (Actions taken by parties)
+  - id: decide_discharge
+    kind: Intervention
+    description: The formal clinical decision to discharge a patient.
+  - id: document_concern
+    kind: Intervention
+    description: A nurse documenting a concern, which can effectively block a discharge.
+  - id: apply_pressure_to_discharge
+    kind: Intervention
+    description: The bed manager urging ward staff to free up a bed.
+  - id: delay_discharge_logistics
+    kind: Intervention
+    description: The discharge coordinator delaying a discharge because logistical arrangements are not in place.
+  - id: admit_patient_from_ed
+    kind: Intervention
+    description: Admitting a patient from the emergency department to an inpatient bed.
+
+  # Consequences (Asymmetric costs of being wrong)
+  - id: readmission
+    kind: Consequence
+    description: A patient returns to the hospital soon after discharge, indicating a potentially premature decision.
+  - id: unsafe_discharge
+    kind: Consequence
+    description: A patient is discharged to a situation where they cannot cope, causing immediate harm or distress.
+  - id: blocked_bed
+    kind: Consequence
+    description: A medically-fit patient occupies a bed due to logistical delays, preventing a new admission.
+  - id: four_hour_breach
+    kind: Consequence
+    description: The hospital fails to meet the 4-hour target, resulting in reporting and financial penalties.
+  - id: patient_distress_at_home
+    kind: Consequence
+    description: The patient experiences fear or inability to cope after being discharged.
+  - id: patient_distress_in_hospital
+    kind: Consequence
+    description: The patient wants to go home but is kept in hospital, causing frustration or anxiety.
+
+  # Desired Conditions and Preferences
+  - id: patient_clinically_stable
+    kind: DesiredCondition
+    description: The patient's medical condition is stable enough for them not to require acute hospital care.
+  - id: patient_functionally_capable
+    kind: DesiredCondition
+    description: The patient can manage daily activities (e.g., washing, eating) in their discharge environment.
+  - id: logistics_arranged
+    kind: DesiredCondition
+    description: All necessary external support (transport, care home, pharmacy) is confirmed.
+  - id: ed_queue_at_zero
+    kind: DesiredCondition
+    description: No patients are waiting on trolleys in the emergency department for a bed.
+  - id: throughput_maximized
+    kind: DesiredCondition
+    description: The rate of patient flow through the hospital is as high as possible.
+  - id: patient_preference_honored
+    kind: DesiredCondition
+    description: The patient's own desire to stay or go is taken into account.
+  - id: patient_preference_ordering
+    kind: PreferenceOrdering
+    description: The patient's personal ranking of outcomes (e.g., "go home" > "stay in hospital").
+
+  # Processes, Timescales, and Delays
+  - id: ward_round_reconciliation
+    kind: Revision
+    description: The daily ward round process where different estimates are discussed and a decision is attempted.
+  - id: consultant_calibration_via_readmission
+    kind: Calibration
+    description: The formal process of measuring readmission rates, which implicitly calibrates a consultant's discharge threshold.
+  - id: readmission_delay
+    kind: Delay
+    description: The time between a patient's discharge and their potential readmission.
+  - id: hourly
+    kind: TimeScale
+    description: The timescale of acute pressures like the ED queue.
+  - id: daily
+    kind: TimeScale
+    description: The timescale of clinical reviews like ward rounds.
+  - id: weekly
+    kind: TimeScale
+    description: The timescale of staffing rotas and short-term trends like readmissions.
+  - id: quarterly
+    kind: TimeScale
+    description: The timescale of budgets and formal performance metric reporting.
+  - id: multi_year
+    kind: TimeScale
+    description: The timescale of long-term cycles like hospital accreditation.
+
+edges:
+  # System Scoping
+  -

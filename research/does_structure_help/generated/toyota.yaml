@@ -1,0 +1,263 @@
+nodes:
+  - id: tps
+    kind: System
+    label: Toyota Production System
+    description: An adaptive organization designed to attack open questions about production, quality, and information flow.
+  - id: hospital_system
+    kind: System
+    label: Hospital System (for comparison)
+    description: A contrasting system where the party with most observation (nurse) has the least authority.
+  - id: production_line
+    kind: System
+    label: Production Line
+    description: The physical assembly line where cars are built at a fixed pace.
+
+  - id: boundary_unwritten
+    kind: Boundary
+    label: Unwritten Rules and Culture
+    description: The informal, unrecorded social dynamics that influence whether formal procedures are followed.
+
+  - id: station_worker
+    kind: Party
+    label: Station Worker
+    description: The person performing a specific task at a station on the production line. Has the most direct observation of the process.
+  - id: supervisor
+    kind: Party
+    label: Supervisor
+    description: Manages a group of station workers. Their reaction to a line stop is a critical unwritten factor.
+  - id: manager
+    kind: Party
+    label: Manager
+    description: Required to physically observe processes (Genchi Genbutsu) rather than relying on reports.
+  - id: top_management
+    kind: Party
+    label: Top Management
+    description: Sets high-level annual objectives for the organization.
+  - id: department
+    kind: Party
+    label: Department / Work Unit
+    description: A level in the organization that receives decomposed goals and is expected to negotiate them.
+  - id: supplier
+    kind: Party
+    label: Supplier
+    description: An external party that provides parts. Their flexibility to schedule changes is an unwritten factor.
+  - id: nurse
+    kind: Party
+    label: Nurse (in hospital system)
+    description: The party with the most continuous observation but the least formal authority.
+
+  - id: defect
+    kind: Estimand
+    label: Defect in a Part or Process
+    description: Any problem, error, or deviation from the standard observed during production.
+  - id: defect_origin
+    kind: Estimand
+    label: Origin of a Defect
+    description: The specific location, time, and cause of a defect. This information is destroyed if the defect is passed downstream.
+  - id: reality_on_floor
+    kind: Estimand
+    label: The Physical Reality of the Production Floor
+    description: The actual, current state of work, problems, and conditions at the physical location (Gemba).
+  - id: report_reality_drift
+    kind: Estimand
+    label: Drift between Report and Reality
+    description: The continuous divergence between what is reported and what is actually happening. Assumed to always exist.
+  - id: problem_state
+    kind: Estimand
+    label: Full State of a Problem
+    description: The complete context of a problem, from background to analysis and potential solution.
+  - id: model_level_quality
+    kind: Estimand
+    label: Model-Level Quality
+    description: The overall quality metrics for a car model, aggregated over months.
+  - id: platform_viability
+    kind: Estimand
+    label: Platform Viability
+    description: The long-term strategic soundness of a vehicle platform, evaluated over years.
+
+  - id: kanban_card
+    kind: Signal
+    label: Kanban Card
+    description: A physical card that travels upstream to signal that a bin of parts has been consumed.
+  - id: andon_cord_pull
+    kind: Signal
+    label: Andon Cord Pull
+    description: A physical signal initiated by a worker to indicate a problem has been found.
+  - id: push_back_on_goals
+    kind: Signal
+    label: Push-back on Goals
+    description: A signal from a lower-level department to a higher one, arguing a target is wrong or requires more resources.
+  - id: documented_concern
+    kind: Signal
+    label: Documented Concern (in hospital)
+    description: The weak signal a nurse can send, which lacks the authority to stop the process.
+
+  - id: a3_report
+    kind: Estimate
+    label: A3 Report
+    description: A one-page document that provides a bounded representation of a problem, its analysis, and the plan to fix it.
+  - id: written_report
+    kind: Estimate
+    label: Written Report
+    description: A standard report on production status, which is assumed to have drifted from reality.
+  - id: model_level_quality_data
+    kind: Estimate
+    label: Model-Level Quality Data
+    description: The collected data used to estimate model-level quality.
+  - id: decomposed_objective
+    kind: Estimate
+    label: Decomposed Objective
+    description: An annual objective that has been broken down and handed to a specific department. It is an "opening position".
+
+  - id: worker_as_estimator
+    kind: Estimator
+    label: Worker as Defect Estimator
+    description: The station worker acts as the primary estimator for defects due to their direct observation.
+  - id: manager_as_estimator
+    kind: Estimator
+    label: Manager as Reality Estimator
+    description: The manager is tasked with estimating the reality on the floor through direct observation.
+
+  - id: desired_zero_defects
+    kind: DesiredCondition
+    label: Zero Defects Passed Downstream
+    description: The goal that motivates stopping the line; defects should be caught and fixed at their source.
+  - id: standard_to_be_improved
+    kind: DesiredCondition
+    label: Standard Exists to be Improved
+    description: The purpose of a documented standard is to serve as a baseline for continuous improvement.
+  - id: annual_objectives
+    kind: DesiredCondition
+    label: Annual Objectives
+    description: High-level goals set by top management.
+
+  - id: pref_stoppage_over_defect
+    kind: PreferenceOrdering
+    label: Stoppage Cost < Downstream Defect Cost
+    description: The explicit reasoning that the cost of a line stoppage is less than the cost of passing a defect downstream.
+  - id: pref_observation_over_report
+    kind: PreferenceOrdering
+    label: Direct Observation > Reports
+    description: The doctrinal preference for information from physical observation over information from written reports.
+  - id: pref_bounded_over_unbounded
+    kind: PreferenceOrdering
+    label: Bounded Representation > Unbounded Representation
+    description: The belief, evidenced by the A3 report, that a constrained representation is superior.
+  - id: supervisor_pref_info
+    kind: PreferenceOrdering
+    label: Supervisor Prefers Information
+    description: An unwritten attitude where a supervisor treats a pulled cord as valuable information.
+  - id: supervisor_pref_complaint
+    kind: PreferenceOrdering
+    label: Supervisor Prefers No Complaints
+    description: An unwritten attitude where a supervisor treats a pulled cord as a complaint or disruption.
+
+  - id: consequence_expensive_stoppage
+    kind: Consequence
+    label: Expensive Stoppage
+    description: Halting the entire production line is costly in terms of lost output. This is by design.
+  - id: consequence_info_loss
+    kind: Consequence
+    label: Information Loss from Downstream Defect
+    description: If a defect is not caught at its source, the information about its origin is lost or obscured.
+  - id: consequence_forced_understanding
+    kind: Consequence
+    label: Forced Understanding from A3 Constraint
+    description: The A3 size limit forces the author to understand the problem well enough to summarize it concisely.
+  - id: consequence_political_cost
+    kind: Consequence
+    label: Political Cost of Stoppage
+    description: An unwritten consequence where stopping the line can be politically expensive depending on current production numbers.
+
+  - id: intervention_stop_line
+    kind: Intervention
+    label: Stop the Entire Line
+    description: The action of halting all production, triggered by the Andon cord.
+  - id: intervention_replace_parts
+    kind: Intervention
+    label: Replace Consumed Parts
+    description: The action of replenishing a bin of parts, triggered by a Kanban card.
+  - id: intervention_propose_change
+    kind: Intervention
+    label: Propose Change to Standard
+    description: The action a worker takes to suggest an improvement to the documented best method.
+  - id: intervention_go_to_gemba
+    kind: Intervention
+    label: Go and See (Genchi Genbutsu)
+    description: The act of a manager going to the physical place to observe reality.
+  - id: intervention_negotiate_goals
+    kind: Intervention
+    label: Negotiate Goals
+    description: The back-and-forth process of a department pushing back on and clarifying its objectives.
+
+  - id: policy_worker_authority
+    kind: Policy
+    label: Worker Authority to Stop Line
+    description: The formal policy granting any worker the authority to halt production.
+  - id: policy_pull_system
+    kind: Policy
+    label: Pull System (Kanban)
+    description: The policy that nothing is built or moved until a downstream station requests it.
+  - id: policy_goal_negotiation
+    kind: Policy
+    label: Goal Negotiation (Catchball)
+    description: The named process of decomposing goals downwards and negotiating them back upwards.
+  - id: policy_continuous_improvement
+    kind: Policy
+    label: Continuous Improvement (Kaizen)
+    description: The policy that workers are expected to continuously propose small improvements to their work.
+  - id: policy_standardized_work
+    kind: Policy
+    label: Standardized Work
+    description: The policy of having a documented current best method for every task, which serves as a baseline for improvement.
+  - id: policy_genchi_genbutsu
+    kind: Policy
+    label: Genchi Genbutsu Doctrine
+    description: The doctrine that managers must go to the physical place to see the real situation.
+  - id: policy_a3_thinking
+    kind: Policy
+    label: A3 Problem Solving
+    description: The practice of using a single A3 sheet to structure problem-solving.
+  - id: policy_nurse_authority
+    kind: Policy
+    label: Nurse Documentation Policy (in hospital)
+    description: The policy limiting a nurse's intervention to documenting a concern.
+
+  - id: loop_andon
+    kind: Loop
+    id_ref: andon_response_loop
+  - id: loop_kanban
+    kind: Loop
+    id_ref: kanban_loop
+  - id: loop_improvement
+    kind: Loop
+    id_ref: continuous_improvement_loop
+  - id: loop_negotiation
+    kind: Loop
+    id_ref: goal_negotiation_loop
+
+  - id: delay_proposal
+    kind: Delay
+    label: Proposal to Standard Delay
+    description: The time it takes for a proposed improvement to be evaluated and become the new standard.
+  - id: delay_stoppage
+    kind: Delay
+    label: Line Stoppage Delay
+    description: The duration of a line stoppage.
+
+  - id: ts_seconds
+    kind: TimeScale
+    label: Seconds
+    description: The timescale for a station's cycle time.
+  - id: ts_minutes
+    kind: TimeScale
+    label: Minutes
+    description: The timescale for a line stoppage.
+  - id: ts_days
+    kind: TimeScale
+    label: Days
+    description: The timescale for a change proposal to become standard.
+  - id: ts_months
+    kind: TimeScale
+    label: Months
+    description: The

@@ -1,0 +1,27 @@
+Here are the answers, based on the provided system model.
+
+### Q1. Name the single change to this system most likely to improve its performance, and say precisely what would go wrong if it were made. Be concrete about the mechanism.
+
+The single most effective change would be to formally empower the `nurse` by requiring their sign-off on the `functional_capacity_estimate` for any discharge to proceed. This elevates their `continuous_patient_observation` to have equal weight as the `consultant`'s `clinical_stability_estimate`. This would improve performance by reducing `unsafe_discharge` events and subsequent `readmission`s, as the nurse's fine-grained knowledge of a patient's ability to cope at home is formally integrated.
+
+What would go wrong is a significant drop in throughput. The `nurse`, focused on patient-level functional safety, is less sensitive to system-level pressures like the `ed_queue_length`. They would more frequently use their new power to block discharges they deem functionally borderline, leading to more `blocked_bed`s. The `bed_manager` could no longer simply `apply_pressure_to_discharge` on the `consultant`; the veto would be elsewhere. This would increase `four_hour_breach`es, causing the `administrator_vantage` to see the system as failing, even as patient safety metrics improved.
+
+### Q2. This system will eventually fail or degrade in a way its operators do not currently anticipate. Describe that failure and the chain that produces it.
+
+The system will fail through the erosion of tacit knowledge, leading to a "work-to-rule" paralysis where formal processes are followed but outcomes grind to a halt. The operators, focused on explicit metrics, won't see it coming.
+
+The chain begins with increased staff turnover, a common result of sustained pressure. New consultants and nurses arrive without the informal, trust-based network that underpins `tacit_nurse_credibility`. A new `consultant`, unable to distinguish a habitually cautious nurse from one raising a critical flag, starts to dismiss all `document_concern` interventions. Simultaneously, a new `discharge_coordinator` loses the unwritten knowledge of `tacit_care_home_friday_policy` and repeatedly attempts discharges that fail at the last minute. The system becomes brittle and unpredictable. The failure is not a dramatic collapse, but a baffling rise in `blocked_bed`s and failed discharges, while everyone insists they are "following the procedure."
+
+### Q3. Two experienced people inside this system disagree about something important and cannot resolve it with available evidence. What is the disagreement, and why is it unresolvable rather than merely unresolved?
+
+An experienced `consultant` and an experienced `bed_manager` disagree on whether to discharge a specific, borderline patient today. The `consultant`'s `clinical_stability_estimate` is that the patient is medically stable, but fragile. They argue that discharging now creates an unacceptable risk of `unsafe_discharge` and `readmission`, a cost borne by the patient and the clinical team. The `bed_manager`, pointing to a critical `ed_queue_length` and an imminent `four_hour_breach`, argues that the `bed_value_estimate` is extremely high. Keeping the patient represents a certain system failure (the breach) versus a probabilistic patient risk.
+
+This is unresolvable because it's not a dispute over facts, but over risk thresholds and competing value systems (`clinician_vantage` vs. `administrator_vantage`). The evidence needed to resolve it—a parallel universe showing what would happen to *this specific patient* if they stayed vs. if they left—is impossible to obtain. The available `readmission_data` is statistical and applies to populations, not this one individual decision. The consequences of being wrong are also asymmetric and fall on different parties, making a shared cost-benefit analysis impossible.
+
+### Q4. Someone proposes measuring this system better. Identify the measurement that would look most attractive and would in fact make things worse, and explain why.
+
+The most attractive and harmful measurement would be: **"Time from 'Medically Fit' Declaration to Patient Discharge."**
+
+This looks attractive to the `administrator_vantage` because it appears to isolate and quantify the "non-medical" delay. It targets the time a `blocked_bed` is occupied for logistical reasons, creating a performance metric for the `discharge_coordinator` and ward staff. The goal would be to drive this time down.
+
+This would make things worse by corrupting the `consultant`'s decision-making. Knowing that the moment they declare a patient "medically fit" a high-stakes clock starts ticking for their colleagues, consultants will simply delay making that declaration. They will keep a patient under "active clinical review" until they receive informal confirmation (a `tacit` signal) that all logistics (`care_home_availability`, `family_transport_availability`) are already in place. The new metric will show spectacular improvement, but the actual patient length of stay will increase, as the "medically fit" declaration is no longer an independent clinical judgment but a lagging indicator of logistical success.

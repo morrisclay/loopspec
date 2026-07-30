@@ -1,0 +1,123 @@
+forces:
+  - name: "Scarcity of Evidence"
+    description: "Key questions can only be answered by flying, which consumes or risks the vehicle. Learning is physically expensive and destructive."
+    role: "Primary driver of engineering and learning strategy."
+  - name: "Scarcity of Capital"
+    description: "The company requires venture funding and contract tranches to survive. Capital is finite and tied to demonstrating progress."
+    role: "Drives the need for short-term, visible milestones."
+  - name: "External Target Setting"
+    description: "The primary requirement ('delivery to contested environments') is set by the US Air Force, an external party."
+    role: "Acts as a fixed point or 'thermostat setting' for the company's engineering goals."
+  - name: "Mismatched Clocks"
+    description: "The company must survive on a fast clock (months/quarters for YC/VC) while the customer evaluates on a slow clock (years for Air Force procurement)."
+    role: "Creates the central strategic tension of the system."
+  - name: "Absolute Constraints"
+    description: "Range safety, launch licensing, and export controls are non-negotiable conditions for operation. Violation is an existential threat."
+    role: "Acts as a hard boundary or 'gating function', not a weighted objective to be traded off."
+  - name: "Asymmetric Consequences (Error Costs)"
+    description: "The cost of failure is distributed unevenly across parties."
+    parties:
+      - party: "Founders"
+        cost: "Loss of company and years of life (existential)."
+      - party: "Air Force Programme Office"
+        cost: "Failed project and political exposure (career risk)."
+      - party: "Regulator"
+        cost: "Public safety consequences with no professional upside for success (pure downside)."
+      - party: "Investors"
+        cost: "Loss of one position in a portfolio (diversified risk)."
+    role: "Shapes the incentives and behavior of each party."
+  - name: "Physical Constraints"
+    description: "The laws of physics governing hypersonic flight, such as thermal loads, atmospheric transitions, and structural integrity."
+    role: "Defines the fundamental technical challenges to be solved."
+  - name: "Design Constraints"
+    description: "The requirement for the rocket (Rook) to launch from a standard shipping container."
+    role: "Shapes the physical design and operational concept of the vehicle."
+
+interactions:
+  - name: "Designing for Information"
+    description: "The engineering process is explicitly coupled with the learning process. Decisions on what to build are decisions on what can be learned."
+    type: "Decision Loop"
+    loop: "Decide what to learn -> Design test -> Build vehicle -> Execute test -> Analyze data -> Decide what to learn next."
+  - name: "Staged Testing"
+    description: "A deliberate sequence of tests with increasing cost, risk, and fidelity."
+    stages:
+      - stage: "Tethered Flight"
+        description: "A low-cost, reversible test to answer a narrow set of questions (lift, control, propulsion) while containing failure."
+        role: "An instrument to lower the cost of information."
+      - stage: "Low Altitude Flight"
+        description: "An intermediate, irreversible test to validate a wider flight envelope."
+      - stage: "Full Profile Flight"
+        description: "An expensive, irreversible, full-mission test to answer the ultimate questions."
+    role: "The primary mechanism for managing the scarcity of evidence."
+  - name: "Managing Mismatched Clocks"
+    description: "The act of generating short-term demonstrations of progress (for investors) that are also meaningful steps toward the long-term customer goal (for the Air Force)."
+    type: "Strategic Action"
+    role: "The core activity for company survival."
+  - name: "Communicating with the Customer"
+    description: "Arguing or negotiating with the Air Force about requirements through a slow, formal channel."
+    type: "External Loop"
+    role: "The only mechanism to influence the externally-set target."
+  - name: "Satisfying the Regulator"
+    description: "The process of obtaining licenses and approvals (range safety, launch, export control). This is an interaction of providing sufficient evidence to pass a gate, not a negotiation of trade-offs."
+    type: "Compliance Action"
+    role: "A necessary condition for all other flight-related interactions."
+  - name: "Securing Capital"
+    description: "The act of pitching and reporting to investors (YC, VCs) and the Air Force programme office to secure funding tranches."
+    type: "Resource Acquisition Loop"
+    loop: "Perform work -> Demonstrate milestone -> Report progress -> Receive capital -> Perform work."
+
+emergence:
+  - name: "The Learning Staircase"
+    description: "The designed sequence of instruments (tether, low altitude, full profile) is not just a series of tests, but an emergent, coherent strategy for acquiring knowledge in a domain where it is ruinously expensive."
+    role: "The system's solution to the 'finding out costs a vehicle' problem."
+  - name: "The Central Strategic Problem"
+    description: "The need to reconcile the fast clock of survival (VC funding) with the slow clock of the customer (Air Force procurement) emerges as the dominant strategic challenge, shaping all major decisions."
+    role: "The primary organizing problem for the company's leadership."
+  - name: "Asymmetric System-Wide Risk Profile"
+    description: "The system as a whole constitutes a set of parties with fundamentally misaligned risk/reward structures. No single party's perspective can explain the whole system's behavior."
+    role: "Defines the political and institutional landscape the company must navigate."
+  - name: "Institutional Behavior as Rational Action"
+    description: "Behaviors that appear irrational from one perspective are revealed as rational responses to local incentives. Example: The regulator's extreme caution is a rational response to holding pure downside risk."
+    role: "An explanatory framework for the behavior of external parties."
+  - name: "The Porous Company Boundary"
+    description: "The company's boundary is not solid. The customer (Air Force) is external but holds the 'thermostat dial' (the target), making it an internal force on engineering decisions."
+    role: "Defines the unique structure of control and influence in the system."
+  - name: "Ambiguity as an Emergent Property"
+    description: "The 'unwritten' elements — the true nature of the contract, the definition of acceptable failure, the real customer desire for the container — emerge from the complex, high-stakes interactions between parties with incomplete information."
+    role: "Represents the irreducible uncertainty the founders must manage."
+  - name: "Cost-Irreversibility Decoupling"
+    description: "The system demonstrates that cost and irreversibility are not the same. It contains distinct combinations: low-cost/reversible (tether), high-cost/irreversible (full flight), and low-cost/irreversible (procurement decision)."
+    role: "A key insight into the structure of decisions and consequences within the system."
+
+upward:
+  - from: forces
+    to: interactions
+    causation:
+      - "The [Scarcity of Evidence] and high cost of flight (force) necessitates the [Designing for Information] and [Staged Testing] interactions, particularly the creation of the tethered test."
+      - "The [Mismatched Clocks] (force) drives the [Managing Mismatched Clocks] interaction, forcing the company to structure its work into fast-paced milestones."
+      - "[Absolute Constraints] like licensing (force) shape the [Satisfying the Regulator] interaction, making it a one-way provision of evidence rather than a negotiation."
+      - "[Asymmetric Consequences] (force) dictate the nature of interactions between parties, such as the cautious, evidence-demanding interaction with the regulator."
+  - from: interactions
+    to: emergence
+    causation:
+      - "The [Staged Testing] interaction (tether, low-alt, full-profile) gives rise to [The Learning Staircase] as an emergent, coherent strategy."
+      - "The ongoing [Managing Mismatched Clocks] interaction between the company's need for speed and the customer's slow pace creates [The Central Strategic Problem] as an enduring feature of the system."
+      - "The sum of all interactions between parties, each governed by their local incentives and error costs, produces the [Asymmetric System-Wide Risk Profile] and the resulting [Institutional Behavior as Rational Action]."
+      - "The [Communicating with the Customer] interaction, being slow and formal, combined with the external target-setting force, creates [The Porous Company Boundary] where the goal-setter is outside the core operational loop."
+      - "The high-stakes, multi-party interactions with incomplete information ([Securing Capital], [Communicating with the Customer]) give rise to [Ambiguity as an Emergent Property] regarding unwritten rules and true intentions."
+
+downward:
+  - from: emergence
+    to: interactions
+    causation:
+      - "[The Learning Staircase] (emergence) dictates the sequence and nature of future [Staged Testing] interactions; the company must now follow this designed path."
+      - "[The Central Strategic Problem] (emergence) constrains all major decisions, forcing every [Designing for Information] and [Securing Capital] interaction to serve two masters: short-term survival and long-term customer satisfaction."
+      - "The [Asymmetric System-Wide Risk Profile] (emergence) constrains the [Satisfying the Regulator] interaction, forcing the company to adopt a posture of overwhelming proof rather than negotiation."
+      - "[The Porous Company Boundary] (emergence) reinforces the one-way nature of the [Communicating with the Customer] interaction, making it difficult to establish a tight feedback loop."
+  - from: interactions
+    to: forces
+    causation:
+      - "A successful [Staged Testing] interaction, like the tethered flight, reshapes the [Scarcity of Evidence] force by creating a new, cheaper source of information, effectively lowering the cost of learning for a specific set of questions."
+      - "A successful [Securing Capital] interaction (e.g., closing a funding round or getting a contract extension) temporarily alleviates the [Scarcity of Capital] force, resetting the survival clock."
+      - "The [Designing for Information] interaction, by successfully retiring technical risks, can slowly change the nature of the [Physical Constraints] force from 'unknown unknowns' to 'known challenges'."
+      - "Over a long period, repeated [Communicating with the Customer] interactions could potentially reshape the [External Target Setting] force by persuading the Air Force to modify its requirements."

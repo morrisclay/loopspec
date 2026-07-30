@@ -1,0 +1,20 @@
+{
+ "hospital-A": "generated",
+ "hospital-B": "stratified",
+ "hospital-C": "prose",
+ "hospital-D": "encoding",
+ "hospital-E": "both",
+ "hospital-F": "generated_both",
+ "toyota-A": "generated_both",
+ "toyota-B": "generated",
+ "toyota-C": "prose",
+ "toyota-D": "stratified",
+ "toyota-E": "encoding",
+ "toyota-F": "both",
+ "hop_aero-A": "both",
+ "hop_aero-B": "stratified",
+ "hop_aero-C": "prose",
+ "hop_aero-D": "generated",
+ "hop_aero-E": "generated_both",
+ "hop_aero-F": "encoding"
+}

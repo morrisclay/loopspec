@@ -1,0 +1,155 @@
+forces:
+  - name: Fixed Pace Production Line
+    description: A car moves down a line at a fixed pace. Each station has a defined time to complete defined work.
+    role: A primary constraint on all shop-floor activity, setting the tempo.
+  - name: Pull-Based Inventory (Kanban)
+    description: Parts arrive on request, not on a schedule. A card authorises replacement of a consumed bin.
+    role: A scarcity-generating rule; parts are not abundant, their flow is constrained by downstream consumption.
+  - name: The Andon Cord Rule
+    description: Any worker has the authority to stop the entire production line.
+    role: A designed-in force that grants extreme authority to the lowest level of the hierarchy.
+  - name: High Cost of Stoppage
+    description: Halting the line for the whole plant is expensive by design.
+    role: A direct financial and operational consequence that makes using the Andon cord a significant act.
+  - name: Higher Cost of Downstream Defects
+    description: The explicit rationale that a defect passed downstream costs more than a stoppage.
+    role: An incentive for workers to pull the cord, counter-balancing the cost of stoppage.
+  - name: Top-Down Annual Objectives
+    description: Goals are set at the top and decomposed down through the organisation.
+    role: The initial force that triggers the goal-setting process; an "opening position".
+  - name: The Documented Standard
+    description: A written current best method exists for every task.
+    role: A baseline constraint for how work is performed, but also the object to be improved.
+  - name: Doctrine of "Go and See" (Genchi Genbutsu)
+    description: Managers are required to go to the physical place and look at the physical thing.
+    role: A doctrinal force on managerial behaviour, countering reliance on abstract reports.
+  - name: Assumption of Report/Reality Drift
+    description: The written assumption is that reports and reality continuously come apart.
+    role: A cognitive force that creates institutional skepticism about reported information.
+  - name: The A3 One-Page Constraint
+    description: A problem write-up must fit on a single A3 sheet.
+    role: A representational constraint forcing conciseness, clarity, and deep understanding.
+  - name: Nested Timescales
+    description: Clocks run at different rates for different activities.
+    clocks:
+      - Seconds (station cycle time)
+      - Minutes (line stoppage)
+      - Days (proposal to standard)
+      - Months (model-level quality data)
+      - Years (platform decisions)
+    role: A set of conflicting temporal constraints that create tension between levels of the organization.
+  - name: Unwritten Social/Political Factors
+    description: Informal and unrecorded forces influencing behaviour.
+    factors:
+      - Supervisor's attitude (information vs. complaint)
+      - Political cost of a stoppage based on current performance numbers
+      - Supplier willingness to absorb changes
+    role: A set of hidden forces that determine whether the formal system is actually used as intended.
+
+interactions:
+  - name: Pull-Based Production Loop (Shop Floor)
+    description: The core material flow loop driven by consumption.
+    loop:
+      - 1. A station worker consumes a bin of parts.
+      - 2. The worker sends the associated card (kanban) back upstream.
+      - 3. The upstream station is authorised to produce an exact replacement quantity.
+      - 4. The replacement bin is delivered to the consuming station.
+  - name: Problem Response Loop (Andon)
+    description: The process for halting production to address a defect at its source.
+    loop:
+      - 1. Observe: A station worker sees a problem (e.g., a defect).
+      - 2. Decide: The worker decides the problem warrants a stoppage.
+      - 3. Act: The worker pulls the andon cord.
+      - 4. Response: The line stops, and a team leader/supervisor immediately responds to the station.
+      - 5. Analysis: The problem is addressed on the spot to prevent recurrence.
+  - name: Continuous Improvement Loop (Kaizen)
+    description: The routine process for incrementally improving standard work.
+    loop:
+      - 1. Observe: A worker performs a task according to the documented standard.
+      - 2. Identify: The worker identifies a potential small improvement (e.g., in safety, quality, or efficiency).
+      - 3. Propose: The worker proposes a change to the standard.
+      - 4. Evaluate: The proposal is reviewed and tested.
+      - 5. Act: If successful, the documented standard is updated to the new method.
+  - name: Goal-Setting Negotiation Loop (Management & Departments)
+    description: The back-and-forth process for setting departmental objectives.
+    loop:
+      - 1. Propose: Top management decomposes annual objectives and hands them down.
+      - 2. Analyze: A department receives its target and analyzes its feasibility and requirements.
+      - 3. Push Back: The department negotiates back upward, arguing the target is wrong or requires unprovided resources.
+      - 4. Reconcile: A back-and-forth dialogue resolves the conflict.
+      - 5. Decide: A final, agreed-upon target is set for the department.
+  - name: Management Observation Loop (Go and See)
+    description: The process for managers to ground their understanding in reality.
+    loop:
+      - 1. Receive: A manager receives a report about a situation.
+      - 2. Assume Drift: The manager assumes the report has drifted from reality.
+      - 3. Act: The manager goes to the physical place (the gemba).
+      - 4. Observe: The manager looks at the physical thing or process directly.
+      - 5. Decide/Act: The manager's decisions are now based on direct observation, not the report.
+  - name: Bounded Problem-Solving (A3 Reporting)
+    description: The interaction for understanding and communicating a problem.
+    process:
+      - 1. Frame: A problem is identified.
+      - 2. Synthesize: All relevant information (background, current state, target, analysis, countermeasures, plan, follow-up) is synthesized.
+      - 3. Constrain: The synthesis is forced to fit onto a single A3 sheet.
+      - 4. Communicate: The resulting artifact is used to communicate the problem to others who were not involved.
+
+emergence:
+  - name: System Identity
+    description: The organization is perceived, and perceives itself, as an adaptive system designed to attack open questions and preserve information.
+    role: An emergent identity that shapes its own goals and justifies its unusual methods.
+  - name: Just-in-Time (JIT) Production Flow
+    description: A smooth, continuous flow of production where materials and products are available at the right time in the right quantity. This is not scheduled; it arises from the pull-based interactions.
+    role: The primary operational characteristic of the plant, highly efficient but brittle.
+  - name: Information Integrity
+    description: The system's ability to prevent the loss of information about the origin of defects. A defect passed downstream "destroys the information," so the system stops to preserve it.
+    role: A key emergent property that prioritizes learning over uninterrupted output.
+  - name: Distributed Authority
+    description: A state where the party with the most direct observation has the authority to act decisively (worker stopping the line), inverting the typical corporate hierarchy.
+    role: An emergent organizational structure.
+  - name: Organizational Adaptiveness (Learning)
+    description: The institutional capability to improve routinely and respond to unforeseen problems. This is the result of the Kaizen and Andon loops operating continuously.
+    role: The system's primary dynamic capability.
+  - name: Shared Understanding
+    description: The A3 process creates a common, concise, and portable understanding of problems that can be understood by people outside the immediate context.
+    role: An emergent cognitive property of the organization.
+  - name: Productive Tension
+    description: The conflict between optimizations at different timescales and organizational levels (e.g., station vs. platform) is surfaced and negotiated rather than suppressed.
+    role: An emergent dynamic that drives higher-level problem-solving.
+  - name: High-Trust vs. Low-Trust Culture
+    description: The "unwritten" social reality. The system is designed for a high-trust culture where workers feel safe to stop the line and propose changes. The actual emergent culture may vary, determining the system's true effectiveness.
+    role: The critical, emergent social layer that enables or disables the formal system's mechanisms.
+  - name: System Boundary
+    description: The definition of what is inside and outside the system. This includes the relationship with suppliers, whose willingness to "absorb a schedule change quietly" defines the softness of the boundary.
+    role: An emergent property defining the system's scope of control and influence.
+
+upward:
+  forces_to_interactions:
+    - The `Andon Cord Rule` (force) and the `High Cost of Downstream Defects` (force) enable and incentivize the `Problem Response Loop` (interaction).
+    - The `Documented Standard` (force) provides the necessary baseline for the `Continuous Improvement Loop (Kaizen)` (interaction).
+    - `Top-Down Annual Objectives` (force) initiate the `Goal-Setting Negotiation Loop` (interaction).
+    - The `Pull-Based Inventory` rule (force) drives the `Pull-Based Production Loop` (interaction).
+    - The `Doctrine of "Go and See"` (force) and the `Assumption of Report/Reality Drift` (force) mandate the `Management Observation Loop` (interaction).
+    - The `A3 One-Page Constraint` (force) structures the `Bounded Problem-Solving` interaction.
+  interactions_to_emergence:
+    - The `Pull-Based Production Loop` (interaction) produces the `Just-in-Time Production Flow` (emergence).
+    - The `Problem Response Loop` (interaction), by stopping the line, creates `Information Integrity` about defect origins (emergence).
+    - The combination of the `Problem Response Loop` and `Continuous Improvement Loop` (interactions) produces `Organizational Adaptiveness` (emergence).
+    - The `Problem Response Loop` (interaction) also actualizes `Distributed Authority` (emergence) by giving workers real power.
+    - The `Goal-Setting Negotiation Loop` (interaction) surfaces and manages `Productive Tension` (emergence) between organizational levels.
+    - The `Bounded Problem-Solving (A3)` interaction generates `Shared Understanding` (emergence) across the organization.
+    - The sum of daily interactions, especially supervisor responses to Andon pulls, determines the `High-Trust vs. Low-Trust Culture` (emergence).
+
+downward:
+  emergence_to_interactions:
+    - The `High-Trust vs. Low-Trust Culture` (emergence) critically determines whether a worker will initiate the `Problem Response Loop` (interaction) by pulling the cord.
+    - The `System Identity` as an adaptive organization (emergence) legitimizes and encourages engagement in the `Continuous Improvement Loop` (interaction).
+    - The brittleness of the `Just-in-Time Production Flow` (emergence) increases the urgency and importance of the `Problem Response Loop` (interaction).
+    - `Productive Tension` (emergence) is the medium in which the `Goal-Setting Negotiation Loop` (interaction) operates; it is what must be resolved.
+    - The `Distributed Authority` structure (emergence) reinforces the worker's role and decision-making power within the `Problem Response Loop` (interaction).
+  interactions_to_forces:
+    - The `Continuous Improvement Loop` (interaction) continuously updates and changes the `Documented Standard` (force), which is non-static by design.
+    - The `Goal-Setting Negotiation Loop` (interaction) transforms the initial `Top-Down Annual Objectives` (force) into a negotiated, co-owned target.
+    - Repeated use of the `Problem Response Loop` (interaction) can normalize stoppages, altering the `Political cost of a stoppage` (force) over time.
+    - The way managers perform the `Management Observation Loop` (interaction) reinforces or weakens the `Doctrine of "Go and See"` (force) for the whole organization.
+    - Successful outcomes from `Bounded Problem-Solving (A3)` (interaction) reinforce the value of the `A3 One-Page Constraint` (force), preventing it from being seen as mere bureaucracy.
