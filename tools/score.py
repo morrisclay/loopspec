@@ -219,23 +219,46 @@ def term_determinacy(encodings):
     if not pairs:
         return None, {"reason": "no source encoded independently more than once"}
 
-    scores, detail = [], []
+    from itertools import combinations
+    scores, detail, vendors = [], [], set()
     for key, encs in pairs:
-        a, b = encs[0], encs[1]
-        if a.get("encoded_by") == b.get("encoded_by"):
-            detail.append({"encodes": key, "skipped": "same encoder — not independent"})
-            continue
-        ja = jaccard(set(a.get("uses") or []), set(b.get("uses") or []))
-        je = jaccard(set(a.get("estimands") or []), set(b.get("estimands") or []))
-        la, lb = len(a.get("loops") or []), len(b.get("loops") or [])
-        jl = 1.0 if la == lb == 0 else min(la, lb) / max(la, lb) if max(la, lb) else 0.0
-        s = 0.5 * ja + 0.3 * je + 0.2 * jl
-        scores.append(s)
-        detail.append({"encodes": key, "score": round(s, 3),
-                       "primitive_jaccard": round(ja, 3), "estimand_jaccard": round(je, 3)})
+        for a, b in combinations(encs, 2):
+            if a.get("encoded_by") == b.get("encoded_by"):
+                continue  # same encoder is not an independent sample
+            ja = jaccard(set(a.get("uses") or []), set(b.get("uses") or []))
+            je = jaccard(set(a.get("estimands") or []), set(b.get("estimands") or []))
+            la, lb = len(a.get("loops") or []), len(b.get("loops") or [])
+            jl = 1.0 if la == lb == 0 else (min(la, lb) / max(la, lb) if max(la, lb) else 0.0)
+            s = 0.5 * ja + 0.3 * je + 0.2 * jl
+            scores.append(s)
+            vendors |= {vendor_of(a.get("encoded_by")), vendor_of(b.get("encoded_by"))}
+            detail.append({
+                "encodes": key, "pair": f"{a.get('encoded_by')} vs {b.get('encoded_by')}",
+                "score": round(s, 3), "primitive_jaccard": round(ja, 3),
+                "estimand_jaccard": round(je, 3), "loop_agreement": round(jl, 3),
+                "uses_only_a": sorted(set(a.get("uses") or []) - set(b.get("uses") or [])),
+                "uses_only_b": sorted(set(b.get("uses") or []) - set(a.get("uses") or [])),
+            })
     if not scores:
         return None, {"reason": "duplicate encodings exist but share an encoder", "detail": detail}
-    return sum(scores) / len(scores), {"pairs": detail}
+    caveat = None
+    if len(vendors) < 2:
+        caveat = (f"ALL encoders are from one vendor family ({sorted(vendors)}). Shared training "
+                  "bias inflates agreement, so this D is optimistic. A genuinely different "
+                  "family is needed for a trustworthy figure.")
+    return sum(scores) / len(scores), {"pairs": detail, "vendors": sorted(vendors),
+                                       "caveat": caveat}
+
+
+def vendor_of(model):
+    m = (model or "").lower()
+    for prefix, vendor in (("gpt", "openai"), ("o1", "openai"), ("o3", "openai"),
+                           ("o4", "openai"), ("codex", "openai"), ("claude", "anthropic"),
+                           ("gemini", "google"), ("grok", "xai"), ("deepseek", "deepseek"),
+                           ("qwen", "alibaba"), ("llama", "meta"), ("mistral", "mistral")):
+        if prefix in m:
+            return vendor
+    return "unknown"
 
 
 def jaccard(a, b):
@@ -307,7 +330,8 @@ def count_tokens(obj):
 
 def depth_of(obj, d=0):
     if isinstance(obj, dict):
-        return max([depth_of(v, d + 1) for k, v in obj.items() if not k.startswith("_")] or [d])
+        return max([depth_of(v, d + 1) for k, v in obj.items()
+                    if not str(k).startswith("_")] or [d])
     if isinstance(obj, list):
         return max([depth_of(v, d + 1) for v in obj] or [d])
     return d

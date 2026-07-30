@@ -60,6 +60,15 @@ primitives:
     tier: core
     depth: 1
     renamed_from: Observer
+    OPEN_QUESTION: >
+      The definition is broader than its author's own use of it. In independent encoding round
+      1, gpt-5-codex counted a thermostat's controller as a Party because it exercises
+      authority over an intervention; I counted only the householder. By the definition as
+      written, CODEX IS RIGHT — it admits any authority-exercising locus. I had been using it
+      to mean something narrower, closer to "an interested party that bears a consequence".
+      Either the definition narrows or the usage corrects. Unresolved.
+      Note the counter-evidence: parties on the hospital were identical 5/5 across encoders,
+      so the concept is well transmitted even where its edge is not.
     definition: >
       A locus that may hold estimates, hold desired conditions, exercise authority, and
       bear consequences. Need not be a person: a lymphocyte population is a party in the
@@ -235,6 +244,17 @@ primitives:
   - name: Loop
     tier: core
     depth: 3
+    OPEN_QUESTION: >
+      Granularity is undetermined and it is the worst divergence measured so far (0.333). On
+      the hospital I identified three loops by timescale; gpt-5-codex identified one. Both are
+      defensible from the prose because the catalog says nothing about where one loop ends and
+      another begins.
+      This is not a matter of taste: per research/flue_notes.md, one alarm per Durable Object
+      makes Loop the unit that maps to a DO, so a 3-vs-1 disagreement is a disagreement about
+      deployed architecture.
+      CANDIDATE RULE, not yet adopted: one loop per (timescale, closing intervention) pair.
+      Gives three here and matches the DO mapping. Must be tested against Toyota first, which
+      has five timescales and would fragment heavily under it.
     definition: >
       A closed cycle: signal, estimate, policy, intervention, world, signal. Carries its
       own time scale. Non-terminating by default.

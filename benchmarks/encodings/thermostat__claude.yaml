@@ -1,0 +1,96 @@
+encodes: thermostat
+set: seed
+domain: engineering
+encoded_by: claude-opus-5
+encoder_role: author-intent          # wrote both the catalog and the prose — NOT independent
+uses: [System, Boundary, Party, Estimand, Signal, Estimate, Estimator, DesiredCondition,
+       Intervention, Policy, Loop, Delay, TimeScale, Constraint]
+estimands: [room_comfort]
+parties: [householder]
+loops:
+  - name: temperature_regulation
+    timescale: seconds_sampling_minutes_effect
+    signal: hallway_air_temperature
+    intervention: fire_boiler
+
+breaks_declared: [goal_holder_mandatory, target_as_bare_number, signal_equals_estimand]
+breaks_handled: [goal_holder_mandatory, target_as_bare_number, signal_equals_estimand]
+
+surfaced:
+  - claim: >
+      The estimator is the identity function — the controller treats the signal AS the
+      estimand, and nothing in the system can detect when the two diverge.
+    decision_affected: whether to add or re-site a sensor, and whether any "smart" feature is
+      worth adding before the proxy gap is closed
+    audited: false
+  - claim: >
+      The deadband is a Constraint preventing relay oscillation, not a tolerance on the
+      desired condition.
+    decision_affected: tuning it trades relay lifetime against comfort — a tradeoff that
+      disappears entirely if it is modelled as measurement error
+    audited: false
+  - claim: >
+      No party inside the boundary holds the desired condition, so the system cannot
+      represent "the target is wrong."
+    decision_affected: any request for learning or adaptive behaviour requires first moving
+      the goal inside the boundary
+    audited: false
+
+reduces_to: classical_control_loop
+
+system:
+  name: domestic_heating
+  boundary:
+    inside: [sensor, controller, relay, boiler]
+    outside: [householder, house_thermal_mass, weather]
+    note: the goal-holder is outside; the regulated medium is partly outside
+  parties:
+    - id: householder
+      location: outside_boundary
+      holds: [desired_condition.comfort_target]
+      authority: [set_dial]
+  estimands:
+    - id: room_comfort
+      observable: false
+      note: what is cared about; never measured
+  signals:
+    - id: hallway_air_temperature
+      measures: room_comfort
+      fidelity: proxy
+      divergence_causes: [sun_on_wall, draught_under_door, closed_interior_door]
+      timescale: seconds
+  estimators:
+    - id: passthrough
+      from: [hallway_air_temperature]
+      to: room_comfort
+      form: identity
+      idempotency_basis: stateless
+      declared_flaw: assumes signal equals estimand; cannot detect divergence
+  desired_conditions:
+    - id: comfort_target
+      applies_to: room_comfort
+      held_by: householder
+      value: 20C
+      specification_status: specified
+  constraints:
+    - id: deadband
+      rule: no actuation within +/-0.5C of target
+      purpose: prevent relay chatter and boiler short-cycling
+      note: structural, not a tolerance on the target
+  interventions:
+    - id: fire_boiler
+      target: world
+      actuator: relay
+      authority: [controller]
+  delays:
+    - id: thermal_lag
+      applies_to: fire_boiler
+      magnitude: 15_to_40_min
+      note: heat continues arriving after actuation stops; overshoot source
+  policies:
+    - id: bang_bang
+      from: [room_comfort.estimate, comfort_target, deadband]
+      select: fire_boiler | idle
+  excluded_variables:
+    variables: [sensor_drift_over_years, per_room_occupancy, wind_direction]
+    note: all three are known to matter and are deliberately outside the model

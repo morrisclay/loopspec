@@ -1,0 +1,175 @@
+encodes: hospital
+set: seed
+domain: institution
+encoded_by: gpt-5-codex
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- Estimate
+- DesiredCondition
+- PreferenceOrdering
+- Consequence
+- Intervention
+- Policy
+- Loop
+- Delay
+- TimeScale
+- Resource
+estimands:
+- clinical_stability
+- functional_capacity
+- logistical_readiness
+- marginal_bed_value
+- patient_acceptability
+parties:
+- consultant
+- nurse
+- discharge_coordinator
+- bed_manager
+- patient
+loops:
+- name: discharge_bed_flow
+  timescale: hourly_pressure_with_daily_decision_gate
+  signal: bed_availability_and_party_specific_observations
+  intervention: discharge_patient
+breaks_declared:
+- multiple_party_estimates
+- authority_separate_from_information
+- partial_objectives
+- asymmetric_error_costs
+- incomplete_specification
+breaks_handled:
+- multiple_party_estimates
+- authority_separate_from_information
+- partial_objectives
+- asymmetric_error_costs
+- incomplete_specification
+surfaced: []
+reduces_to: null
+system:
+  System:
+    name: discharge_and_bed_flow
+    Boundary:
+      inside:
+      - ward_discharge_decisions
+      - bed_stock
+      - emergency_queue
+      outside:
+      - admission_generation
+      - care_homes
+      - family_transport
+      - pharmacy
+      - national_target_setter
+    excluded_variables:
+    - name: night_consultant_reachability
+      specification_status: unknown
+    - name: friday_care_home_acceptance
+      specification_status: unknown
+    - name: arrival_time_recording_practice
+      specification_status: unknown
+    - name: nurse_specific_credibility
+      specification_status: unknown
+  Party:
+  - consultant
+  - nurse
+  - discharge_coordinator
+  - bed_manager
+  - patient
+  Estimand:
+    consultant: clinical_stability
+    nurse: functional_capacity
+    discharge_coordinator: logistical_readiness
+    bed_manager: marginal_bed_value
+    patient: patient_acceptability
+  Signal:
+    consultant: daily_ward_round_observation
+    nurse: continuous_mobility_intake_and_fear_observation
+    discharge_coordinator: care_home_transport_and_pharmacy_status
+    bed_manager: live_beds_emergency_queue_and_four_hour_clock
+    patient: stated_wish_or_fear
+  Estimate:
+  - holder: consultant
+    estimand: clinical_stability
+    uncertainty: clinical
+  - holder: nurse
+    estimand: functional_capacity
+    uncertainty: qualitative_and_continuously_revised
+  - holder: discharge_coordinator
+    estimand: logistical_readiness
+    uncertainty: dependency_specific
+  - holder: bed_manager
+    estimand: marginal_bed_value
+    uncertainty: queue_dependent
+  - holder: patient
+    estimand: patient_acceptability
+    uncertainty: stated_and_changeable
+  DesiredCondition:
+    consultant: clinically_safe_discharge
+    nurse: functionally_safe_discharge
+    discharge_coordinator: executable_onward_arrangements
+    bed_manager: capacity_before_four_hour_breach
+    patient: own_preferred_place_and_timing
+  PreferenceOrdering:
+    type: partial
+    objectives:
+    - throughput
+    - safety
+    - cost
+    - staff_sustainability
+    - patient_preference
+    exchange_rates: unspecified
+  Consequence:
+    consultant: measured_readmission_and_individual_reflection
+    nurse: immediate_but_less_formal_unsafe_discharge_cost
+    discharge_coordinator: patient_occupies_bed_without_destination
+    bed_manager: reportable_breach_and_financial_cost
+    patient: unsafe_or_unwanted_discharge_or_prolonged_stay
+  Intervention:
+  - name: discharge_patient
+    target: world
+    authority:
+    - consultant
+  - name: document_safety_concern
+    target: world
+    authority:
+    - nurse
+  - name: arrange_onward_logistics
+    target: world
+    authority:
+    - discharge_coordinator
+  - name: apply_capacity_pressure
+    target: world
+    authority:
+    - bed_manager
+  Policy:
+    name: discharge_decision
+    inputs: party_specific_estimates
+    aggregation: none
+    rules:
+    - consultant_alone_authorizes_discharge
+    - documented_nurse_concern_effectively_blocks
+    - unavailable_logistics_delays
+    - bed_manager_pressure_changes_urgency_not_authority
+    - patient_has_no_formal_authority
+  Resource:
+    name: beds
+    stock: fixed
+  Delay:
+    clinical_reassessment: up_to_one_day
+    early_discharge_to_readmission: about_two_weeks
+    missing_logistics: potentially_indefinite
+  TimeScale:
+    bed_pressure: hourly
+    ward_round: daily
+    staffing: weekly
+    budget: quarterly
+    accreditation: multi_year
+  Loop:
+    name: discharge_bed_flow
+    cycle: bed_and_queue_signals_to_distinct_estimates_to_discharge_policy_to_bed_release_to_bed_signal
+    timescale: hourly_pressure_with_daily_decision_gate
+encoder_role: independent
+encoded_from: stripped catalog + stripped prose; no access to author intent

@@ -1,0 +1,107 @@
+encodes: thermostat
+set: seed
+domain: engineering
+encoded_by: gpt-5-codex
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- Estimate
+- Estimator
+- DesiredCondition
+- Consequence
+- Intervention
+- Policy
+- Loop
+- Delay
+- TimeScale
+estimands:
+- room_comfort
+parties:
+- controller
+- householder
+loops:
+- name: temperature_control
+  timescale: seconds
+  signal: hallway_air_temperature
+  intervention: set_boiler_state
+breaks_declared:
+- goal_holding_not_mandatory
+- target_not_just_number
+- signal_estimand_separation
+breaks_handled:
+- goal_holding_not_mandatory
+- target_not_just_number
+- signal_estimand_separation
+surfaced: []
+reduces_to: classical_control_loop
+system:
+  System:
+    name: thermostat_control
+    Boundary:
+      inside:
+      - sensor
+      - controller
+      - relay
+      - boiler
+      outside:
+      - householder
+      - room_use
+      - weather
+    excluded_variables:
+    - occupancy_and_room_priority
+    - long_term_sensor_drift
+    - wind_dependent_heating_response
+  Party:
+  - name: controller
+    location: inside
+    DesiredCondition: null
+  - name: householder
+    location: outside
+  Estimand:
+    name: room_comfort
+    directly_observable: false
+  Signal:
+    name: hallway_air_temperature
+    cadence: every_few_seconds
+    location: hallway_wall_at_1.5m
+  Estimator:
+    process: treat_hallway_temperature_as_comfort_proxy
+    idempotency_basis: same_sensor_report_and_setpoint
+  Estimate:
+    holder: controller
+    estimand: room_comfort
+    basis: hallway_air_temperature
+    uncertainty: proxy_error_unrepresented
+  DesiredCondition:
+    holder: householder
+    estimand: room_comfort
+    operational_setpoint: 20_celsius_hallway_air
+  Policy:
+    below_19.5_celsius: boiler_on
+    above_20.5_celsius: boiler_off
+    inside_deadband: retain_state
+    deadband_motive: prevent_relay_chatter_and_equipment_damage
+  Intervention:
+    name: set_boiler_state
+    target: world
+    authority:
+    - controller
+  Delay:
+    heat_to_room_air: 15_to_40_minutes
+    after_boiler_stops: residual_heat_continues
+  TimeScale:
+    sensing_and_switching: seconds
+    thermal_response: tens_of_minutes
+  Consequence:
+    bearer: householder
+    proxy_error: discomfort_or_wasted_heat
+    excessive_switching: relay_and_boiler_damage
+  Loop:
+    name: temperature_control
+    cycle: hallway_air_temperature_to_proxy_estimate_to_deadband_policy_to_boiler_to_hallway_air_temperature
+    timescale: seconds_with_delayed_thermal_response
+encoder_role: independent
+encoded_from: stripped catalog + stripped prose; no access to author intent
