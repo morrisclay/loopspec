@@ -112,6 +112,34 @@ def load_seed_sources():
 
 # ---------------------------------------------------------------- terms
 
+CANONICAL_RELS = ["measures", "estimates", "holds", "targets", "closes", "delays",
+                  "constrains", "authorizes", "consumes", "revises", "contains", "bears",
+                  "asserts", "replenishes", "produces"]
+
+
+def relation_usage(encodings):
+    """
+    Coverage for the EDGE vocabulary, on the same terms as primitives.
+
+    Primitives have had an orphan rule since the beginning — appear in <3 encodings or <2
+    domains and you are flagged. Relations never did, and the omission was expensive: three
+    relations were added from a single encoder's proposals and sat at zero uses across the
+    whole corpus, exactly the phantom pattern that got `Evidence` retired hours earlier.
+    """
+    from collections import Counter, defaultdict
+    use, dom = Counter(), defaultdict(set)
+    for enc in encodings:
+        if "error" in enc or "edges" not in enc:
+            continue
+        d = enc.get("domain", "?")
+        for e in enc.get("edges") or []:
+            r = e.get("rel")
+            if r:
+                use[r] += 1
+                dom[r].add(d)
+    return {r: {"uses": use.get(r, 0), "domains": len(dom.get(r, ()))} for r in CANONICAL_RELS}
+
+
 def term_simplicity(doc, encodings):
     prims = doc.get("primitives") or []
     core = [p for p in prims if p.get("tier") == "core"]
@@ -129,7 +157,14 @@ def term_simplicity(doc, encodings):
                or u["domains"] < MIN_DOMAINS_PER_PRIMITIVE]
     orphan_term = 1.0 - (len(orphans) / n) if n else 0.0
 
+    rels = relation_usage(encodings)
+    rel_orphans = [r for r, u in rels.items()
+                   if u["uses"] < MIN_BENCHMARKS_PER_PRIMITIVE
+                   or u["domains"] < MIN_DOMAINS_PER_PRIMITIVE]
+
     detail = {
+        "relation_usage": {r: f"{u['uses']}u/{u['domains']}d" for r, u in rels.items()},
+        "relation_orphans": rel_orphans,
         "core_count": n,
         "budget": budget,
         "over_budget": n > budget,
@@ -578,6 +613,8 @@ def main():
     partial = len(available) < 5 or g_neg is None or g_red is None
 
     hard = list(errors)
+    if s_d.get("relation_orphans"):
+        hard.append("RELATION ORPHANS (declared, never used): %s" % s_d["relation_orphans"])
     if s_d["over_budget"]:
         hard.append(f"PRIMITIVE BUDGET EXCEEDED: {s_d['core_count']} core > {s_d['budget']}")
     if g_neg == 0:
