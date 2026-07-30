@@ -1,0 +1,169 @@
+encodes: spacex
+set: adversarial
+domain: aerospace
+encoded_by: gemini-2.5-pro
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- Estimate
+- Estimator
+- DesiredCondition
+- Consequence
+- Intervention
+- Policy
+- Loop
+- TimeScale
+- Resource
+- Delay
+estimands:
+- vehicle_performance
+- failure_root_cause
+parties:
+- engineering_leadership
+nodes:
+- id: spacex_dev_practice
+  kind: System
+  description: The development practice at SpaceX, focused on making failure affordable to accelerate
+    learning.
+- id: company_boundary
+  kind: Boundary
+  description: The boundary of the company, which is actively managed via vertical integration.
+- id: engineering_leadership
+  kind: Party
+  description: The leadership group making strategic decisions about development.
+- id: vehicle_performance
+  kind: Estimand
+  description: The actual performance characteristics of a launch vehicle during flight.
+- id: failure_root_cause
+  kind: Estimand
+  description: The specific reason for an in-flight anomaly or failure.
+- id: flight_data
+  kind: Signal
+  description: Telemetry and other data gathered during a flight test.
+- id: inspected_hardware
+  kind: Signal
+  description: Evidence gathered from inspecting a recovered, flight-proven booster.
+- id: post_flight_analysis
+  kind: Estimator
+  idempotency_basis: Per-flight unique ID.
+  description: The process of analyzing flight data and hardware to understand performance and failures.
+- id: performance_estimate
+  kind: Estimate
+  description: The current understanding of the vehicle's performance and failure modes.
+- id: orbital_capability
+  kind: DesiredCondition
+  description: The goal of achieving a reliable orbital launch system.
+- id: project_failure
+  kind: Consequence
+  description: Failure to achieve the desired launch capability, borne by leadership.
+- id: bring_supplier_in_house
+  kind: Intervention
+  target: own-structure
+  motive: To shorten the delay and increase the fidelity of information about components.
+- id: develop_reusability
+  kind: Intervention
+  target: own-structure
+  motive: To reduce the cost of evidence acquisition and create a new evidence source (flown hardware).
+- id: increase_launch_cadence
+  kind: Intervention
+  target: own-structure
+  motive: To increase the rate of learning by prioritizing more attempts over better prediction.
+- id: launch_prototype
+  kind: Intervention
+  target: world
+  description: Launch a vehicle with the expectation that it may fail, to gather data.
+- id: development_policy
+  kind: Policy
+  description: A policy that prioritizes rapid iteration and high launch cadence over exhaustive
+    pre-flight analysis.
+- id: supplier_info_delay
+  kind: Delay
+  description: The time lag and information filtering that occurs when working with an external component
+    supplier.
+- id: prototypes
+  kind: Resource
+  description: The stock of vehicles available for testing.
+- id: development_loop
+  kind: Loop
+- id: months_timescale
+  kind: TimeScale
+  unit: months
+  value: 1-3
+edges:
+- from: spacex_dev_practice
+  to: company_boundary
+  rel: contains
+- from: spacex_dev_practice
+  to: engineering_leadership
+  rel: contains
+- from: engineering_leadership
+  to: project_failure
+  rel: bears
+- from: engineering_leadership
+  to: performance_estimate
+  rel: holds
+- from: engineering_leadership
+  to: orbital_capability
+  rel: holds
+- from: orbital_capability
+  to: vehicle_performance
+  rel: targets
+- from: flight_data
+  to: vehicle_performance
+  rel: measures
+- from: inspected_hardware
+  to: failure_root_cause
+  rel: measures
+- from: post_flight_analysis
+  to: performance_estimate
+  rel: estimates
+- from: engineering_leadership
+  to: bring_supplier_in_house
+  rel: authorizes
+- from: engineering_leadership
+  to: develop_reusability
+  rel: authorizes
+- from: engineering_leadership
+  to: increase_launch_cadence
+  rel: authorizes
+- from: engineering_leadership
+  to: launch_prototype
+  rel: authorizes
+- from: bring_supplier_in_house
+  to: company_boundary
+  rel: revises
+- from: launch_prototype
+  to: prototypes
+  rel: consumes
+- from: development_loop
+  to: months_timescale
+  rel: closes
+- from: development_loop
+  to: flight_data
+  rel: closes
+- from: development_loop
+  to: launch_prototype
+  rel: closes
+loops:
+- id: development_loop
+  timescale: months_timescale
+  signal: flight_data
+  intervention: launch_prototype
+breaks_declared:
+- interventions-act-outward
+- scoring-by-present-effect
+- evidence-cost-is-given
+- boundary-change-motive-elsewhere
+breaks_handled:
+- interventions-act-outward
+- scoring-by-present-effect
+- evidence-cost-is-given
+- boundary-change-motive-elsewhere
+surfaced: []
+reduces_to: null
+new_primitives_needed: []
+encoder_role: independent
+shape: canonical-graph

@@ -1,0 +1,295 @@
+uras_version: 0
+encodes: toyota
+set: adversarial
+domain: organization
+encoded_by: gpt-5-codex
+encoder_role: independent
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- Estimate
+- Estimator
+- DesiredCondition
+- PreferenceOrdering
+- Consequence
+- Intervention
+- Policy
+- Loop
+- Delay
+- TimeScale
+- Constraint
+- Revision
+estimands:
+- process_condition
+- method_effectiveness
+- objective_feasibility
+parties:
+- top_management
+- operating_levels
+- line_workers
+nodes:
+- id: toyota_production_system
+  kind: System
+- id: plant_boundary
+  kind: Boundary
+  scope: plant operations inside; suppliers outside
+- id: top_management
+  kind: Party
+  informal_influence: monthly output politics can discourage stoppages
+- id: operating_levels
+  kind: Party
+  informal_influence: each level may push assigned objectives back upward
+- id: line_workers
+  kind: Party
+  informal_influence: cord use depends on whether supervisors treat it as information
+- id: process_condition
+  kind: Estimand
+  includes:
+  - quality_at_source
+  - station_flow
+  - parts_need
+  - report_reality_alignment
+- id: method_effectiveness
+  kind: Estimand
+- id: objective_feasibility
+  kind: Estimand
+- id: direct_place_observation
+  kind: Signal
+  source: worker observation or manager inspection of the physical thing
+- id: consumed_bin_card
+  kind: Signal
+  source: downstream consumption of an exact quantity
+- id: method_trial_result
+  kind: Signal
+- id: objective_pushback
+  kind: Signal
+- id: process_state_estimate
+  kind: Estimate
+  uncertainty: qualitative; reports are presumed to drift from reality
+- id: method_effect_estimate
+  kind: Estimate
+  uncertainty: comparison with documented baseline
+- id: feasibility_estimate
+  kind: Estimate
+  uncertainty: negotiated and level-specific
+- id: direct_observation_estimator
+  kind: Estimator
+  idempotency_basis: place, physical item, observer, and observation time
+- id: kaizen_estimator
+  kind: Estimator
+  idempotency_basis: method revision and trial identifier
+- id: objective_estimator
+  kind: Estimator
+  idempotency_basis: objective, organizational level, and negotiation round
+- id: quality_at_source
+  kind: DesiredCondition
+  condition: stop rather than pass a suspected defect downstream
+- id: annual_objectives
+  kind: DesiredCondition
+  condition: top-level objectives decomposed subject to upward negotiation
+- id: local_preferences
+  kind: PreferenceOrdering
+  ordering: partial across local feasibility, quality, output, and platform effects
+- id: management_consequence
+  kind: Consequence
+  outcome: lost output, quality, and platform performance
+- id: level_consequence
+  kind: Consequence
+  outcome: responsibility for an infeasible accepted objective
+- id: worker_consequence
+  kind: Consequence
+  outcome: passed defect or informal penalty for stopping the line
+- id: pull_andon
+  kind: Intervention
+  target: world
+  effect: halt the whole line while origin information is fresh
+- id: replenish_exact_quantity
+  kind: Intervention
+  target: world
+- id: inspect_at_gemba
+  kind: Intervention
+  target: world
+  effect: replace report-only assessment with direct observation
+- id: adopt_method_change
+  kind: Intervention
+  target: own-structure
+  motive: make a tested improvement the new documented baseline
+- id: negotiate_objectives
+  kind: Intervention
+  target: own-structure
+  motive: surface conflicts between organizational levels and timescales
+- id: andon_policy
+  kind: Policy
+  mapping: direct problem observation to immediate line stop
+- id: kanban_policy
+  kind: Policy
+  mapping: consumed bin card to replacement of exactly that quantity
+- id: standardized_work
+  kind: Policy
+  mapping: current documented best method, used as a revisable baseline
+- id: standardized_work_revision
+  kind: Revision
+  regime: routine-incremental
+  change: tested method becomes the new standard
+- id: a3_limit
+  kind: Constraint
+  invariant: problem representation fits one readable A3 sheet
+- id: replenishment_lag
+  kind: Delay
+  lag: card travel and upstream replacement
+- id: station_cycles
+  kind: TimeScale
+  cadence: seconds
+- id: stoppage_response
+  kind: TimeScale
+  cadence: minutes
+- id: method_revision_days
+  kind: TimeScale
+  cadence: days
+- id: strategic_horizon
+  kind: TimeScale
+  cadence: months to years
+- id: kanban_loop
+  kind: Loop
+- id: andon_loop
+  kind: Loop
+- id: kaizen_loop
+  kind: Loop
+- id: strategy_negotiation_loop
+  kind: Loop
+edges:
+- from: toyota_production_system
+  to: plant_boundary
+  rel: contains
+- from: toyota_production_system
+  to: standardized_work
+  rel: contains
+- from: direct_place_observation
+  to: process_condition
+  rel: measures
+- from: consumed_bin_card
+  to: process_condition
+  rel: measures
+- from: method_trial_result
+  to: method_effectiveness
+  rel: measures
+- from: objective_pushback
+  to: objective_feasibility
+  rel: measures
+- from: direct_observation_estimator
+  to: process_state_estimate
+  rel: estimates
+- from: process_state_estimate
+  to: process_condition
+  rel: estimates
+- from: kaizen_estimator
+  to: method_effect_estimate
+  rel: estimates
+- from: method_effect_estimate
+  to: method_effectiveness
+  rel: estimates
+- from: objective_estimator
+  to: feasibility_estimate
+  rel: estimates
+- from: feasibility_estimate
+  to: objective_feasibility
+  rel: estimates
+- from: line_workers
+  to: process_state_estimate
+  rel: holds
+- from: operating_levels
+  to: feasibility_estimate
+  rel: holds
+- from: line_workers
+  to: quality_at_source
+  rel: holds
+- from: top_management
+  to: annual_objectives
+  rel: holds
+- from: operating_levels
+  to: local_preferences
+  rel: holds
+- from: quality_at_source
+  to: process_condition
+  rel: targets
+- from: annual_objectives
+  to: objective_feasibility
+  rel: targets
+- from: line_workers
+  to: pull_andon
+  rel: authorizes
+- from: operating_levels
+  to: negotiate_objectives
+  rel: authorizes
+- from: top_management
+  to: inspect_at_gemba
+  rel: authorizes
+- from: standardized_work_revision
+  to: standardized_work
+  rel: revises
+- from: a3_limit
+  to: standardized_work_revision
+  rel: constrains
+- from: replenishment_lag
+  to: consumed_bin_card
+  rel: delays
+- from: replenish_exact_quantity
+  to: kanban_loop
+  rel: closes
+- from: pull_andon
+  to: andon_loop
+  rel: closes
+- from: adopt_method_change
+  to: kaizen_loop
+  rel: closes
+- from: negotiate_objectives
+  to: strategy_negotiation_loop
+  rel: closes
+- from: top_management
+  to: management_consequence
+  rel: bears
+- from: operating_levels
+  to: level_consequence
+  rel: bears
+- from: line_workers
+  to: worker_consequence
+  rel: bears
+loops:
+- id: kanban_loop
+  timescale: station_cycles
+  signal: consumed_bin_card
+  intervention: replenish_exact_quantity
+- id: andon_loop
+  timescale: stoppage_response
+  signal: direct_place_observation
+  intervention: pull_andon
+- id: kaizen_loop
+  timescale: method_revision_days
+  signal: method_trial_result
+  intervention: adopt_method_change
+- id: strategy_negotiation_loop
+  timescale: strategic_horizon
+  signal: objective_pushback
+  intervention: negotiate_objectives
+excluded_variables:
+- supplier willingness to absorb schedule changes
+- supervisor reactions and monthly political cost beyond declared informal influence
+breaks_declared:
+- authority_follows_observation
+- single_goal_per_organization
+- documented_method_fixed
+- reports_track_reality
+- unbounded_encodings
+breaks_handled:
+- authority_follows_observation
+- single_goal_per_organization
+- documented_method_fixed
+- reports_track_reality
+- unbounded_encodings
+surfaced: []
+reduces_to: null
+new_primitives_needed: []
+shape: canonical-graph

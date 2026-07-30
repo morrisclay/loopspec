@@ -1,0 +1,337 @@
+uras_version: 0
+encodes: hop_aero
+set: adversarial
+domain: aerospace
+encoded_by: gpt-5-codex
+encoder_role: independent
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- Estimate
+- Estimator
+- DesiredCondition
+- PreferenceOrdering
+- Consequence
+- Intervention
+- Policy
+- Loop
+- Delay
+- TimeScale
+- Resource
+- Constraint
+estimands:
+- recoverable_flight_control
+- full_profile_viability
+- contested_delivery_capability
+- company_survival
+parties:
+- founders
+- air_force_program_office
+- regulator
+- investors
+nodes:
+- id: rook_program
+  kind: System
+- id: company_boundary
+  kind: Boundary
+  scope: Hop Aero inside; customer, funders, and regulators outside
+- id: founders
+  kind: Party
+- id: air_force_program_office
+  kind: Party
+  informal_influence: an internal champion may affect tranche and procurement decisions
+- id: regulator
+  kind: Party
+- id: investors
+  kind: Party
+- id: recoverable_flight_control
+  kind: Estimand
+  includes:
+  - lift
+  - stabilization
+  - propulsion
+- id: full_profile_viability
+  kind: Estimand
+  includes:
+  - thermal_survival
+  - transition_guidance
+  - clean_separation
+- id: contested_delivery_capability
+  kind: Estimand
+- id: company_survival
+  kind: Estimand
+- id: tether_results
+  kind: Signal
+  acquisition: low cost, repeatable, recoverable, narrow
+- id: low_altitude_results
+  kind: Signal
+  acquisition: intermediate cost and recoverability
+- id: full_profile_results
+  kind: Signal
+  acquisition: vehicle-consuming or vehicle-risking; sometimes available once
+- id: milestone_progress
+  kind: Signal
+  acquisition: observable each venture quarter
+- id: procurement_feedback
+  kind: Signal
+  acquisition: cheap to observe; budget-cycle gated
+- id: flight_control_estimate
+  kind: Estimate
+  uncertainty: test-bounded
+- id: viability_estimate
+  kind: Estimate
+  uncertainty: high until destructive-profile evidence exists
+- id: survival_estimate
+  kind: Estimate
+  uncertainty: milestone and runway dependent
+- id: test_estimator
+  kind: Estimator
+  idempotency_basis: vehicle, test configuration, run, and telemetry record
+- id: survival_estimator
+  kind: Estimator
+  idempotency_basis: milestone, financing period, and report revision
+- id: contested_delivery_requirement
+  kind: DesiredCondition
+  condition: cargo delivery into environments inaccessible to aircraft
+- id: founder_survival_condition
+  kind: DesiredCondition
+  condition: show fast progress before runway expires
+- id: staged_learning_order
+  kind: PreferenceOrdering
+  ordering: tether, then low altitude, then full profile; preserve reversibility where informative
+- id: founder_loss
+  kind: Consequence
+  outcome: company and years of work
+- id: air_force_loss
+  kind: Consequence
+  outcome: failed bet and political exposure beyond the contract
+- id: regulator_loss
+  kind: Consequence
+  outcome: public-safety downside with no upside from successful approval
+- id: investor_loss
+  kind: Consequence
+  outcome: one portfolio position
+- id: conduct_tether_test
+  kind: Intervention
+  target: own-structure
+  motive: buy narrow evidence while retaining the vehicle and containing failure
+- id: conduct_low_altitude_test
+  kind: Intervention
+  target: world
+  reversibility: intermediate
+- id: conduct_full_profile_test
+  kind: Intervention
+  target: world
+  reversibility: low
+- id: submit_requirement_argument
+  kind: Intervention
+  target: world
+  effect: slow formal argument; company cannot directly change the target
+- id: make_procurement_decision
+  kind: Intervention
+  target: world
+  reversibility: low
+- id: staged_test_policy
+  kind: Policy
+  mapping: advance instruments only when cheaper evidence supports doing so
+- id: financing_policy
+  kind: Policy
+  mapping: select demonstrable milestones on a quarterly survival clock
+- id: formal_customer_policy
+  kind: Policy
+  mapping: Air Force requirement and budget process govern procurement
+- id: test_vehicles
+  kind: Resource
+  stock: small and costly
+- id: runway
+  kind: Resource
+  stock: venture-funded months and quarters
+- id: operating_permissions
+  kind: Constraint
+  invariants:
+  - range_safety_approval
+  - launch_licensing
+  - export_control
+- id: procurement_delay
+  kind: Delay
+  lag: formal channels and annual budget cycles
+- id: prototype_weeks
+  kind: TimeScale
+  cadence: weeks to months
+- id: venture_quarters
+  kind: TimeScale
+  cadence: quarters
+- id: procurement_years
+  kind: TimeScale
+  cadence: years
+- id: tether_learning_loop
+  kind: Loop
+- id: profile_learning_loop
+  kind: Loop
+- id: venture_survival_loop
+  kind: Loop
+- id: customer_loop
+  kind: Loop
+edges:
+- from: rook_program
+  to: company_boundary
+  rel: contains
+- from: tether_results
+  to: recoverable_flight_control
+  rel: measures
+- from: low_altitude_results
+  to: recoverable_flight_control
+  rel: measures
+- from: full_profile_results
+  to: full_profile_viability
+  rel: measures
+- from: milestone_progress
+  to: company_survival
+  rel: measures
+- from: procurement_feedback
+  to: contested_delivery_capability
+  rel: measures
+- from: test_estimator
+  to: flight_control_estimate
+  rel: estimates
+- from: test_estimator
+  to: viability_estimate
+  rel: estimates
+- from: flight_control_estimate
+  to: recoverable_flight_control
+  rel: estimates
+- from: viability_estimate
+  to: full_profile_viability
+  rel: estimates
+- from: survival_estimator
+  to: survival_estimate
+  rel: estimates
+- from: survival_estimate
+  to: company_survival
+  rel: estimates
+- from: founders
+  to: flight_control_estimate
+  rel: holds
+- from: founders
+  to: viability_estimate
+  rel: holds
+- from: founders
+  to: founder_survival_condition
+  rel: holds
+- from: founders
+  to: staged_learning_order
+  rel: holds
+- from: air_force_program_office
+  to: contested_delivery_requirement
+  rel: holds
+- from: contested_delivery_requirement
+  to: contested_delivery_capability
+  rel: targets
+- from: founder_survival_condition
+  to: company_survival
+  rel: targets
+- from: founders
+  to: conduct_tether_test
+  rel: authorizes
+- from: founders
+  to: conduct_low_altitude_test
+  rel: authorizes
+- from: founders
+  to: conduct_full_profile_test
+  rel: authorizes
+- from: founders
+  to: submit_requirement_argument
+  rel: authorizes
+- from: air_force_program_office
+  to: make_procurement_decision
+  rel: authorizes
+- from: conduct_tether_test
+  to: test_vehicles
+  rel: consumes
+- from: conduct_low_altitude_test
+  to: test_vehicles
+  rel: consumes
+- from: conduct_full_profile_test
+  to: test_vehicles
+  rel: consumes
+- from: conduct_tether_test
+  to: runway
+  rel: consumes
+- from: conduct_full_profile_test
+  to: runway
+  rel: consumes
+- from: operating_permissions
+  to: conduct_low_altitude_test
+  rel: constrains
+- from: operating_permissions
+  to: conduct_full_profile_test
+  rel: constrains
+- from: procurement_delay
+  to: procurement_feedback
+  rel: delays
+- from: conduct_tether_test
+  to: tether_learning_loop
+  rel: closes
+- from: conduct_full_profile_test
+  to: profile_learning_loop
+  rel: closes
+- from: conduct_low_altitude_test
+  to: venture_survival_loop
+  rel: closes
+- from: submit_requirement_argument
+  to: customer_loop
+  rel: closes
+- from: founders
+  to: founder_loss
+  rel: bears
+- from: air_force_program_office
+  to: air_force_loss
+  rel: bears
+- from: regulator
+  to: regulator_loss
+  rel: bears
+- from: investors
+  to: investor_loss
+  rel: bears
+loops:
+- id: tether_learning_loop
+  timescale: prototype_weeks
+  signal: tether_results
+  intervention: conduct_tether_test
+- id: profile_learning_loop
+  timescale: prototype_weeks
+  signal: full_profile_results
+  intervention: conduct_full_profile_test
+- id: venture_survival_loop
+  timescale: venture_quarters
+  signal: milestone_progress
+  intervention: conduct_low_altitude_test
+- id: customer_loop
+  timescale: procurement_years
+  signal: procurement_feedback
+  intervention: submit_requirement_argument
+excluded_variables:
+- whether the contract is procurement or a terminating research line
+- which failures read as learning rather than incompetence
+- whether the container requirement is real demand or pitch framing
+breaks_declared:
+- observation_is_cheap_or_repeatable
+- cost_equals_irreversibility
+- goal_holder_must_be_inside
+- single_clock
+- constraints_are_weighted_objectives
+- error_costs_are_shared
+breaks_handled:
+- observation_is_cheap_or_repeatable
+- cost_equals_irreversibility
+- goal_holder_must_be_inside
+- single_clock
+- constraints_are_weighted_objectives
+- error_costs_are_shared
+surfaced: []
+reduces_to: null
+new_primitives_needed: []
+shape: canonical-graph

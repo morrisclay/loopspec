@@ -1,0 +1,197 @@
+uras_version: 0
+encodes: spacex
+set: adversarial
+domain: aerospace
+encoded_by: gpt-5-codex
+encoder_role: independent
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- Estimate
+- Estimator
+- DesiredCondition
+- PreferenceOrdering
+- Consequence
+- Intervention
+- Policy
+- Loop
+- Delay
+- TimeScale
+- Resource
+- Revision
+estimands:
+- vehicle_behavior
+- evidence_cycle
+parties:
+- engineering_leadership
+nodes:
+- id: spacex_development
+  kind: System
+- id: production_boundary
+  kind: Boundary
+  scope: component work moved from suppliers into the company
+- id: engineering_leadership
+  kind: Party
+- id: vehicle_behavior
+  kind: Estimand
+  includes:
+  - flight_failure_modes
+  - flown_component_condition
+- id: evidence_cycle
+  kind: Estimand
+  includes:
+  - flight_cadence
+  - question_answer_delay
+  - evidence_cost
+- id: flight_outcome
+  kind: Signal
+  acquisition: real flight; expected failures count as data
+- id: recovered_hardware_condition
+  kind: Signal
+  acquisition: post-flight inspection without destroying the booster
+- id: internal_component_answer
+  kind: Signal
+  acquisition: direct, same-afternoon access
+- id: behavior_estimate
+  kind: Estimate
+  uncertainty: empirical and configuration-specific
+- id: development_estimator
+  kind: Estimator
+  idempotency_basis: vehicle, configuration, flight, and telemetry record
+- id: affordable_learning
+  kind: DesiredCondition
+  condition: failures cheap enough for repeated flight
+- id: empirical_learning_order
+  kind: PreferenceOrdering
+  ordering: more real attempts before better prediction per attempt
+- id: development_consequence
+  kind: Consequence
+  outcome: vehicle, schedule, and public failure exposure
+- id: fly_prototype
+  kind: Intervention
+  target: world
+- id: vertical_integration
+  kind: Intervention
+  target: own-structure
+  motive: remove commercial filtering and shorten component-answer delay
+- id: recover_booster
+  kind: Intervention
+  target: own-structure
+  motive: preserve flown hardware as future evidence and lower repeat cost
+- id: increase_flight_cadence
+  kind: Intervention
+  target: own-structure
+  motive: increase otherwise unavailable evidence per unit time
+- id: iterative_flight_policy
+  kind: Policy
+  mapping: build, fly, learn from failure, revise, and fly again
+- id: flight_articles
+  kind: Resource
+  stock: made replaceable enough to spend repeatedly
+- id: supplier_delay
+  kind: Delay
+  lag: commercial schedule and filtered disclosure
+- id: supplier_boundary_revision
+  kind: Revision
+  regime: episodic-discontinuous
+  change: supplier-owned component work became in-house work
+- id: flight_weeks
+  kind: TimeScale
+  cadence: repeated flight cadence
+- id: inspection_days
+  kind: TimeScale
+  cadence: post-flight inspection
+- id: flight_learning_loop
+  kind: Loop
+- id: hardware_learning_loop
+  kind: Loop
+edges:
+- from: spacex_development
+  to: production_boundary
+  rel: contains
+- from: flight_outcome
+  to: vehicle_behavior
+  rel: measures
+- from: recovered_hardware_condition
+  to: vehicle_behavior
+  rel: measures
+- from: internal_component_answer
+  to: evidence_cycle
+  rel: measures
+- from: development_estimator
+  to: behavior_estimate
+  rel: estimates
+- from: behavior_estimate
+  to: vehicle_behavior
+  rel: estimates
+- from: engineering_leadership
+  to: behavior_estimate
+  rel: holds
+- from: engineering_leadership
+  to: affordable_learning
+  rel: holds
+- from: engineering_leadership
+  to: empirical_learning_order
+  rel: holds
+- from: affordable_learning
+  to: evidence_cycle
+  rel: targets
+- from: engineering_leadership
+  to: fly_prototype
+  rel: authorizes
+- from: engineering_leadership
+  to: vertical_integration
+  rel: authorizes
+- from: engineering_leadership
+  to: recover_booster
+  rel: authorizes
+- from: engineering_leadership
+  to: increase_flight_cadence
+  rel: authorizes
+- from: fly_prototype
+  to: flight_articles
+  rel: consumes
+- from: supplier_delay
+  to: internal_component_answer
+  rel: delays
+- from: supplier_boundary_revision
+  to: production_boundary
+  rel: revises
+- from: fly_prototype
+  to: flight_learning_loop
+  rel: closes
+- from: recover_booster
+  to: hardware_learning_loop
+  rel: closes
+- from: engineering_leadership
+  to: development_consequence
+  rel: bears
+loops:
+- id: flight_learning_loop
+  timescale: flight_weeks
+  signal: flight_outcome
+  intervention: fly_prototype
+- id: hardware_learning_loop
+  timescale: inspection_days
+  signal: recovered_hardware_condition
+  intervention: recover_booster
+excluded_variables:
+- public_failure_framing
+- uncomputed_failure_modes
+breaks_declared:
+- interventions_act_only_outward
+- present_world_effect_only
+- evidence_cost_is_given
+- boundary_change_reason_recorded_elsewhere
+breaks_handled:
+- interventions_act_only_outward
+- present_world_effect_only
+- evidence_cost_is_given
+- boundary_change_reason_recorded_elsewhere
+surfaced: []
+reduces_to: null
+new_primitives_needed: []
+shape: canonical-graph

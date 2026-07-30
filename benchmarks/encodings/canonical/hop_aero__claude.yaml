@@ -1,0 +1,168 @@
+uras_version: 0
+encodes: hop_aero
+set: adversarial
+domain: aerospace
+encoded_by: claude-opus-5
+encoder_role: author-intent
+shape: canonical-graph
+
+uses: [System, Boundary, Party, Estimand, Signal, Estimate, Estimator, DesiredCondition,
+       Consequence, Intervention, Policy, Loop, Delay, TimeScale, Resource, Constraint]
+estimands: [airframe_survivability, guidance_stability, separation_reliability,
+            commercial_viability, programme_confidence]
+parties: [founders, air_force, regulator, investors]
+
+nodes:
+  - {id: company, kind: System, name: hop_aero}
+  - {id: edge, kind: Boundary, inside: [founders, engineers, test_rig],
+     outside: [air_force, regulator, investors, launch_range]}
+
+  - {id: founders, kind: Party}
+  - {id: air_force, kind: Party, location: outside_boundary,
+     note: customer, part-funder and eventual operator simultaneously}
+  - {id: regulator, kind: Party, location: outside_boundary}
+  - {id: investors, kind: Party, location: outside_boundary}
+
+  - {id: c_founders, kind: Consequence, borne_by: founders, measured: false,
+     severity: company_and_years}
+  - {id: c_airforce, kind: Consequence, borne_by: air_force, measured: partial,
+     severity: failed_bet_plus_political_exposure}
+  - {id: c_regulator, kind: Consequence, borne_by: regulator, measured: false,
+     severity: public_safety, upside: none,
+     note: best outcome is nothing happening — pure downside, structurally}
+  - {id: c_investors, kind: Consequence, borne_by: investors, measured: true,
+     severity: one_position_in_a_portfolio}
+
+  - {id: airframe_survivability, kind: Estimand, observable: false,
+     settled_by: flying the profile and recovering or losing the vehicle}
+  - {id: guidance_stability, kind: Estimand, observable: false,
+     settled_by: a tethered or free flight through the control transition}
+  - {id: separation_reliability, kind: Estimand, observable: false,
+     settled_by: a staged flight test}
+  - {id: commercial_viability, kind: Estimand, observable: false,
+     settled_by: whether procurement converts to a programme of record}
+  - {id: programme_confidence, kind: Estimand, observable: false,
+     settled_by: the next tranche decision}
+
+  - {id: tether_telemetry, kind: Signal, frequency: per-test, cost: low,
+     reversibility: repeatable}
+  - {id: free_flight_telemetry, kind: Signal, frequency: rare, cost: catastrophic,
+     reversibility: irreversible}
+  - {id: contract_signal, kind: Signal, frequency: per-budget-cycle, cost: low,
+     reversibility: irreversible, note: cheap to observe, irreversible in effect}
+  - {id: cash_position, kind: Signal, frequency: monthly, cost: none}
+
+  - {id: e_founders_tech, kind: Estimate, held_by: founders, uncertainty: ordinal}
+  - {id: e_airforce_prog, kind: Estimate, held_by: air_force, uncertainty: ordinal}
+  - {id: e_investors_comm, kind: Estimate, held_by: investors, uncertainty: ordinal}
+
+  - {id: test_analysis, kind: Estimator, idempotency_basis: per_test_article_id}
+  - {id: procurement_review, kind: Estimator, idempotency_basis: per_tranche_id}
+
+  - {id: usaf_requirement, kind: DesiredCondition, held_by: air_force,
+     note: delivery to contested environments — specified outside the boundary, arriving
+       with a contract attached}
+  - {id: survive_to_next_raise, kind: DesiredCondition, held_by: founders}
+
+  - {id: tethered_test, kind: Intervention, target: own-structure,
+     motive: buy a narrow answer cheaply and reversibly that would otherwise need an
+       expensive irreversible test}
+  - {id: free_flight_test, kind: Intervention, target: world}
+  - {id: argue_requirement, kind: Intervention, target: own-structure,
+     motive: the only channel available for changing an externally held target — slow,
+       formal, and routed through people whose incentives differ}
+  - {id: raise_capital, kind: Intervention, target: world}
+
+  - {id: test_sequence, kind: Policy,
+     form: tether_then_low_altitude_then_full_profile,
+     note: the sequence of instruments is itself designed, not a smaller version of the
+       real test}
+  - {id: range_safety, kind: Constraint, rule: launch licence and range approval,
+     tradeable: false}
+  - {id: export_control, kind: Constraint, rule: ITAR on propulsion and guidance,
+     tradeable: false,
+     note: violation ends the company or imprisons someone; no amount of speed compensates}
+
+  - {id: t_weeks, kind: TimeScale, period: weeks}
+  - {id: t_months, kind: TimeScale, period: months}
+  - {id: t_years, kind: TimeScale, period: years}
+  - {id: procurement_lag, kind: Delay, magnitude: years,
+     note: decision points set by budget cycles nobody in the company influences}
+  - {id: runway, kind: Resource, depletable: true}
+  - {id: vehicles, kind: Resource, depletable: true,
+     note: consumed by the act of finding out}
+
+edges:
+  - {from: company, to: edge, rel: contains}
+  - {from: founders, to: c_founders, rel: bears}
+  - {from: air_force, to: c_airforce, rel: bears}
+  - {from: regulator, to: c_regulator, rel: bears}
+  - {from: investors, to: c_investors, rel: bears}
+
+  - {from: tether_telemetry, to: guidance_stability, rel: measures}
+  - {from: free_flight_telemetry, to: airframe_survivability, rel: measures}
+  - {from: free_flight_telemetry, to: separation_reliability, rel: measures}
+  - {from: contract_signal, to: programme_confidence, rel: measures}
+
+  - {from: test_analysis, to: e_founders_tech, rel: estimates}
+  - {from: procurement_review, to: e_airforce_prog, rel: estimates}
+
+  - {from: founders, to: e_founders_tech, rel: holds}
+  - {from: air_force, to: e_airforce_prog, rel: holds}
+  - {from: investors, to: e_investors_comm, rel: holds}
+  - {from: air_force, to: usaf_requirement, rel: holds}
+  - {from: founders, to: survive_to_next_raise, rel: holds}
+  - {from: usaf_requirement, to: commercial_viability, rel: targets}
+
+  - {from: founders, to: tethered_test, rel: authorizes}
+  - {from: founders, to: free_flight_test, rel: authorizes}
+  - {from: founders, to: argue_requirement, rel: authorizes}
+  - {from: founders, to: raise_capital, rel: authorizes}
+
+  - {from: range_safety, to: free_flight_test, rel: constrains}
+  - {from: export_control, to: free_flight_test, rel: constrains}
+  - {from: free_flight_test, to: vehicles, rel: consumes}
+  - {from: tethered_test, to: runway, rel: consumes}
+  - {from: test_sequence, to: free_flight_test, rel: closes}
+  - {from: tethered_test, to: test_sequence, rel: revises}
+  - {from: argue_requirement, to: usaf_requirement, rel: revises}
+  - {from: procurement_lag, to: raise_capital, rel: delays}
+
+loops:
+  - {id: technical_learning, timescale: t_weeks, signal: tether_telemetry,
+     intervention: tethered_test}
+  - {id: flight_qualification, timescale: t_months, signal: free_flight_telemetry,
+     intervention: free_flight_test}
+  - {id: programme_survival, timescale: t_years, signal: contract_signal,
+     intervention: argue_requirement}
+
+excluded_variables: [which_programme_officer_champions_this,
+                     whether_the_contract_is_a_real_procurement_path,
+                     which_failures_read_as_learning_vs_incompetence]
+
+breaks_declared: [observation_cheap_and_repeatable, cost_conflated_with_irreversibility,
+                  goal_holder_must_be_inside, single_clock,
+                  constraints_as_weighted_objectives, shared_error_costs]
+breaks_handled: [observation_cheap_and_repeatable, cost_conflated_with_irreversibility,
+                 goal_holder_must_be_inside, single_clock,
+                 constraints_as_weighted_objectives, shared_error_costs]
+surfaced: []
+reduces_to: null
+
+new_primitives_needed: []
+
+convergence_note: >
+  Empty again. The three features I expected to strain the catalog did not.
+
+  Cost and reversibility come apart cleanly as separate Signal attributes — the tether is
+  cheap and repeatable, a free flight is catastrophic and irreversible, and a procurement
+  decision is cheap to observe yet irreversible in effect. Three distinct combinations, all
+  expressible without a new primitive.
+
+  An externally held DesiredCondition needs no new machinery: the Air Force is a Party
+  outside the Boundary holding a DesiredCondition, and the only act available to the company
+  is an own-structure Intervention that revises it slowly through a channel it does not
+  control.
+
+  Non-tradeable constraints are already distinguished from desired conditions by Constraint
+  itself, which is what that primitive exists for.

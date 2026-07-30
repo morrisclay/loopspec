@@ -1,0 +1,269 @@
+encodes: toyota
+set: adversarial
+domain: organization
+encoded_by: gemini-2.5-pro
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- Estimate
+- Estimator
+- DesiredCondition
+- Consequence
+- Intervention
+- Policy
+- Loop
+- TimeScale
+- Resource
+- Constraint
+- Revision
+estimands:
+- defect_state
+- process_efficiency
+- reported_vs_actual_state
+parties:
+- line_worker
+- plant_management
+- department_management
+nodes:
+- id: tps
+  kind: System
+  description: The Toyota Production System at a single plant.
+- id: plant_boundary
+  kind: Boundary
+  description: The boundary of the manufacturing plant.
+- id: line_worker
+  kind: Party
+  description: A worker on the assembly line with direct observation of the process.
+- id: plant_management
+  kind: Party
+  description: Top-level management for the plant, sets overall objectives.
+- id: department_management
+  kind: Party
+  description: Mid-level management responsible for a specific department or process area.
+- id: defect_state
+  kind: Estimand
+  description: Whether a defect exists in a part or assembly at a given station.
+- id: process_efficiency
+  kind: Estimand
+  description: The current efficiency and correctness of a standardized work process.
+- id: reported_vs_actual_state
+  kind: Estimand
+  description: The divergence between formal reports and the physical reality of the plant floor.
+- id: worker_observation
+  kind: Signal
+  description: A line worker directly seeing a problem with a part or process.
+- id: performance_report
+  kind: Signal
+  description: A periodic report on production metrics, assumed to drift from reality.
+- id: direct_observation
+  kind: Signal
+  description: A manager going to the physical place (gemba) to observe the work.
+- id: worker_defect_estimate
+  kind: Estimate
+  description: A worker's immediate assessment that a defect is present.
+- id: management_state_estimate
+  kind: Estimate
+  description: Management's assessment of plant status, derived from reports or direct observation.
+- id: worker_as_estimator
+  kind: Estimator
+  idempotency_basis: Per-vehicle observation at a specific station.
+  description: The worker at the station acts as the primary estimator for local defects.
+- id: manager_as_estimator
+  kind: Estimator
+  idempotency_basis: Per-visit observation or per-report analysis.
+  description: A manager estimating plant state, either via reports or direct observation.
+- id: zero_defects
+  kind: DesiredCondition
+  description: The goal of having no defects passed downstream.
+- id: negotiated_targets
+  kind: DesiredCondition
+  description: Production targets that have been negotiated between management levels.
+- id: missed_production_target
+  kind: Consequence
+  description: Failure to meet production goals, a consequence borne by management.
+- id: incorrect_line_stop
+  kind: Consequence
+  description: The social or professional cost to a worker for stopping the line unnecessarily.
+- id: pull_andon_cord
+  kind: Intervention
+  target: world
+  description: Stop the entire assembly line in response to a perceived defect.
+- id: go_to_gemba
+  kind: Intervention
+  target: world
+  description: A manager physically goes to the location of work to observe reality.
+- id: revise_standard_work
+  kind: Revision
+  regime: routine-incremental
+  description: Proposing and implementing an improvement to a documented work standard.
+- id: negotiate_goals
+  kind: Intervention
+  target: own-structure
+  motive: To align top-down objectives with bottom-up reality of what is achievable.
+  description: The formal back-and-forth process to set departmental goals.
+- id: andon_policy
+  kind: Policy
+  description: Any worker who sees a problem should pull the andon cord.
+- id: kaizen_policy
+  kind: Policy
+  description: Workers are expected to continuously propose improvements to the standard work.
+- id: genchi_genbutsu_policy
+  kind: Policy
+  description: Managers must not rely on reports and should go and see for themselves.
+- id: a3_report_constraint
+  kind: Constraint
+  description: A problem write-up must fit on a single A3-sized sheet of paper.
+- id: production_time
+  kind: Resource
+  description: The available time for the line to be running and producing vehicles.
+- id: andon_loop
+  kind: Loop
+- id: kaizen_loop
+  kind: Loop
+- id: genchi_genbutsu_loop
+  kind: Loop
+- id: timescale_minutes
+  kind: TimeScale
+  unit: minutes
+  value: 1-10
+- id: timescale_days
+  kind: TimeScale
+  unit: days
+  value: 1-14
+- id: timescale_hours
+  kind: TimeScale
+  unit: hours
+  value: 1-8
+edges:
+- from: tps
+  to: plant_boundary
+  rel: contains
+- from: tps
+  to: line_worker
+  rel: contains
+- from: tps
+  to: plant_management
+  rel: contains
+- from: tps
+  to: department_management
+  rel: contains
+- from: line_worker
+  to: worker_defect_estimate
+  rel: holds
+- from: plant_management
+  to: management_state_estimate
+  rel: holds
+- from: plant_management
+  to: zero_defects
+  rel: holds
+- from: department_management
+  to: negotiated_targets
+  rel: holds
+- from: line_worker
+  to: incorrect_line_stop
+  rel: bears
+- from: plant_management
+  to: missed_production_target
+  rel: bears
+- from: department_management
+  to: missed_production_target
+  rel: bears
+- from: worker_observation
+  to: defect_state
+  rel: measures
+- from: performance_report
+  to: reported_vs_actual_state
+  rel: measures
+- from: direct_observation
+  to: reported_vs_actual_state
+  rel: measures
+- from: worker_as_estimator
+  to: worker_defect_estimate
+  rel: estimates
+- from: manager_as_estimator
+  to: management_state_estimate
+  rel: estimates
+- from: zero_defects
+  to: defect_state
+  rel: targets
+- from: negotiated_targets
+  to: process_efficiency
+  rel: targets
+- from: line_worker
+  to: pull_andon_cord
+  rel: authorizes
+- from: line_worker
+  to: revise_standard_work
+  rel: revises
+- from: department_management
+  to: negotiate_goals
+  rel: authorizes
+- from: plant_management
+  to: go_to_gemba
+  rel: authorizes
+- from: pull_andon_cord
+  to: production_time
+  rel: consumes
+- from: a3_report_constraint
+  to: revise_standard_work
+  rel: constrains
+- from: andon_loop
+  to: timescale_minutes
+  rel: closes
+- from: andon_loop
+  to: worker_observation
+  rel: closes
+- from: andon_loop
+  to: pull_andon_cord
+  rel: closes
+- from: kaizen_loop
+  to: timescale_days
+  rel: closes
+- from: kaizen_loop
+  to: worker_observation
+  rel: closes
+- from: kaizen_loop
+  to: revise_standard_work
+  rel: closes
+- from: genchi_genbutsu_loop
+  to: timescale_hours
+  rel: closes
+- from: genchi_genbutsu_loop
+  to: performance_report
+  rel: closes
+- from: genchi_genbutsu_loop
+  to: go_to_gemba
+  rel: closes
+loops:
+- id: andon_loop
+  timescale: timescale_minutes
+  signal: worker_observation
+  intervention: pull_andon_cord
+- id: kaizen_loop
+  timescale: timescale_days
+  signal: worker_observation
+  intervention: revise_standard_work
+- id: genchi_genbutsu_loop
+  timescale: timescale_hours
+  signal: performance_report
+  intervention: go_to_gemba
+breaks_declared:
+- authority-vs-observation
+- single-goal
+- fixed-method
+- reports-track-reality
+- unbounded-encodings
+breaks_handled:
+- authority-vs-observation
+- single-goal
+- fixed-method
+- reports-track-reality
+- unbounded-encodings
+surfaced: []
+reduces_to: null
+new_primitives_needed: []
+encoder_role: independent
+shape: canonical-graph

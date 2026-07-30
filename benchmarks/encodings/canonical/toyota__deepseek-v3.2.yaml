@@ -1,0 +1,270 @@
+uras_version: 0
+encodes: toyota
+set: adversarial
+domain: organization
+encoded_by: deepseek-v3.2
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- Estimate
+- Estimator
+- DesiredCondition
+- PreferenceOrdering
+- Consequence
+- Intervention
+- Policy
+- Loop
+- Delay
+- TimeScale
+- Resource
+- Constraint
+- Revision
+estimands:
+- plant_output_quality
+- station_cycle_time
+- defect_location_info
+- report_reality_gap
+- improvement_progress
+parties:
+- top_management
+- line_worker
+- department_head
+- supervisor
+nodes:
+- id: toyota_production_system
+  kind: System
+- id: plant_boundary
+  kind: Boundary
+- id: top_management
+  kind: Party
+- id: line_worker
+  kind: Party
+- id: department_head
+  kind: Party
+- id: supervisor
+  kind: Party
+- id: plant_output_quality
+  kind: Estimand
+- id: station_cycle_time
+  kind: Estimand
+- id: defect_location_info
+  kind: Estimand
+- id: report_reality_gap
+  kind: Estimand
+- id: improvement_progress
+  kind: Estimand
+- id: observed_defect
+  kind: Signal
+- id: physical_inspection
+  kind: Signal
+- id: quality_report
+  kind: Signal
+- id: defect_location_info_estimate
+  kind: Estimate
+- id: report_reality_gap_estimate
+  kind: Estimate
+- id: defect_observation_estimator
+  kind: Estimator
+  idempotency_basis: physical_observation
+- id: gemba_estimator
+  kind: Estimator
+  idempotency_basis: physical_inspection
+- id: high_quality_target
+  kind: DesiredCondition
+- id: fast_cycle_time_target
+  kind: DesiredCondition
+- id: defect_prevention_target
+  kind: DesiredCondition
+- id: improvement_target
+  kind: DesiredCondition
+- id: quality_vs_speed_preference
+  kind: PreferenceOrdering
+- id: line_stop_consequence
+  kind: Consequence
+- id: defect_pass_consequence
+  kind: Consequence
+- id: missed_target_consequence
+  kind: Consequence
+- id: pull_andon_cord
+  kind: Intervention
+  target: world
+- id: propose_method_change
+  kind: Intervention
+  target: own-structure
+  motive: improve_evidence_economics
+- id: negotiate_target
+  kind: Intervention
+  target: own-structure
+  motive: align_goals
+- id: go_to_gemba
+  kind: Intervention
+  target: own-structure
+  motive: reduce_report_reality_gap
+- id: andon_policy
+  kind: Policy
+- id: improvement_policy
+  kind: Policy
+- id: negotiation_policy
+  kind: Policy
+- id: seconds_timescale
+  kind: TimeScale
+- id: minutes_timescale
+  kind: TimeScale
+- id: days_timescale
+  kind: TimeScale
+- id: months_timescale
+  kind: TimeScale
+- id: years_timescale
+  kind: TimeScale
+- id: line_stop_delay
+  kind: Delay
+- id: improvement_delay
+  kind: Delay
+- id: production_resource
+  kind: Resource
+- id: attention_resource
+  kind: Resource
+- id: a3_constraint
+  kind: Constraint
+- id: continuous_revision
+  kind: Revision
+  regime: routine-incremental
+edges:
+- from: toyota_production_system
+  to: plant_boundary
+  rel: contains
+- from: plant_boundary
+  to: top_management
+  rel: contains
+- from: plant_boundary
+  to: line_worker
+  rel: contains
+- from: plant_boundary
+  to: department_head
+  rel: contains
+- from: plant_boundary
+  to: supervisor
+  rel: contains
+- from: line_worker
+  to: observed_defect
+  rel: measures
+- from: supervisor
+  to: quality_report
+  rel: measures
+- from: defect_observation_estimator
+  to: defect_location_info_estimate
+  rel: estimates
+- from: gemba_estimator
+  to: report_reality_gap_estimate
+  rel: estimates
+- from: defect_location_info_estimate
+  to: defect_location_info
+  rel: holds
+- from: report_reality_gap_estimate
+  to: report_reality_gap
+  rel: holds
+- from: top_management
+  to: high_quality_target
+  rel: holds
+- from: department_head
+  to: fast_cycle_time_target
+  rel: holds
+- from: line_worker
+  to: defect_prevention_target
+  rel: holds
+- from: top_management
+  to: improvement_target
+  rel: holds
+- from: high_quality_target
+  to: plant_output_quality
+  rel: targets
+- from: fast_cycle_time_target
+  to: station_cycle_time
+  rel: targets
+- from: defect_prevention_target
+  to: defect_location_info
+  rel: targets
+- from: improvement_target
+  to: improvement_progress
+  rel: targets
+- from: andon_policy
+  to: pull_andon_cord
+  rel: closes
+- from: improvement_policy
+  to: propose_method_change
+  rel: closes
+- from: negotiation_policy
+  to: negotiate_target
+  rel: closes
+- from: pull_andon_cord
+  to: line_stop_delay
+  rel: delays
+- from: propose_method_change
+  to: improvement_delay
+  rel: delays
+- from: a3_constraint
+  to: continuous_revision
+  rel: constrains
+- from: line_worker
+  to: pull_andon_cord
+  rel: authorizes
+- from: line_worker
+  to: propose_method_change
+  rel: authorizes
+- from: department_head
+  to: negotiate_target
+  rel: authorizes
+- from: supervisor
+  to: go_to_gemba
+  rel: authorizes
+- from: pull_andon_cord
+  to: production_resource
+  rel: consumes
+- from: go_to_gemba
+  to: attention_resource
+  rel: consumes
+- from: continuous_revision
+  to: improvement_target
+  rel: revises
+- from: top_management
+  to: line_stop_consequence
+  rel: bears
+- from: line_worker
+  to: defect_pass_consequence
+  rel: bears
+- from: department_head
+  to: missed_target_consequence
+  rel: bears
+loops:
+- id: andon_loop
+  timescale: minutes_timescale
+  signal: observed_defect
+  intervention: pull_andon_cord
+- id: improvement_loop
+  timescale: days_timescale
+  signal: improvement_progress
+  intervention: propose_method_change
+- id: negotiation_loop
+  timescale: months_timescale
+  signal: station_cycle_time
+  intervention: negotiate_target
+breaks_declared:
+- authority_follows_observation
+- single_goal_per_organization
+- documented_method_fixed
+- reports_track_reality
+- unbounded_encodings
+breaks_handled:
+- authority_follows_observation
+- single_goal_per_organization
+- documented_method_fixed
+- reports_track_reality
+- unbounded_encodings
+surfaced: []
+reduces_to: null
+new_primitives_needed: []
+encoder_role: independent
+shape: canonical-graph

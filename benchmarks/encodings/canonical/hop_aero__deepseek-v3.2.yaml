@@ -1,0 +1,249 @@
+uras_version: 0
+encodes: hop_aero
+set: adversarial
+domain: aerospace
+encoded_by: deepseek-v3.2
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- Estimate
+- Estimator
+- DesiredCondition
+- PreferenceOrdering
+- Consequence
+- Intervention
+- Policy
+- Loop
+- Delay
+- TimeScale
+- Resource
+- Constraint
+- Revision
+estimands:
+- vehicle_performance
+- thermal_load_survival
+- guidance_stability
+- separation_cleanliness
+- customer_satisfaction
+- regulatory_compliance
+parties:
+- founders
+- air_force
+- regulator
+- investors
+nodes:
+- id: hop_aero_system
+  kind: System
+- id: company_boundary
+  kind: Boundary
+- id: founders
+  kind: Party
+- id: air_force
+  kind: Party
+- id: regulator
+  kind: Party
+- id: investors
+  kind: Party
+- id: vehicle_performance
+  kind: Estimand
+- id: thermal_load_survival
+  kind: Estimand
+- id: guidance_stability
+  kind: Estimand
+- id: separation_cleanliness
+  kind: Estimand
+- id: customer_satisfaction
+  kind: Estimand
+- id: regulatory_compliance
+  kind: Estimand
+- id: tethered_flight_data
+  kind: Signal
+- id: low_altitude_test_data
+  kind: Signal
+- id: full_profile_test_data
+  kind: Signal
+- id: procurement_feedback
+  kind: Signal
+- id: vehicle_performance_estimate
+  kind: Estimate
+- id: regulatory_compliance_estimate
+  kind: Estimate
+- id: flight_test_estimator
+  kind: Estimator
+  idempotency_basis: physical_test
+- id: regulatory_assessment_estimator
+  kind: Estimator
+  idempotency_basis: formal_review
+- id: delivery_speed_target
+  kind: DesiredCondition
+- id: contested_access_target
+  kind: DesiredCondition
+- id: safety_target
+  kind: DesiredCondition
+- id: speed_vs_safety_preference
+  kind: PreferenceOrdering
+- id: founder_consequence
+  kind: Consequence
+- id: air_force_consequence
+  kind: Consequence
+- id: regulator_consequence
+  kind: Consequence
+- id: investor_consequence
+  kind: Consequence
+- id: conduct_tethered_test
+  kind: Intervention
+  target: world
+- id: conduct_full_profile_test
+  kind: Intervention
+  target: world
+- id: argue_requirement
+  kind: Intervention
+  target: own-structure
+  motive: align_customer_target
+- id: flight_test_policy
+  kind: Policy
+- id: requirement_negotiation_policy
+  kind: Policy
+- id: months_timescale
+  kind: TimeScale
+- id: quarters_timescale
+  kind: TimeScale
+- id: years_timescale
+  kind: TimeScale
+- id: test_result_delay
+  kind: Delay
+- id: procurement_delay
+  kind: Delay
+- id: vehicle_resource
+  kind: Resource
+- id: funding_resource
+  kind: Resource
+- id: licensing_constraint
+  kind: Constraint
+- id: export_control_constraint
+  kind: Constraint
+- id: requirement_revision
+  kind: Revision
+  regime: episodic-discontinuous
+edges:
+- from: hop_aero_system
+  to: company_boundary
+  rel: contains
+- from: company_boundary
+  to: founders
+  rel: contains
+- from: company_boundary
+  to: investors
+  rel: contains
+- from: air_force
+  to: procurement_feedback
+  rel: measures
+- from: flight_test_estimator
+  to: vehicle_performance_estimate
+  rel: estimates
+- from: regulatory_assessment_estimator
+  to: regulatory_compliance_estimate
+  rel: estimates
+- from: vehicle_performance_estimate
+  to: vehicle_performance
+  rel: holds
+- from: regulatory_compliance_estimate
+  to: regulatory_compliance
+  rel: holds
+- from: air_force
+  to: delivery_speed_target
+  rel: holds
+- from: air_force
+  to: contested_access_target
+  rel: holds
+- from: regulator
+  to: safety_target
+  rel: holds
+- from: delivery_speed_target
+  to: vehicle_performance
+  rel: targets
+- from: contested_access_target
+  to: customer_satisfaction
+  rel: targets
+- from: safety_target
+  to: regulatory_compliance
+  rel: targets
+- from: flight_test_policy
+  to: conduct_tethered_test
+  rel: closes
+- from: requirement_negotiation_policy
+  to: argue_requirement
+  rel: closes
+- from: conduct_tethered_test
+  to: test_result_delay
+  rel: delays
+- from: argue_requirement
+  to: procurement_delay
+  rel: delays
+- from: licensing_constraint
+  to: regulatory_compliance
+  rel: constrains
+- from: export_control_constraint
+  to: regulatory_compliance
+  rel: constrains
+- from: founders
+  to: conduct_tethered_test
+  rel: authorizes
+- from: founders
+  to: argue_requirement
+  rel: authorizes
+- from: regulator
+  to: licensing_constraint
+  rel: authorizes
+- from: conduct_tethered_test
+  to: vehicle_resource
+  rel: consumes
+- from: argue_requirement
+  to: funding_resource
+  rel: consumes
+- from: requirement_revision
+  to: delivery_speed_target
+  rel: revises
+- from: founders
+  to: founder_consequence
+  rel: bears
+- from: air_force
+  to: air_force_consequence
+  rel: bears
+- from: regulator
+  to: regulator_consequence
+  rel: bears
+- from: investors
+  to: investor_consequence
+  rel: bears
+loops:
+- id: test_learning_loop
+  timescale: months_timescale
+  signal: tethered_flight_data
+  intervention: conduct_tethered_test
+- id: requirement_negotiation_loop
+  timescale: years_timescale
+  signal: procurement_feedback
+  intervention: argue_requirement
+breaks_declared:
+- observation_cheap_repeatable
+- cost_irreversibility_conflation
+- goal_holder_inside
+- single_clock
+- constraints_as_weighted_objectives
+- error_costs_shared
+breaks_handled:
+- observation_cheap_repeatable
+- cost_irreversibility_conflation
+- goal_holder_inside
+- single_clock
+- constraints_as_weighted_objectives
+- error_costs_shared
+surfaced: []
+reduces_to: null
+new_primitives_needed: []
+encoder_role: independent
+shape: canonical-graph

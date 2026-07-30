@@ -1,0 +1,175 @@
+uras_version: 0
+encodes: toyota
+set: adversarial
+domain: organization
+encoded_by: claude-opus-5
+encoder_role: author-intent
+shape: canonical-graph
+
+uses: [System, Boundary, Party, Estimand, Signal, Estimate, Estimator, DesiredCondition,
+       PreferenceOrdering, Consequence, Intervention, Policy, Loop, Delay, TimeScale,
+       Resource, Constraint]
+estimands: [process_condition, defect_origin, standard_method_efficacy, target_feasibility]
+parties: [line_worker, supervisor, department_head, executive]
+
+nodes:
+  - {id: plant, kind: System, name: production_system}
+  - {id: edge, kind: Boundary, inside: [line, stations, supervisors, departments],
+     outside: [suppliers, customers, dealers]}
+
+  - {id: line_worker, kind: Party}
+  - {id: supervisor, kind: Party}
+  - {id: department_head, kind: Party}
+  - {id: executive, kind: Party}
+  - {id: c_worker, kind: Consequence, borne_by: line_worker, measured: false,
+     note: social cost of stopping the line if the supervisor treats it as complaint}
+  - {id: c_supervisor, kind: Consequence, borne_by: supervisor, measured: true,
+     note: output against takt}
+  - {id: c_dept, kind: Consequence, borne_by: department_head, measured: true}
+  - {id: c_exec, kind: Consequence, borne_by: executive, measured: true}
+
+  - {id: process_condition, kind: Estimand, observable: false,
+     settled_by: going to the place and looking at the thing}
+  - {id: defect_origin, kind: Estimand, observable: false,
+     settled_by: tracing the defect to its station before it passes downstream}
+  - {id: standard_method_efficacy, kind: Estimand, observable: false,
+     settled_by: cycle time and defect rate before and after a change}
+  - {id: target_feasibility, kind: Estimand, observable: false,
+     settled_by: attempting the target with the provided resources}
+
+  - {id: takt_state, kind: Signal, frequency: seconds}
+  - {id: andon_pull, kind: Signal, frequency: per-event, fidelity: rich}
+  - {id: kanban_card, kind: Signal, frequency: per-consumption, identity: stable}
+  - {id: gemba_observation, kind: Signal, frequency: on-demand, fidelity: direct}
+  - {id: field_defect_data, kind: Signal, frequency: monthly, lagged: true}
+
+  - {id: e_worker_process, kind: Estimate, held_by: line_worker, uncertainty: ordinal}
+  - {id: e_supervisor_process, kind: Estimate, held_by: supervisor, uncertainty: ordinal}
+  - {id: e_dept_feasibility, kind: Estimate, held_by: department_head, uncertainty: ordinal}
+  - {id: e_exec_feasibility, kind: Estimate, held_by: executive, uncertainty: ordinal}
+
+  - {id: direct_observation, kind: Estimator, idempotency_basis: per_gemba_visit_id,
+     note: doctrine assumes reports diverge from reality; no amount of reporting fixes it}
+  - {id: defect_trace, kind: Estimator, idempotency_basis: per_andon_event_id}
+  - {id: change_measurement, kind: Estimator, idempotency_basis: per_change_id}
+
+  - {id: takt_target, kind: DesiredCondition, held_by: supervisor}
+  - {id: annual_objective, kind: DesiredCondition, held_by: executive}
+  - {id: negotiated_objective, kind: DesiredCondition, held_by: department_head,
+     note: what arrives is an opening position, not an instruction}
+  - {id: level_conflict, kind: PreferenceOrdering, form: partial, scalarized: false,
+     over: [station_cycle_time, platform_quality, cost, worker_sustainability]}
+
+  - {id: assemble, kind: Intervention, target: world}
+  - {id: stop_line, kind: Intervention, target: world,
+     note: expensive by design; a defect passed downstream destroys the information about origin}
+  - {id: replenish, kind: Intervention, target: world}
+  - {id: change_standard, kind: Intervention, target: own-structure,
+     motive: improve the documented method — the standard exists in order to be improved}
+  - {id: design_change, kind: Intervention, target: own-structure,
+     motive: remove a defect class at source rather than detect it repeatedly}
+  - {id: negotiate_target, kind: Intervention, target: own-structure,
+     motive: revise the objective itself when the level receiving it judges it infeasible}
+  - {id: install_andon, kind: Intervention, target: own-structure,
+     motive: make defect evidence cheap, immediate and local in a domain where it is not}
+
+  - {id: standard_work, kind: Policy, form: documented_current_best_method}
+  - {id: a3, kind: Policy, form: single_sheet_problem_structure}
+  - {id: a3_bound, kind: Constraint, rule: one sheet of A3 paper,
+     purpose: force the problem to be understood well enough to fit, and readable by
+       someone not involved}
+  - {id: jidoka_rule, kind: Constraint, rule: stop on defect, tradeable: false}
+
+  - {id: t_seconds, kind: TimeScale, period: seconds}
+  - {id: t_event, kind: TimeScale, period: minutes}
+  - {id: t_consumption, kind: TimeScale, period: hours}
+  - {id: t_days, kind: TimeScale, period: days}
+  - {id: t_months, kind: TimeScale, period: months}
+  - {id: t_annual, kind: TimeScale, period: annual}
+  - {id: field_lag, kind: Delay, magnitude: months,
+     note: a design fault reaches field data long after the station that produced it}
+  - {id: parts, kind: Resource, depletable: true}
+  - {id: line_time, kind: Resource, depletable: true, contended: true}
+
+edges:
+  - {from: plant, to: edge, rel: contains}
+  - {from: line_worker, to: c_worker, rel: bears}
+  - {from: supervisor, to: c_supervisor, rel: bears}
+  - {from: department_head, to: c_dept, rel: bears}
+  - {from: executive, to: c_exec, rel: bears}
+
+  - {from: gemba_observation, to: process_condition, rel: measures}
+  - {from: andon_pull, to: defect_origin, rel: measures}
+  - {from: field_defect_data, to: standard_method_efficacy, rel: measures}
+  - {from: takt_state, to: process_condition, rel: measures}
+
+  - {from: direct_observation, to: e_supervisor_process, rel: estimates}
+  - {from: defect_trace, to: e_worker_process, rel: estimates}
+  - {from: change_measurement, to: e_dept_feasibility, rel: estimates}
+
+  - {from: line_worker, to: e_worker_process, rel: holds}
+  - {from: supervisor, to: e_supervisor_process, rel: holds}
+  - {from: department_head, to: e_dept_feasibility, rel: holds}
+  - {from: executive, to: e_exec_feasibility, rel: holds}
+
+  - {from: supervisor, to: takt_target, rel: holds}
+  - {from: executive, to: annual_objective, rel: holds}
+  - {from: department_head, to: negotiated_objective, rel: holds}
+  - {from: takt_target, to: process_condition, rel: targets}
+  - {from: annual_objective, to: target_feasibility, rel: targets}
+
+  - {from: line_worker, to: stop_line, rel: authorizes}
+  - {from: line_worker, to: change_standard, rel: authorizes}
+  - {from: supervisor, to: assemble, rel: authorizes}
+  - {from: supervisor, to: replenish, rel: authorizes}
+  - {from: department_head, to: negotiate_target, rel: authorizes}
+  - {from: executive, to: design_change, rel: authorizes}
+  - {from: executive, to: install_andon, rel: authorizes}
+
+  - {from: jidoka_rule, to: stop_line, rel: constrains}
+  - {from: a3_bound, to: a3, rel: constrains}
+  - {from: assemble, to: parts, rel: consumes}
+  - {from: stop_line, to: line_time, rel: consumes}
+  - {from: standard_work, to: assemble, rel: closes}
+  - {from: change_standard, to: standard_work, rel: revises}
+  - {from: negotiate_target, to: annual_objective, rel: revises}
+  - {from: install_andon, to: andon_pull, rel: revises}
+  - {from: field_lag, to: design_change, rel: delays}
+
+loops:
+  - {id: station_cycle, timescale: t_seconds, signal: takt_state, intervention: assemble}
+  - {id: jidoka, timescale: t_event, signal: andon_pull, intervention: stop_line}
+  - {id: kanban_pull, timescale: t_consumption, signal: kanban_card, intervention: replenish}
+  - {id: kaizen, timescale: t_days, signal: gemba_observation, intervention: change_standard}
+  - {id: quality, timescale: t_months, signal: field_defect_data, intervention: design_change}
+  - {id: hoshin, timescale: t_annual, signal: gemba_observation, intervention: negotiate_target}
+
+excluded_variables: [which_supervisors_treat_a_pull_as_information,
+                     political_cost_of_stoppage_this_month,
+                     which_suppliers_absorb_schedule_change_quietly]
+
+breaks_declared: [authority_follows_observation, single_goal_per_organisation,
+                  documented_method_fixed, reports_track_reality, unbounded_encodings]
+breaks_handled: [authority_follows_observation, single_goal_per_organisation,
+                 documented_method_fixed, reports_track_reality, unbounded_encodings]
+surfaced: []
+reduces_to: null
+
+new_primitives_needed: []
+
+convergence_note: >
+  Six loops under the adopted identity rule: one per distinct (timescale, closing
+  intervention). This is more than the five I predicted before testing the rule — kanban
+  pull-replenishment is the sixth, which I had missed and an independent encoder found first.
+
+  new_primitives_needed is EMPTY, and the two candidates I expected to need were both
+  absorbed by existing primitives:
+
+  - A3 looked like it needed an artifact primitive, which the round-2 adjudicator had flagged
+    as a gap. It does not: A3 is a Policy (a documented method for structuring a problem) and
+    its one-sheet limit is a Constraint on that policy. The apparent gap was a missing
+    composition, not a missing primitive.
+  - goal negotiation across levels looked like it needed something for nested objectives. It
+    does not: it is an Intervention with target own-structure that revises a DesiredCondition
+    held by a higher level. That composition is exactly the loci-of-goal-formation claim from
+    the prior-art gate, and it turns out to be expressible without adding anything.

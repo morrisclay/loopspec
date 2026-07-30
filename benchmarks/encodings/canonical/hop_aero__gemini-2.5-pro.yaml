@@ -1,0 +1,233 @@
+encodes: hop_aero
+set: adversarial
+domain: aerospace
+encoded_by: gemini-2.5-pro
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- Estimate
+- Estimator
+- DesiredCondition
+- Consequence
+- Intervention
+- TimeScale
+- Resource
+- Constraint
+- Loop
+estimands:
+- airframe_survivability
+- guidance_stability
+- vehicle_readiness
+parties:
+- founders
+- us_air_force
+- regulator
+- investors
+nodes:
+- id: hop_aero
+  kind: System
+  description: A startup building an autonomous hypersonic cargo rocket.
+- id: company_boundary
+  kind: Boundary
+  description: The boundary of the 6-person startup.
+- id: founders
+  kind: Party
+  description: The founders of Hop Aero.
+- id: us_air_force
+  kind: Party
+  description: The customer, part-funder, and eventual operator. Sits outside the company boundary.
+- id: regulator
+  kind: Party
+  description: A government body like the FAA responsible for range safety and launch licensing.
+- id: investors
+  kind: Party
+  description: Venture capitalists (e.g., YC) providing funding.
+- id: airframe_survivability
+  kind: Estimand
+  description: Whether the airframe can survive the thermal and mechanical loads of flight.
+- id: guidance_stability
+  kind: Estimand
+  description: Whether the guidance system can maintain control through all flight phases.
+- id: vehicle_readiness
+  kind: Estimand
+  description: The overall capability of the vehicle to meet the customer's requirement.
+- id: tethered_test_data
+  kind: Signal
+  description: Data from a tethered test, answering a narrow set of questions.
+- id: full_flight_data
+  kind: Signal
+  description: Data from a full-profile flight, which consumes the vehicle.
+- id: flight_analysis
+  kind: Estimator
+  idempotency_basis: Per-test unique ID.
+  description: The process of analyzing test data to update estimates of vehicle performance.
+- id: vehicle_performance_estimate
+  kind: Estimate
+  description: The company's current assessment of the vehicle's capabilities.
+- id: af_desired_capability
+  kind: DesiredCondition
+  description: The Air Force's requirement for fast delivery to contested environments.
+- id: vc_desired_progress
+  kind: DesiredCondition
+  description: The investors' need to see demonstrable progress on a quarterly basis.
+- id: company_failure
+  kind: Consequence
+  description: The company runs out of money and ceases to exist.
+- id: failed_bet
+  kind: Consequence
+  description: The Air Force program office's bet fails, with political exposure.
+- id: public_safety_incident
+  kind: Consequence
+  description: A launch failure causes public harm, a pure downside for the regulator.
+- id: portfolio_loss
+  kind: Consequence
+  description: The investment is lost, one of many in a VC portfolio.
+- id: build_tethered_rig
+  kind: Intervention
+  target: own-structure
+  motive: To create a low-cost, reversible way to acquire evidence about propulsion and control.
+- id: perform_tethered_test
+  kind: Intervention
+  target: world
+  description: Conduct a test with the vehicle tethered, which is recoverable.
+- id: perform_full_flight
+  kind: Intervention
+  target: world
+  description: Conduct a full-profile flight, which is irreversible as it consumes the vehicle.
+- id: range_safety
+  kind: Constraint
+  description: The requirement to have range safety approval before any launch.
+- id: launch_license
+  kind: Constraint
+  description: The requirement to have a launch license before any launch.
+- id: vehicle_resource
+  kind: Resource
+  description: A physical rocket prototype. Consumed in a full flight.
+- id: funding
+  kind: Resource
+  description: The capital available to the company.
+- id: vc_timescale
+  kind: TimeScale
+  unit: months
+  value: 3-6
+- id: af_timescale
+  kind: TimeScale
+  unit: years
+  value: 1-3
+- id: development_loop
+  kind: Loop
+- id: customer_loop
+  kind: Loop
+edges:
+- from: hop_aero
+  to: company_boundary
+  rel: contains
+- from: hop_aero
+  to: founders
+  rel: contains
+- from: founders
+  to: company_failure
+  rel: bears
+- from: us_air_force
+  to: failed_bet
+  rel: bears
+- from: regulator
+  to: public_safety_incident
+  rel: bears
+- from: investors
+  to: portfolio_loss
+  rel: bears
+- from: us_air_force
+  to: af_desired_capability
+  rel: holds
+- from: investors
+  to: vc_desired_progress
+  rel: holds
+- from: founders
+  to: vehicle_performance_estimate
+  rel: holds
+- from: af_desired_capability
+  to: vehicle_readiness
+  rel: targets
+- from: vc_desired_progress
+  to: vehicle_readiness
+  rel: targets
+- from: tethered_test_data
+  to: guidance_stability
+  rel: measures
+- from: full_flight_data
+  to: airframe_survivability
+  rel: measures
+- from: flight_analysis
+  to: vehicle_performance_estimate
+  rel: estimates
+- from: founders
+  to: build_tethered_rig
+  rel: authorizes
+- from: founders
+  to: perform_tethered_test
+  rel: authorizes
+- from: founders
+  to: perform_full_flight
+  rel: authorizes
+- from: regulator
+  to: perform_full_flight
+  rel: authorizes
+- from: range_safety
+  to: perform_full_flight
+  rel: constrains
+- from: launch_license
+  to: perform_full_flight
+  rel: constrains
+- from: perform_full_flight
+  to: vehicle_resource
+  rel: consumes
+- from: development_loop
+  to: vc_timescale
+  rel: closes
+- from: development_loop
+  to: tethered_test_data
+  rel: closes
+- from: development_loop
+  to: perform_tethered_test
+  rel: closes
+- from: customer_loop
+  to: af_timescale
+  rel: closes
+- from: customer_loop
+  to: full_flight_data
+  rel: closes
+- from: customer_loop
+  to: perform_full_flight
+  rel: closes
+loops:
+- id: development_loop
+  timescale: vc_timescale
+  signal: tethered_test_data
+  intervention: perform_tethered_test
+- id: customer_loop
+  timescale: af_timescale
+  signal: full_flight_data
+  intervention: perform_full_flight
+breaks_declared:
+- cheap-observation
+- conflation-of-cost-and-irreversibility
+- goal-holder-inside
+- single-clock
+- constraints-as-objectives
+- shared-error-costs
+breaks_handled:
+- cheap-observation
+- conflation-of-cost-and-irreversibility
+- goal-holder-inside
+- single-clock
+- constraints-as-objectives
+- shared-error-costs
+surfaced: []
+reduces_to: null
+new_primitives_needed: []
+encoder_role: independent
+shape: canonical-graph

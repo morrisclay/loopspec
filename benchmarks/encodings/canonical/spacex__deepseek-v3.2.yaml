@@ -1,0 +1,233 @@
+uras_version: 0
+encodes: spacex
+set: adversarial
+domain: aerospace
+encoded_by: deepseek-v3.2
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- Estimate
+- Estimator
+- DesiredCondition
+- PreferenceOrdering
+- Consequence
+- Intervention
+- Policy
+- Loop
+- Delay
+- TimeScale
+- Resource
+- Constraint
+- Revision
+estimands:
+- launch_reliability
+- vehicle_performance
+- component_behavior
+- flight_cadence
+- development_speed
+parties:
+- engineering_leadership
+- suppliers
+- regulators
+- investors
+nodes:
+- id: spacex_system
+  kind: System
+- id: company_boundary
+  kind: Boundary
+- id: engineering_leadership
+  kind: Party
+- id: suppliers
+  kind: Party
+- id: regulators
+  kind: Party
+- id: investors
+  kind: Party
+- id: launch_reliability
+  kind: Estimand
+- id: vehicle_performance
+  kind: Estimand
+- id: component_behavior
+  kind: Estimand
+- id: flight_cadence
+  kind: Estimand
+- id: development_speed
+  kind: Estimand
+- id: flight_data
+  kind: Signal
+- id: recovered_hardware_inspection
+  kind: Signal
+- id: supplier_response
+  kind: Signal
+- id: launch_reliability_estimate
+  kind: Estimate
+- id: component_behavior_estimate
+  kind: Estimate
+- id: flight_test_estimator
+  kind: Estimator
+  idempotency_basis: physical_flight
+- id: inspection_estimator
+  kind: Estimator
+  idempotency_basis: physical_inspection
+- id: high_cadence_target
+  kind: DesiredCondition
+- id: low_cost_target
+  kind: DesiredCondition
+- id: fast_learning_target
+  kind: DesiredCondition
+- id: cadence_vs_cost_preference
+  kind: PreferenceOrdering
+- id: flight_failure_consequence
+  kind: Consequence
+- id: schedule_slip_consequence
+  kind: Consequence
+- id: regulatory_violation_consequence
+  kind: Consequence
+- id: fly_vehicle
+  kind: Intervention
+  target: world
+- id: recover_booster
+  kind: Intervention
+  target: world
+- id: bring_supplier_inhouse
+  kind: Intervention
+  target: own-structure
+  motive: improve_evidence_economics
+- id: flight_test_policy
+  kind: Policy
+- id: vertical_integration_policy
+  kind: Policy
+- id: weeks_timescale
+  kind: TimeScale
+- id: months_timescale
+  kind: TimeScale
+- id: quarters_timescale
+  kind: TimeScale
+- id: flight_result_delay
+  kind: Delay
+- id: integration_delay
+  kind: Delay
+- id: vehicle_resource
+  kind: Resource
+- id: funding_resource
+  kind: Resource
+- id: safety_constraint
+  kind: Constraint
+- id: cadence_revision
+  kind: Revision
+  regime: routine-incremental
+edges:
+- from: spacex_system
+  to: company_boundary
+  rel: contains
+- from: company_boundary
+  to: engineering_leadership
+  rel: contains
+- from: company_boundary
+  to: investors
+  rel: contains
+- from: suppliers
+  to: supplier_response
+  rel: measures
+- from: flight_test_estimator
+  to: launch_reliability_estimate
+  rel: estimates
+- from: inspection_estimator
+  to: component_behavior_estimate
+  rel: estimates
+- from: launch_reliability_estimate
+  to: launch_reliability
+  rel: holds
+- from: component_behavior_estimate
+  to: component_behavior
+  rel: holds
+- from: engineering_leadership
+  to: high_cadence_target
+  rel: holds
+- from: engineering_leadership
+  to: low_cost_target
+  rel: holds
+- from: engineering_leadership
+  to: fast_learning_target
+  rel: holds
+- from: high_cadence_target
+  to: flight_cadence
+  rel: targets
+- from: low_cost_target
+  to: vehicle_performance
+  rel: targets
+- from: fast_learning_target
+  to: development_speed
+  rel: targets
+- from: flight_test_policy
+  to: fly_vehicle
+  rel: closes
+- from: vertical_integration_policy
+  to: bring_supplier_inhouse
+  rel: closes
+- from: fly_vehicle
+  to: flight_result_delay
+  rel: delays
+- from: bring_supplier_inhouse
+  to: integration_delay
+  rel: delays
+- from: safety_constraint
+  to: launch_reliability
+  rel: constrains
+- from: engineering_leadership
+  to: fly_vehicle
+  rel: authorizes
+- from: engineering_leadership
+  to: bring_supplier_inhouse
+  rel: authorizes
+- from: regulators
+  to: safety_constraint
+  rel: authorizes
+- from: fly_vehicle
+  to: vehicle_resource
+  rel: consumes
+- from: bring_supplier_inhouse
+  to: funding_resource
+  rel: consumes
+- from: cadence_revision
+  to: high_cadence_target
+  rel: revises
+- from: engineering_leadership
+  to: flight_failure_consequence
+  rel: bears
+- from: engineering_leadership
+  to: schedule_slip_consequence
+  rel: bears
+- from: regulators
+  to: regulatory_violation_consequence
+  rel: bears
+- from: investors
+  to: schedule_slip_consequence
+  rel: bears
+loops:
+- id: flight_learning_loop
+  timescale: weeks_timescale
+  signal: flight_data
+  intervention: fly_vehicle
+- id: vertical_integration_loop
+  timescale: quarters_timescale
+  signal: supplier_response
+  intervention: bring_supplier_inhouse
+breaks_declared:
+- interventions_act_only_outward
+- scoring_by_present_effect_alone
+- evidence_cost_given
+- boundary_change_motive_unrecorded
+breaks_handled:
+- interventions_act_only_outward
+- scoring_by_present_effect_alone
+- evidence_cost_given
+- boundary_change_motive_unrecorded
+surfaced: []
+reduces_to: null
+new_primitives_needed: []
+encoder_role: independent
+shape: canonical-graph
