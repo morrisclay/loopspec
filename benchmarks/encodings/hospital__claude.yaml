@@ -27,7 +27,6 @@ estimands:
 - logistical_readiness
 - marginal_bed_value
 - patient_preference
-- discharge_readiness
 parties:
 - consultant
 - nurse
@@ -58,18 +57,6 @@ breaks_handled:
 - authority_follows_information
 - single_objective
 - shared_error_costs
-modelling_fork:
-  question: is "discharge readiness" one estimand with five estimates, or five distinct estimands?
-  chosen: five distinct estimands PLUS a contested aggregate that is never scalarized
-  rationale: 'The source says explicitly these are "different questions, asked against different
-    evidence" rather than noisy readings of one truth. Modelling them as one estimand with five estimates
-    would smuggle in a shared referent that does not exist.
-
-    '
-  note: 'Flagged because this is the single most likely point of divergence between independent encoders,
-    and therefore the most informative thing to compare.
-
-    '
 surfaced:
 - claim: 'Authority and observation are inversely distributed — the party with continuous observation
     (nurse) holds no discharge authority, and the party with authority (consultant) observes once
@@ -179,17 +166,6 @@ system:
   - id: patient_preference
     observable: false
     specification_status: often_unelicited
-  - id: discharge_readiness
-    form: contested_aggregate
-    over:
-    - clinical_stability
-    - functional_capacity
-    - logistical_readiness
-    - marginal_bed_value
-    - patient_preference
-    scalarized: false
-    resolution: ward_round_negotiation
-    note: no exchange rates exist; the ward round IS the resolution procedure
   preference_ordering:
     over:
     - throughput
@@ -234,3 +210,6 @@ system:
       but cannot represent them.
 
       '
+individuation_note: 'discharge_readiness removed under the adopted settling-observation rule: no
+  observation settles it, so it is a Policy output rather than an Estimand. The independent encoder
+  was right and the author was wrong.'

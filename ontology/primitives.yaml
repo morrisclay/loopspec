@@ -96,8 +96,38 @@ primitives:
     tier: core
     depth: 1
     definition: >
-      A quantity of interest, typically not directly observable. Room comfort. Discharge
-      readiness. Whether anyone is buying.
+      A quantity of interest, typically not directly observable, for which at least one
+      conceivable observation would settle the matter.
+    individuation_rule: >
+      ADOPTED. The settling-observation test, in three parts:
+
+      1. Two assessments are the SAME estimand if and only if the same conceivable
+         observation would settle both. Different settling observation, different estimand.
+      2. Same settling observation, different assessors, different results: ONE estimand
+         with MULTIPLE estimates, indexed by Party.
+      3. If NO conceivable observation would settle it, it is NOT AN ESTIMAND. It is a
+         decision, and it belongs to Policy.
+    individuation_rationale: >
+      Resolves the worst remaining determinacy divergence — estimand agreement was
+      0.43-0.67 across independent encoders on the institutional benchmark, against 1.00 on
+      the simple one.
+
+      Part 3 is the part with teeth, and applying it shows I WAS WRONG and the independent
+      encoder was right. I had modelled "discharge readiness" as an estimand: five distinct
+      estimands plus a sixth contested aggregate over them. But no observation settles
+      discharge-readiness-in-general — there is no measurement of it. It is the OUTPUT of a
+      negotiation over several estimands, which makes it a decision wearing a quantity's
+      clothing. gpt-5-codex declined to model it as an estimand and was correct.
+
+      The error is worth naming because it is attractive: an aggregate feels like a quantity
+      because parties argue about it. Arguing about something does not make it measurable.
+
+      Cross-checks. Hospital: clinical stability and functional capacity are settled by
+      different observations (a blood panel versus watching someone walk), so they are
+      distinct estimands — while two consultants disagreeing about clinical stability is one
+      estimand with two estimates, which is where genuine plural belief actually lives.
+      Thermostat: room comfort has a conceivable settling observation and survives, which
+      is consistent with all five encoders having agreed on it 1.00.
     demanded_by: [thermostat, hospital, startup]
 
   - name: Signal

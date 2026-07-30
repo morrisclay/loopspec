@@ -384,3 +384,6 @@ surfaced:
   verdict: unsupported
   audited: true
 reduces_to: null
+individuation_note: 'discharge_readiness removed under the adopted settling-observation rule: no
+  observation settles it, so it is a Policy output rather than an Estimand. The independent encoder
+  was right and the author was wrong.'
