@@ -1,0 +1,418 @@
+[
+ {
+  "system": "hospital",
+  "q": 1,
+  "judge": "gemini-2.5-pro",
+  "rank_arms": [
+   "stratified",
+   "prose",
+   "generated_both",
+   "both",
+   "encoding",
+   "generated"
+  ]
+ },
+ {
+  "system": "hospital",
+  "q": 1,
+  "judge": "deepseek-v3.2",
+  "rank_arms": [
+   "generated",
+   "both",
+   "generated_both",
+   "prose",
+   "stratified",
+   "encoding"
+  ]
+ },
+ {
+  "system": "hospital",
+  "q": 2,
+  "judge": "gpt-5.5",
+  "rank_arms": [
+   "encoding",
+   "generated",
+   "both",
+   "prose",
+   "stratified",
+   "generated_both"
+  ]
+ },
+ {
+  "system": "hospital",
+  "q": 2,
+  "judge": "gemini-2.5-pro",
+  "rank_arms": [
+   "encoding",
+   "prose",
+   "generated",
+   "both",
+   "generated_both",
+   "stratified"
+  ]
+ },
+ {
+  "system": "hospital",
+  "q": 2,
+  "judge": "deepseek-v3.2",
+  "rank_arms": [
+   "encoding",
+   "stratified",
+   "generated",
+   "prose",
+   "both",
+   "generated_both"
+  ]
+ },
+ {
+  "system": "hospital",
+  "q": 3,
+  "judge": "gemini-2.5-pro",
+  "rank_arms": [
+   "both",
+   "generated",
+   "generated_both",
+   "encoding",
+   "stratified",
+   "prose"
+  ]
+ },
+ {
+  "system": "hospital",
+  "q": 3,
+  "judge": "deepseek-v3.2",
+  "rank_arms": [
+   "generated",
+   "both",
+   "stratified",
+   "prose",
+   "encoding",
+   "generated_both"
+  ]
+ },
+ {
+  "system": "hospital",
+  "q": 4,
+  "judge": "gemini-2.5-pro",
+  "rank_arms": [
+   "stratified",
+   "both",
+   "generated",
+   "encoding",
+   "prose",
+   "generated_both"
+  ]
+ },
+ {
+  "system": "hospital",
+  "q": 4,
+  "judge": "deepseek-v3.2",
+  "rank_arms": [
+   "generated",
+   "prose",
+   "generated_both",
+   "both",
+   "encoding",
+   "stratified"
+  ]
+ },
+ {
+  "system": "toyota",
+  "q": 1,
+  "judge": "gpt-5.5",
+  "rank_arms": [
+   "encoding",
+   "generated",
+   "both",
+   "stratified",
+   "generated_both",
+   "prose"
+  ]
+ },
+ {
+  "system": "toyota",
+  "q": 1,
+  "judge": "gemini-2.5-pro",
+  "rank_arms": [
+   "encoding",
+   "both",
+   "generated",
+   "stratified",
+   "generated_both",
+   "prose"
+  ]
+ },
+ {
+  "system": "toyota",
+  "q": 1,
+  "judge": "deepseek-v3.2",
+  "rank_arms": [
+   "encoding",
+   "both",
+   "generated",
+   "stratified",
+   "generated_both",
+   "prose"
+  ]
+ },
+ {
+  "system": "toyota",
+  "q": 2,
+  "judge": "gpt-5.5",
+  "rank_arms": [
+   "generated",
+   "both",
+   "encoding",
+   "prose",
+   "generated_both",
+   "stratified"
+  ]
+ },
+ {
+  "system": "toyota",
+  "q": 2,
+  "judge": "gemini-2.5-pro",
+  "rank_arms": [
+   "generated",
+   "generated_both",
+   "encoding",
+   "both",
+   "stratified",
+   "prose"
+  ]
+ },
+ {
+  "system": "toyota",
+  "q": 2,
+  "judge": "deepseek-v3.2",
+  "rank_arms": [
+   "generated_both",
+   "prose",
+   "generated",
+   "encoding",
+   "both",
+   "stratified"
+  ]
+ },
+ {
+  "system": "toyota",
+  "q": 3,
+  "judge": "gpt-5.5",
+  "rank_arms": [
+   "both",
+   "prose",
+   "stratified",
+   "generated",
+   "generated_both",
+   "encoding"
+  ]
+ },
+ {
+  "system": "toyota",
+  "q": 3,
+  "judge": "gemini-2.5-pro",
+  "rank_arms": [
+   "both",
+   "prose",
+   "generated",
+   "encoding",
+   "stratified",
+   "generated_both"
+  ]
+ },
+ {
+  "system": "toyota",
+  "q": 3,
+  "judge": "deepseek-v3.2",
+  "rank_arms": [
+   "both",
+   "prose",
+   "generated_both",
+   "generated",
+   "stratified",
+   "encoding"
+  ]
+ },
+ {
+  "system": "toyota",
+  "q": 4,
+  "judge": "gemini-2.5-pro",
+  "rank_arms": [
+   "encoding",
+   "generated",
+   "both",
+   "generated_both",
+   "stratified",
+   "prose"
+  ]
+ },
+ {
+  "system": "toyota",
+  "q": 4,
+  "judge": "deepseek-v3.2",
+  "rank_arms": [
+   "stratified",
+   "prose",
+   "generated",
+   "generated_both",
+   "encoding",
+   "both"
+  ]
+ },
+ {
+  "system": "hop_aero",
+  "q": 1,
+  "judge": "gpt-5.5",
+  "rank_arms": [
+   "generated_both",
+   "stratified",
+   "generated",
+   "prose",
+   "both",
+   "encoding"
+  ]
+ },
+ {
+  "system": "hop_aero",
+  "q": 1,
+  "judge": "gemini-2.5-pro",
+  "rank_arms": [
+   "generated_both",
+   "generated",
+   "stratified",
+   "encoding",
+   "prose",
+   "both"
+  ]
+ },
+ {
+  "system": "hop_aero",
+  "q": 1,
+  "judge": "deepseek-v3.2",
+  "rank_arms": [
+   "stratified",
+   "generated_both",
+   "generated",
+   "prose",
+   "both",
+   "encoding"
+  ]
+ },
+ {
+  "system": "hop_aero",
+  "q": 2,
+  "judge": "gpt-5.5",
+  "rank_arms": [
+   "stratified",
+   "generated_both",
+   "generated",
+   "encoding",
+   "prose",
+   "both"
+  ]
+ },
+ {
+  "system": "hop_aero",
+  "q": 2,
+  "judge": "gemini-2.5-pro",
+  "rank_arms": [
+   "stratified",
+   "generated",
+   "generated_both",
+   "encoding",
+   "prose",
+   "both"
+  ]
+ },
+ {
+  "system": "hop_aero",
+  "q": 2,
+  "judge": "deepseek-v3.2",
+  "rank_arms": [
+   "generated",
+   "generated_both",
+   "stratified",
+   "encoding",
+   "prose",
+   "both"
+  ]
+ },
+ {
+  "system": "hop_aero",
+  "q": 3,
+  "judge": "gpt-5.5",
+  "rank_arms": [
+   "stratified",
+   "generated_both",
+   "prose",
+   "encoding",
+   "both",
+   "generated"
+  ]
+ },
+ {
+  "system": "hop_aero",
+  "q": 3,
+  "judge": "gemini-2.5-pro",
+  "rank_arms": [
+   "stratified",
+   "generated_both",
+   "generated",
+   "prose",
+   "encoding",
+   "both"
+  ]
+ },
+ {
+  "system": "hop_aero",
+  "q": 3,
+  "judge": "deepseek-v3.2",
+  "rank_arms": [
+   "stratified",
+   "generated_both",
+   "generated",
+   "prose",
+   "both",
+   "encoding"
+  ]
+ },
+ {
+  "system": "hop_aero",
+  "q": 4,
+  "judge": "gpt-5.5",
+  "rank_arms": [
+   "stratified",
+   "generated",
+   "generated_both",
+   "encoding",
+   "prose",
+   "both"
+  ]
+ },
+ {
+  "system": "hop_aero",
+  "q": 4,
+  "judge": "gemini-2.5-pro",
+  "rank_arms": [
+   "generated",
+   "stratified",
+   "generated_both",
+   "encoding",
+   "prose",
+   "both"
+  ]
+ },
+ {
+  "system": "hop_aero",
+  "q": 4,
+  "judge": "deepseek-v3.2",
+  "rank_arms": [
+   "stratified",
+   "generated",
+   "generated_both",
+   "encoding",
+   "prose",
+   "both"
+  ]
+ }
+]

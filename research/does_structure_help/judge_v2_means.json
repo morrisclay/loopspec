@@ -1,0 +1,26 @@
+{
+ "gemini-2.5-pro": {
+  "stratified": 2.25,
+  "prose": 3.5,
+  "generated_both": 2.5833333333333335,
+  "both": 2.75,
+  "encoding": 2.3333333333333335,
+  "generated": 1.5833333333333333
+ },
+ "deepseek-v3.2": {
+  "generated": 1.3333333333333333,
+  "both": 3.0833333333333335,
+  "generated_both": 2.3333333333333335,
+  "prose": 2.6666666666666665,
+  "stratified": 2.1666666666666665,
+  "encoding": 3.4166666666666665
+ },
+ "gpt-5.5": {
+  "encoding": 2.625,
+  "generated": 1.875,
+  "both": 2.875,
+  "prose": 3.125,
+  "stratified": 1.875,
+  "generated_both": 2.625
+ }
+}
