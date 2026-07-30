@@ -2,138 +2,235 @@ encodes: hospital
 set: seed
 domain: institution
 encoded_by: claude-opus-5
-encoder_role: author-intent          # wrote both the catalog and the prose — NOT independent
-uses: [System, Boundary, Party, Estimand, Signal, Estimate, Evidence, Estimator,
-       DesiredCondition, PreferenceOrdering, Consequence, Intervention, Policy, Loop,
-       Delay, TimeScale, Resource, Constraint]
-estimands: [clinical_stability, functional_capacity, logistical_readiness,
-            marginal_bed_value, patient_preference, discharge_readiness]
-parties: [consultant, nurse, discharge_coordinator, bed_manager, patient]
+encoder_role: author-intent
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- Estimate
+- Estimator
+- DesiredCondition
+- PreferenceOrdering
+- Consequence
+- Intervention
+- Policy
+- Loop
+- Delay
+- TimeScale
+- Resource
+- Constraint
+estimands:
+- clinical_stability
+- functional_capacity
+- logistical_readiness
+- marginal_bed_value
+- patient_preference
+- discharge_readiness
+parties:
+- consultant
+- nurse
+- discharge_coordinator
+- bed_manager
+- patient
 loops:
-  - name: discharge_decision
-    timescale: daily
-    signal: ward_round_observation
-    intervention: discharge_patient
-  - name: bed_allocation
-    timescale: hourly
-    signal: bed_state_board
-    intervention: request_discharge
-  - name: readmission_feedback
-    timescale: fortnightly
-    signal: readmission_event
-    intervention: adjust_discharge_threshold
-
-breaks_declared: [single_estimate_per_quantity, authority_follows_information,
-                  single_objective, shared_error_costs, complete_specification]
-breaks_handled: [single_estimate_per_quantity, authority_follows_information,
-                 single_objective, shared_error_costs]
-
+- name: discharge_decision
+  timescale: daily
+  signal: ward_round_observation
+  intervention: discharge_patient
+- name: bed_allocation
+  timescale: hourly
+  signal: bed_state_board
+  intervention: request_discharge
+- name: readmission_feedback
+  timescale: fortnightly
+  signal: readmission_event
+  intervention: adjust_discharge_threshold
+breaks_declared:
+- single_estimate_per_quantity
+- authority_follows_information
+- single_objective
+- shared_error_costs
+- complete_specification
+breaks_handled:
+- single_estimate_per_quantity
+- authority_follows_information
+- single_objective
+- shared_error_costs
 modelling_fork:
   question: is "discharge readiness" one estimand with five estimates, or five distinct estimands?
   chosen: five distinct estimands PLUS a contested aggregate that is never scalarized
-  rationale: >
-    The source says explicitly these are "different questions, asked against different
-    evidence" rather than noisy readings of one truth. Modelling them as one estimand with
-    five estimates would smuggle in a shared referent that does not exist.
-  note: >
-    Flagged because this is the single most likely point of divergence between independent
-    encoders, and therefore the most informative thing to compare.
+  rationale: 'The source says explicitly these are "different questions, asked against different
+    evidence" rather than noisy readings of one truth. Modelling them as one estimand with five estimates
+    would smuggle in a shared referent that does not exist.
 
+    '
+  note: 'Flagged because this is the single most likely point of divergence between independent encoders,
+    and therefore the most informative thing to compare.
+
+    '
 surfaced:
-  - claim: >
-      Authority and observation are inversely distributed — the party with continuous
-      observation (nurse) holds no discharge authority, and the party with authority
-      (consultant) observes once daily.
-    decision_affected: whether to change who may discharge, or to change what the
-      consultant's once-daily observation is composed of
-    audited: false
-  - claim: >
-      The five estimates differ because the five consequences differ, not because the parties
-      are differently informed. Equalising information would not converge them.
-    decision_affected: whether better shared dashboards would help at all — this predicts
-      they would not
-    audited: false
-  - claim: >
-      The hourly and fortnightly loops have opposite gradients on the same intervention, and
-      no party owns both.
-    decision_affected: who, if anyone, should be accountable for the readmission consequence
-      of an hourly bed decision
-    audited: false
+- claim: 'Authority and observation are inversely distributed — the party with continuous observation
+    (nurse) holds no discharge authority, and the party with authority (consultant) observes once
+    daily.
 
+    '
+  decision_affected: whether to change who may discharge, or to change what the consultant's once-daily
+    observation is composed of
+  audited: false
+- claim: 'The five estimates differ because the five consequences differ, not because the parties
+    are differently informed. Equalising information would not converge them.
+
+    '
+  decision_affected: whether better shared dashboards would help at all — this predicts they would
+    not
+  audited: false
+- claim: 'The hourly and fortnightly loops have opposite gradients on the same intervention, and
+    no party owns both.
+
+    '
+  decision_affected: who, if anyone, should be accountable for the readmission consequence of an
+    hourly bed decision
+  audited: false
 reduces_to: null
-
 system:
   name: patient_flow_and_discharge
   boundary:
-    inside: [wards, bed_management, discharge_coordination, pharmacy]
-    outside: [care_homes, families, national_regulator, ambulance_service]
+    inside:
+    - wards
+    - bed_management
+    - discharge_coordination
+    - pharmacy
+    outside:
+    - care_homes
+    - families
+    - national_regulator
+    - ambulance_service
     note: care homes gate discharge but are outside authority
   parties:
-    - id: consultant
-      observes: [ward_round_observation]
-      holds_estimate_of: [clinical_stability]
-      authority: [discharge_patient]
-      consequence: {of: readmission, borne: individually, measured: true}
-    - id: nurse
-      observes: [continuous_ward_presence]
-      holds_estimate_of: [functional_capacity]
-      authority: [block_discharge_by_documenting]
-      consequence: {of: unsafe_discharge, borne: immediately, measured: false}
-    - id: discharge_coordinator
-      observes: [placement_availability, pharmacy_state, family_capacity]
-      holds_estimate_of: [logistical_readiness]
-      authority: [delay_by_withholding_transport]
-      consequence: {of: bed_blocked, borne: operationally, measured: partially}
-    - id: bed_manager
-      observes: [bed_state_board, ed_queue]
-      holds_estimate_of: [marginal_bed_value]
-      authority: [apply_pressure]
-      consequence: {of: four_hour_breach, borne: financially, measured: true}
-    - id: patient
-      observes: [own_state]
-      holds_estimate_of: [patient_preference]
-      authority: []
-      consequence: {of: wrong_discharge, borne: fully, measured: false}
-      note: maximum consequence, zero authority
-
+  - id: consultant
+    observes:
+    - ward_round_observation
+    holds_estimate_of:
+    - clinical_stability
+    authority:
+    - discharge_patient
+    consequence:
+      of: readmission
+      borne: individually
+      measured: true
+  - id: nurse
+    observes:
+    - continuous_ward_presence
+    holds_estimate_of:
+    - functional_capacity
+    authority:
+    - block_discharge_by_documenting
+    consequence:
+      of: unsafe_discharge
+      borne: immediately
+      measured: false
+  - id: discharge_coordinator
+    observes:
+    - placement_availability
+    - pharmacy_state
+    - family_capacity
+    holds_estimate_of:
+    - logistical_readiness
+    authority:
+    - delay_by_withholding_transport
+    consequence:
+      of: bed_blocked
+      borne: operationally
+      measured: partially
+  - id: bed_manager
+    observes:
+    - bed_state_board
+    - ed_queue
+    holds_estimate_of:
+    - marginal_bed_value
+    authority:
+    - apply_pressure
+    consequence:
+      of: four_hour_breach
+      borne: financially
+      measured: true
+  - id: patient
+    observes:
+    - own_state
+    holds_estimate_of:
+    - patient_preference
+    authority: []
+    consequence:
+      of: wrong_discharge
+      borne: fully
+      measured: false
+    note: maximum consequence, zero authority
   estimands:
-    - {id: clinical_stability, observable: false}
-    - {id: functional_capacity, observable: partially}
-    - {id: logistical_readiness, observable: true}
-    - {id: marginal_bed_value, observable: false}
-    - {id: patient_preference, observable: false, specification_status: often_unelicited}
-    - id: discharge_readiness
-      form: contested_aggregate
-      over: [clinical_stability, functional_capacity, logistical_readiness,
-             marginal_bed_value, patient_preference]
-      scalarized: false
-      resolution: ward_round_negotiation
-      note: no exchange rates exist; the ward round IS the resolution procedure
-
+  - id: clinical_stability
+    observable: false
+  - id: functional_capacity
+    observable: partially
+  - id: logistical_readiness
+    observable: true
+  - id: marginal_bed_value
+    observable: false
+  - id: patient_preference
+    observable: false
+    specification_status: often_unelicited
+  - id: discharge_readiness
+    form: contested_aggregate
+    over:
+    - clinical_stability
+    - functional_capacity
+    - logistical_readiness
+    - marginal_bed_value
+    - patient_preference
+    scalarized: false
+    resolution: ward_round_negotiation
+    note: no exchange rates exist; the ward round IS the resolution procedure
   preference_ordering:
-    over: [throughput, safety, cost, staff_sustainability, patient_preference]
+    over:
+    - throughput
+    - safety
+    - cost
+    - staff_sustainability
+    - patient_preference
     form: partial
     scalarized: false
     note: no exchange rates exist in practice; imposing weights would invent information
-
   resources:
-    - {id: beds, depletable: true, contended: true}
-    - {id: staff_hours, depletable: true}
+  - id: beds
+    depletable: true
+    contended: true
+  - id: staff_hours
+    depletable: true
   constraints:
-    - {id: four_hour_target, rule: ED wait under 4h, external: true, financial_consequence: true}
+  - id: four_hour_target
+    rule: ED wait under 4h
+    external: true
+    financial_consequence: true
   delays:
-    - {id: readmission_lag, applies_to: discharge_patient, magnitude: ~2_weeks,
-       note: makes the hourly loop locally optimal and globally costly}
-  timescales: [hourly_bed_pressure, daily_ward_round, weekly_rota, quarterly_budget,
-               multiyear_accreditation]
-
+  - id: readmission_lag
+    applies_to: discharge_patient
+    magnitude: ~2_weeks
+    note: makes the hourly loop locally optimal and globally costly
+  timescales:
+  - hourly_bed_pressure
+  - daily_ward_round
+  - weekly_rota
+  - quarterly_budget
+  - multiyear_accreditation
   excluded_variables:
-    variables: [which_consultants_are_callable_at_night,
-                which_care_homes_accept_friday_discharges,
-                how_arrival_time_is_recorded,
-                whose_documented_concern_carries_weight]
-    note: >
-      All four are load-bearing and unwritten. Recorded as excluded rather than omitted,
-      because a model that silently drops them will be confidently wrong about behaviour.
-      This is the break "complete_specification" that is declared and NOT handled — the
-      representation can name these but cannot represent them.
+    variables:
+    - which_consultants_are_callable_at_night
+    - which_care_homes_accept_friday_discharges
+    - how_arrival_time_is_recorded
+    - whose_documented_concern_carries_weight
+    note: 'All four are load-bearing and unwritten. Recorded as excluded rather than omitted, because
+      a model that silently drops them will be confidently wrong about behaviour. This is the break
+      "complete_specification" that is declared and NOT handled — the representation can name these
+      but cannot represent them.
+
+      '

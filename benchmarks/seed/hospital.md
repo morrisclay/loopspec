@@ -12,7 +12,6 @@ demands:
   - Estimand
   - Signal
   - Estimate
-  - Evidence
   - Estimator
   - DesiredCondition
   - PreferenceOrdering

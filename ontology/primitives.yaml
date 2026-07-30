@@ -125,33 +125,6 @@ primitives:
       of which is noise around a truth. Permitting only one estimate per estimand makes
       institutions inexpressible.
 
-  - name: Evidence
-    tier: core
-    depth: 2
-    definition: >
-      An identified item that moves estimates. Carries stable identity, provenance, and the
-      cost and reversibility of having acquired it.
-    demanded_by: [hospital, startup, toyota]
-    attributes:
-      - cost: >
-          What acquiring this evidence consumed. Spans six orders of magnitude across the
-          reference set — a GitHub issue against a destroyed launch vehicle.
-      - reversibility: >
-          Whether the acquisition can be repeated or undone. Independent of cost: a slow
-          government procurement decision is cheap to observe and irreversible; a destroyed
-          rocket is expensive and irreversible; an issue is cheap and reversible.
-    note: >
-      Stable identity is a correctness requirement, not bookkeeping. Under at-least-once
-      execution (see research/flue_notes.md) an un-identified evidence item can be applied
-      twice, silently double-counting into a well-formed but wrong posterior.
-    note_cost: >
-      Added from the reference set (benchmarks/reference_set.md), which spans evidence cost
-      almost perfectly and revealed it as the dominant axis for organisations — it
-      determines whether iteration is possible at all. Critically, cost is a VARIABLE not a
-      constraint: Toyota manufactures physical cars and engineered its way to cheap
-      immediate local evidence via andon, kanban and go-and-see. So an intervention may
-      target the cost of future evidence, which is also exactly what Lumi Science sells.
-
   - name: Estimator
     tier: core
     depth: 2
@@ -398,6 +371,29 @@ fields:
       rather than a thing in its own right.
 
 # ---------------------------------------------------------------------------
+
+retired:
+  - name: Evidence
+    retired_in: round3
+    reason: >
+      PHANTOM PRIMITIVE. Declared in the `uses` list of 7 encodings across 5 vendors and
+      instantiated as a node ZERO times. The only core primitive with that property.
+
+      The diagnosis is a layer boundary rather than a modelling mistake. A Signal is a
+      CHANNEL (the hallway thermometer); Evidence would be a DATUM that arrived through it
+      (19.3C at 14:02). That is a runtime instance, not a specification-time structure — so
+      Evidence belongs to the execution layer, not the IR. Encoders sensed this and silently
+      declined to instantiate it.
+
+      Its two jobs are already covered: identity by Signal, and protection against
+      double-counting by Estimator.idempotency_basis (required, per the at-least-once
+      finding in research/flue_notes.md).
+
+      CAVEAT ON WHO DECIDED THIS: ontology/score.md lists "whether a merge lost something" as
+      something the score cannot see, and I am the party judging that the channel/datum
+      distinction is not load-bearing at specification time. The mechanical evidence is
+      strong (7 declared, 0 instantiated) but the judgement is mine. Reversible in one commit
+      if an encoding ever needs it.
 
 honest_notes:
   count: >

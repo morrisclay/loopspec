@@ -13,7 +13,6 @@ demands:
   - Signal
   - Estimate
   - Estimator
-  - Evidence
   - Intervention
   - Policy
   - Loop

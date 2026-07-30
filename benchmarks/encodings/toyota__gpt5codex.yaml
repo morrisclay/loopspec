@@ -9,7 +9,6 @@ uses:
 - Estimand
 - Signal
 - Estimate
-- Evidence
 - Estimator
 - DesiredCondition
 - PreferenceOrdering
