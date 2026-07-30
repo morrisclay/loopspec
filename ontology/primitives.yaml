@@ -8,7 +8,12 @@
 #
 # tier: core | provisional | extension
 # depth: composition depth (0 = irreducible)
-# demanded_by: which seed descriptions forced this to exist
+#
+# demanded_by: DOCUMENTATION ONLY — which systems are known to have forced this primitive.
+#   NOT the coverage metric. Coverage is computed from the `demands:` declared in each
+#   benchmark's front matter, because a field maintained here measured the maintainer's
+#   diligence in updating it rather than actual coverage. Treat this list as a hint that may
+#   lag; benchmarks/ is authoritative.
 # not_in_charter / renamed_from: where derivation departed from the earlier list
 
 version: 0
@@ -33,10 +38,23 @@ primitives:
       own boundary during development and can establish it wrongly, which is the strongest
       pressure toward making this a first-class relation — deferred until a benchmark
       forces it.
-    demanded_by: [immune_system, startup]
+    demanded_by: [immune_system, startup, spacex]
     note: >
       The startup's advisor and lead investor are more inside than one employee, for
       purposes of predicting behaviour. Membership is graded, not binary.
+    note_deferral_third_time: >
+      Promotion to a first-class relation is deferred for a THIRD time, now on examination
+      rather than on cost. I predicted in reference_set.md that SpaceX would force it.
+      Examining it, it does not: vertical integration moves a component from outside to
+      inside SEQUENTIALLY, which is a property changing over time, and Revision already
+      covers boundary redrawing explicitly.
+
+      What would force relation-hood is SIMULTANEOUS dual membership — a component inside for
+      one purpose and outside for another, both memberships reasoned about at once. SpaceX
+      does not present that. supply_chain remains the predicted breaker.
+
+      Recorded as a failed prediction because the temptation was to declare the deferral
+      resolved and take the credit for the earlier call.
 
   - name: Party
     tier: core
@@ -160,21 +178,47 @@ primitives:
     depth: 2
     definition: >
       What a party bears when an estimate is wrong. Asymmetric across parties.
-    demanded_by: [hospital]
+    demanded_by: [hospital, hop_aero]
     note: >
-      Only one seed demands it, so it is at risk under the orphan rule and must earn
-      itself in the adversarial set. Retained because it appears explanatory rather than
-      descriptive: in the hospital the asymmetry of consequence is WHY the estimates
-      differ. Model the estimates without it and rational disagreement looks like
+      Retained on the strength of the hospital, where asymmetry of consequence is WHY the
+      estimates differ — model the estimates without it and rational disagreement looks like
       irrationality. Expected to be demanded by military_command and democracy.
+    note_hop_aero: >
+      Hop Aero supplies the cleanest instance yet: the launch regulator holds pure downside
+      and no upside whatsoever, since its best outcome is nothing happening. Its caution is
+      not obstruction but the correct response to that asymmetry. A representation without
+      Consequence describes the regulator as an irrational obstacle, which is both wrong and
+      the exact mistake founders make about regulators in practice.
 
   - name: Intervention
     tier: core
     depth: 2
     definition: >
-      An act intended to change the world. Authority over it is a relation to Party, not
-      a separate primitive.
-    demanded_by: [thermostat, hospital, startup]
+      An act intended to change either the world or the system's own structure. Authority
+      over it is a relation to Party, not a separate primitive.
+    demanded_by: [thermostat, hospital, startup, toyota, spacex, hop_aero]
+    attributes:
+      - target: >
+          world | own-structure. Acts on the world: fire the boiler, discharge the patient,
+          ship the feature. Acts on own structure: give line workers a stop cord, build a
+          tethered test rig, bring a supplier in-house, land the booster instead of dropping
+          it.
+      - motive: >
+          Required when target is own-structure. Structural interventions pay off entirely in
+          future evidence economics — what becomes knowable, how fast, at what cost, with what
+          reversibility. Recording the change without the motive loses why the system is
+          shaped as it is.
+    note_structural: >
+      Derived from SpaceX, and the reason it matters is that structural interventions are
+      INVISIBLE when scored against present-world outcomes. Reusability judged on the launch
+      it occurs in is pure overhead; its payoff is that a flown component can be inspected
+      later. This is why traditional aerospace found the move hard to justify — not
+      conservatism, a measurement artifact.
+
+      Not a new primitive: same mechanism, different target. Coverage is comfortable at five
+      systems across three domains — Toyota's andon cord, Hop Aero's tethered flight, SpaceX's
+      vertical integration and reusability, Lumi Science's entire product, and the immune
+      system's affinity maturation, which improves the estimator rather than the body.
     note: >
       The prior-art gate found legitimacy does not survive as an expressivity claim, while
       the hospital seed insists authority is structural. Reconciled by making authority a
@@ -228,8 +272,16 @@ primitives:
     tier: core
     depth: 2
     definition: >
-      An invariant that must hold, distinct from something merely desired.
-    demanded_by: [hospital, thermostat]
+      An invariant that must hold, distinct from something merely desired. Not tradeable at
+      any exchange rate.
+    demanded_by: [hospital, thermostat, hop_aero]
+    note: >
+      Hop Aero moves this off the at-risk list. Range safety approval, launch licensing and
+      export control are not things the company wants more or less of — they are conditions
+      of operating at all, and violation ends the company or imprisons someone. There is no
+      amount of speed that compensates. A representation able to express only strong
+      preference cannot say this, and treating them as heavily weighted objectives is a
+      category error rather than an approximation.
 
   - name: Revision
     tier: core
@@ -292,9 +344,28 @@ honest_notes:
     - Constraint and DesiredCondition differ only in whether violation is permitted.
 
   at_risk_under_orphan_rule:
-    - Consequence — one seed only
-    - Constraint — two seeds, thin
-    - Delay — two seeds, both engineering-adjacent
+    still_thin:
+      - Delay — two systems, both engineering-adjacent. Still the thinnest.
+      - PreferenceOrdering — two systems. Expected to be demanded by democracy.
+      - Boundary — three systems but never load-bearing enough to force its own promotion,
+        which is either a sign it is correctly cheap or a sign it is underspecified.
+    resolved:
+      - Consequence — was one seed; Hop Aero's launch regulator (pure downside, no upside)
+        supplies a second and cleaner instance.
+      - Constraint — was thin; Hop Aero's licensing and export control are non-tradeable at
+        any exchange rate, which is the distinction Constraint exists to carry.
+
+  evidence_cost_axis: >
+    reference_set.md predicted that expensive-evidence systems would invest in Estimator
+    quality while cheap-evidence systems would run weak estimators over many observations.
+    Traditional aerospace versus SpaceX confirms the contrast.
+
+    CORRECTION: SpaceX did not pick a strategy on the axis, it MOVED ITS POSITION along the
+    axis. Vertical integration, reusability and cadence are all interventions aimed at making
+    evidence cheaper and more reversible. So there are three strategies, not two: estimate
+    harder, observe more, or change what observation costs.
+
+    The third now has five independent instances and became Intervention.target.
 
   loci_hypothesis: >
     RESOLVED IN FAVOUR, reversing the previous entry. research/prior_art_gate.md predicted
