@@ -20,6 +20,7 @@ import json
 import math
 import glob
 import os
+import re
 
 try:
     import yaml
@@ -242,7 +243,7 @@ def term_determinacy(encodings):
             if a.get("encoded_by") == b.get("encoded_by"):
                 continue  # same encoder is not an independent sample
             ja = jaccard(set(a.get("uses") or []), set(b.get("uses") or []))
-            je = jaccard(set(a.get("estimands") or []), set(b.get("estimands") or []))
+            je = fuzzy_jaccard(a.get("estimands"), b.get("estimands"))
             la, lb = len(a.get("loops") or []), len(b.get("loops") or [])
             jl = 1.0 if la == lb == 0 else (min(la, lb) / max(la, lb) if max(la, lb) else 0.0)
             s = 0.5 * ja + 0.3 * je + 0.2 * jl
@@ -294,6 +295,62 @@ def jaccard(a, b):
     if not a and not b:
         return 1.0
     return len(a & b) / len(a | b) if (a | b) else 0.0
+
+
+STOP = {"the", "a", "of", "is", "and", "state", "level", "value", "status", "estimand",
+        "current", "actual", "rate", "gap", "measure", "metric"}
+
+
+def normalize_name(x):
+    """
+    Reduce a free-text identifier to a bag of content tokens.
+
+    ontology/score.md has always specified that estimands are 'fuzzy-matched on name', but
+    the implementation used exact string intersection — so the term was measuring NAMING
+    CONVENTION rather than conceptual agreement. One encoder writing
+    `estimand:report_matches_reality` and another writing `report_reality_gap` scored 0.0
+    for what is plainly the same quantity.
+    """
+    if isinstance(x, dict):
+        x = x.get("id") or x.get("name") or ""
+    x = str(x).lower()
+    x = re.sub(r"^(estimand|node|est)[:_]", "", x)
+    toks = [t for t in re.split(r"[^a-z0-9]+", x) if t and t not in STOP]
+    # crude stemming: collapse common suffixes so survivability ~ survivable ~ survival
+    out = set()
+    for t in toks:
+        for suf in ("ability", "ibility", "ivity", "ility", "ness", "tion", "sion",
+                    "ing", "ed", "s"):
+            if len(t) > len(suf) + 3 and t.endswith(suf):
+                t = t[: -len(suf)]
+                break
+        out.add(t)
+    return out
+
+
+def fuzzy_jaccard(a, b, thresh=0.5):
+    """Greedy best-match set similarity over token bags."""
+    A = [normalize_name(x) for x in (a or [])]
+    B = [normalize_name(x) for x in (b or [])]
+    A = [x for x in A if x]
+    B = [x for x in B if x]
+    if not A and not B:
+        return 1.0
+    if not A or not B:
+        return 0.0
+    used, matched = set(), 0
+    for i, x in enumerate(A):
+        best, bj = None, 0.0
+        for j, y in enumerate(B):
+            if j in used:
+                continue
+            jv = len(x & y) / len(x | y) if (x | y) else 0.0
+            if jv > bj:
+                best, bj = j, jv
+        if best is not None and bj >= thresh:
+            used.add(best)
+            matched += 1
+    return matched / max(len(A), len(B))
 
 
 def load_adjudications():
