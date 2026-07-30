@@ -409,6 +409,7 @@ primitives:
       A loop that closes on an ESTIMATOR rather than on the world: it compares what the
       estimator predicted against what later happened, over a declared window, and adjusts
       the estimator's trust rather than the system's actions.
+    demanded_by: [fusion_venture, ai_frontier_lab, materials_discovery, venture_acme]
     attributes:
       - window: >
           The period over which prediction and outcome are compared. Necessarily longer than

@@ -90,11 +90,19 @@ def depth_of(obj, d=0):
 
 # --------------------------------------------------------------- semantics
 
+def maps(section):
+    """Only mapping entries. Pre-normal encodings mix mappings and bare strings freely."""
+    return [x for x in (section or []) if isinstance(x, dict)]
+
+
 def ids_in(section):
+    """Ids from a section. Pre-normal encodings mix mappings and bare strings."""
     out = set()
     for item in section or []:
         if isinstance(item, dict) and item.get("id"):
             out.add(item["id"])
+        elif isinstance(item, str):
+            out.add(item)
     return out
 
 
@@ -163,7 +171,7 @@ def check_canonical(path, doc, allp, rep):
 
     # loops must close, name real nodes, and be distinct
     seen = {}
-    for lp in doc.get("loops") or []:
+    for lp in maps(doc.get("loops")):
         for field, want in (("timescale", "TimeScale"), ("signal", "Signal"),
                             ("intervention", "Intervention")):
             v = lp.get(field)
@@ -246,7 +254,7 @@ def check_encoding(path, doc, core, allp, rep):
     delays = ids_in(sysd.get("delays"))
 
     # --- referential integrity: every reference resolves
-    for est in sysd.get("estimators") or []:
+    for est in maps(sysd.get("estimators")):
         for s in est.get("from") or []:
             base = str(s).split(".")[0]
             if base not in signals and base not in estimands:
@@ -256,12 +264,12 @@ def check_encoding(path, doc, core, allp, rep):
         if to and str(to).split(".")[0] not in estimands:
             rep.err(where, f"estimator `{est.get('id')}` writes `{to}` which is not a declared estimand")
 
-    for sig in sysd.get("signals") or []:
+    for sig in maps(sysd.get("signals")):
         m = sig.get("measures")
         if m and m not in estimands:
             rep.err(where, f"signal `{sig.get('id')}` measures `{m}` which is not a declared estimand")
 
-    for dc in sysd.get("desired_conditions") or []:
+    for dc in maps(sysd.get("desired_conditions")):
         tgt = dc.get("applies_to")
         if tgt and str(tgt).split(".")[0] not in estimands:
             rep.err(where, f"desired_condition `{dc.get('id')}` applies to `{tgt}` which is not "
@@ -273,14 +281,14 @@ def check_encoding(path, doc, core, allp, rep):
 
     # --- Estimator idempotency. Required, not advisory: alarm delivery is at-least-once,
     #     so a Bayesian update applied twice double-counts into a well-formed wrong posterior.
-    for est in sysd.get("estimators") or []:
+    for est in maps(sysd.get("estimators")):
         if not est.get("idempotency_basis"):
             rep.err(where, f"estimator `{est.get('id')}` declares no idempotency_basis — under "
                            f"at-least-once execution it can double-count evidence silently")
 
     # --- no estimator may depend on its own output without an intervening Delay
-    delayed_targets = {d.get("applies_to") for d in (sysd.get("delays") or [])}
-    for est in sysd.get("estimators") or []:
+    delayed_targets = {d.get("applies_to") for d in maps(sysd.get("delays"))}
+    for est in maps(sysd.get("estimators")):
         reads = {str(s).split(".")[0] for s in (est.get("from") or [])}
         writes = str(est.get("to") or "").split(".")[0]
         if writes and writes in reads and est.get("id") not in delayed_targets:
@@ -288,7 +296,7 @@ def check_encoding(path, doc, core, allp, rep):
                            f"declared Delay — an algebraic loop")
 
     # --- loop closure
-    for lp in doc.get("loops") or []:
+    for lp in maps(doc.get("loops")):
         name = lp.get("name", "?")
         sig, iv = lp.get("signal"), lp.get("intervention")
         if not sig or not iv:
@@ -304,7 +312,7 @@ def check_encoding(path, doc, core, allp, rep):
 
     # --- loop identity rule: distinct (timescale, closing intervention)
     seen = {}
-    for lp in doc.get("loops") or []:
+    for lp in maps(doc.get("loops")):
         key = (lp.get("timescale"), lp.get("intervention"))
         if key in seen:
             rep.err(where, f"loops `{seen[key]}` and `{lp.get('name')}` share both timescale and "
@@ -312,21 +320,28 @@ def check_encoding(path, doc, core, allp, rep):
         seen[key] = lp.get("name")
 
     # --- Party requires consequence-bearing (resolved open question, round 1)
-    for p in sysd.get("parties") or []:
+    #     Pre-normal encodings sometimes list parties as bare strings rather than mappings.
+    for p in maps(sysd.get("parties")):
+        if not isinstance(p, dict):
+            continue
         if "consequence" not in p:
             rep.warn(where, f"party `{p.get('id')}` declares no consequence — under the resolved "
                             f"definition a Party bears consequences; an authority-holding "
                             f"mechanism that bears none is a component, not a Party")
 
     # --- interventions acting on own structure must state a motive
-    for iv in sysd.get("interventions") or []:
+    for iv in maps(sysd.get("interventions")):
+        if not isinstance(iv, dict):
+            continue
         if iv.get("target") == "own-structure" and not iv.get("motive"):
             rep.err(where, f"intervention `{iv.get('id')}` targets own-structure but states no "
                            f"motive — the payoff is in future evidence economics and is lost "
                            f"without it")
 
     # --- probability well-formedness where numeric
-    for e in sysd.get("estimates") or []:
+    for e in maps(sysd.get("estimates")):
+        if not isinstance(e, dict):
+            continue
         dist = e.get("distribution")
         if isinstance(dist, dict):
             vals = [v for v in dist.values() if isinstance(v, (int, float))]
