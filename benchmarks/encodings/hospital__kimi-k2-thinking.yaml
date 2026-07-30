@@ -1,0 +1,164 @@
+encodes: hospital
+set: seed
+domain: institution
+encoded_by: kimi-k2-thinking
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- Estimate
+- Evidence
+- DesiredCondition
+- Consequence
+- Intervention
+- Policy
+- Loop
+- TimeScale
+- Resource
+estimands:
+- clinical_stability
+- functional_capacity
+- logistical_readiness
+- marginal_bed_value
+- patient_preference
+parties:
+- consultant
+- nurse
+- discharge_coordinator
+- bed_manager
+- patient
+loops:
+- name: discharge_decision
+  timescale: daily
+  signal: ward_round_observations
+  intervention: discharge
+- name: bed_pressure
+  timescale: hourly
+  signal: ed_queue_state
+  intervention: apply_pressure
+breaks_declared:
+- single_estimate_per_quantity
+- authority_follows_information
+- single_objective
+- shared_error_costs
+- complete_specification_required
+breaks_handled:
+- single_estimate_per_quantity
+- authority_follows_information
+- single_objective
+- shared_error_costs
+- complete_specification_required
+surfaced: []
+reduces_to: null
+system:
+  type: System
+  excluded_variables:
+  - weekend_care_home_availability
+  - night_consultant_access
+  - arrival_time_recording
+  - nurse_reputation_weights
+  - family_reliability
+  resources:
+    beds:
+      type: Resource
+  parties:
+    consultant:
+      type: Party
+    nurse:
+      type: Party
+    discharge_coordinator:
+      type: Party
+    bed_manager:
+      type: Party
+    patient:
+      type: Party
+  estimands:
+    clinical_stability:
+      type: Estimand
+    functional_capacity:
+      type: Estimand
+    logistical_readiness:
+      type: Estimand
+    marginal_bed_value:
+      type: Estimand
+    patient_preference:
+      type: Estimand
+  estimates:
+    clinical:
+      type: Estimate
+      party: consultant
+      estimand: clinical_stability
+      evidence: daily_ward_round
+    functional:
+      type: Estimate
+      party: nurse
+      estimand: functional_capacity
+      evidence: continuous_observation
+    logistical:
+      type: Estimate
+      party: discharge_coordinator
+      estimand: logistical_readiness
+      evidence: placement_availability
+    marginal:
+      type: Estimate
+      party: bed_manager
+      estimand: marginal_bed_value
+      evidence: census_and_queue
+    patient:
+      type: Estimate
+      party: patient
+      estimand: patient_preference
+      evidence: subjective_state
+  consequences:
+    readmission:
+      type: Consequence
+      party: consultant
+    unsafe_discharge:
+      type: Consequence
+      party: nurse
+    stranded_patient:
+      type: Consequence
+      party: discharge_coordinator
+    four_hour_breach:
+      type: Consequence
+      party: bed_manager
+  interventions:
+    discharge:
+      type: Intervention
+      target: world
+      authority:
+      - consultant
+    block:
+      type: Intervention
+      target: own-structure
+      authority:
+      - nurse
+      motive: safety_concern
+    delay_logistics:
+      type: Intervention
+      target: own-structure
+      authority:
+      - discharge_coordinator
+      motive: arrange_transport
+    apply_pressure:
+      type: Intervention
+      target: own-structure
+      authority:
+      - bed_manager
+      motive: relieve_ed_pressure
+  loops:
+  - type: Loop
+    name: discharge_decision
+    timescale: daily
+  - type: Loop
+    name: bed_pressure
+    timescale: hourly
+  time_scales:
+  - hourly
+  - daily
+  - weekly
+  - quarterly
+  - multi_year
+encoder_role: independent

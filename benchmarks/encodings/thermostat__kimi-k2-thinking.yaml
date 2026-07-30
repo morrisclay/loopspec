@@ -1,0 +1,82 @@
+encodes: thermostat
+set: seed
+domain: engineering
+encoded_by: kimi-k2-thinking
+uses:
+- System
+- Boundary
+- Party
+- Estimand
+- Signal
+- DesiredCondition
+- Intervention
+- Policy
+- Loop
+- Delay
+estimands:
+- room_comfort
+parties:
+- householder
+loops:
+- name: temperature_control
+  timescale: seconds
+  signal: hallway_temp
+  intervention: boiler_control
+breaks_declared:
+- mandatory_goal_holding
+- target_as_pure_number
+- measured_is_interest
+breaks_handled:
+- mandatory_goal_holding
+- target_as_pure_number
+- measured_is_interest
+surfaced: []
+reduces_to: classical_control_loop
+system:
+  type: System
+  excluded_variables:
+  - room_temp_actual
+  - sensor_drift
+  - occupant_preferences
+  - east_wind_response
+  boundary:
+    inside:
+    - controller
+    - sensor
+    - relay
+    outside:
+    - householder
+    - rooms
+  parties:
+    householder:
+      type: Party
+      location: outside
+  estimands:
+    room_comfort:
+      type: Estimand
+      specification_status: deliberately-unspecified
+  signals:
+    hallway_temp:
+      type: Signal
+      specification_status: specified
+  desired_conditions:
+    setpoint:
+      type: DesiredCondition
+      held_by: householder
+      value: 20C
+      deadband: 0.5C
+  delays:
+    heat_transfer:
+      type: Delay
+      duration: 15-40min
+  interventions:
+    boiler_control:
+      type: Intervention
+      target: world
+  policy:
+    type: Policy
+    logic: hysteresis_anti_chatter
+  loop:
+    type: Loop
+    timescale: seconds
+encoder_role: independent

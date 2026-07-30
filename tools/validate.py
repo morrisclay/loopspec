@@ -98,6 +98,98 @@ def ids_in(section):
     return out
 
 
+CANONICAL_RELS = {"measures", "estimates", "holds", "targets", "closes", "delays",
+                  "constrains", "authorizes", "consumes", "revises", "contains", "bears"}
+
+
+def check_canonical(path, doc, allp, rep):
+    """Validate a flat node/edge document against schema/uras.graph.md."""
+    where = os.path.basename(path)
+    nodes = doc.get("nodes") or []
+    edges = doc.get("edges") or []
+
+    ids, kinds = {}, {}
+    for n in nodes:
+        i = n.get("id")
+        if not i:
+            rep.err(where, "node with no id")
+            continue
+        if i in ids:
+            rep.err(where, f"duplicate node id `{i}`")
+        ids[i] = n
+        kinds.setdefault(n.get("kind"), []).append(i)
+
+    # kinds must be catalogued
+    for k in sorted(kinds):
+        if k and k not in allp:
+            rep.warn(where, f"node kind `{k}` is not in the catalog — either add the primitive "
+                            f"or express it differently")
+
+    # `uses` reachability, against node kinds rather than section names
+    for prim in doc.get("uses") or []:
+        if prim == "Loop":
+            if not doc.get("loops"):
+                rep.warn(where, "`uses` declares `Loop` but the loops list is empty")
+            continue          # loops are declared top-level, not as nodes
+        if prim not in kinds:
+            rep.warn(where, f"`uses` declares `{prim}` but no node has that kind")
+
+    # edges: closed vocabulary + referential integrity
+    for e in edges:
+        r = e.get("rel")
+        if r not in CANONICAL_RELS:
+            rep.err(where, f"edge rel `{r}` is outside the closed vocabulary "
+                           f"{sorted(CANONICAL_RELS)}")
+        for end in ("from", "to"):
+            v = e.get(end)
+            if v not in ids:
+                rep.err(where, f"edge {end} `{v}` references no declared node")
+
+    # loops must close, name real nodes, and be distinct
+    seen = {}
+    for lp in doc.get("loops") or []:
+        for field, want in (("timescale", "TimeScale"), ("signal", "Signal"),
+                            ("intervention", "Intervention")):
+            v = lp.get(field)
+            if not v:
+                rep.err(where, f"loop `{lp.get('id')}` does not close: missing {field}")
+            elif v not in ids:
+                rep.err(where, f"loop `{lp.get('id')}` {field} `{v}` references no node")
+            elif ids[v].get("kind") != want:
+                rep.err(where, f"loop `{lp.get('id')}` {field} `{v}` is kind "
+                               f"`{ids[v].get('kind')}`, expected `{want}`")
+        key = (lp.get("timescale"), lp.get("intervention"))
+        if key in seen:
+            rep.err(where, f"loops `{seen[key]}` and `{lp.get('id')}` share timescale and "
+                           f"closing intervention — under the identity rule they are one loop")
+        seen[key] = lp.get("id")
+
+    # every Party bears a Consequence (edge rel: bears)
+    bears = {e["from"] for e in edges if e.get("rel") == "bears"}
+    for pid in kinds.get("Party", []):
+        if pid not in bears:
+            rep.err(where, f"party `{pid}` bears no Consequence — under the narrowed definition "
+                           f"an authority-holding node bearing none is a component, not a Party")
+
+    # every Estimator declares an idempotency basis
+    for eid in kinds.get("Estimator", []):
+        if not ids[eid].get("idempotency_basis"):
+            rep.err(where, f"estimator `{eid}` declares no idempotency_basis — under "
+                           f"at-least-once execution it can double-count evidence silently")
+
+    # own-structure interventions need a motive
+    for iid in kinds.get("Intervention", []):
+        n = ids[iid]
+        if n.get("target") == "own-structure" and not n.get("motive"):
+            rep.err(where, f"intervention `{iid}` targets own-structure with no motive")
+
+    d = depth_of(doc)
+    if d > 4:
+        rep.err(where, f"nesting depth {d} exceeds the canonical ceiling of 4")
+
+    return rep
+
+
 def check_encoding(path, doc, core, allp, rep):
     where = os.path.basename(path)
 
@@ -106,6 +198,11 @@ def check_encoding(path, doc, core, allp, rep):
             rep.err(where, f"missing required top-level key `{k}`")
 
     check_keys(doc, rep, where)
+
+    # Canonical flat documents take the canonical path; the nested checks below apply only
+    # to pre-normal round-1 encodings, retained as the evidentiary record.
+    if doc.get("shape") == "canonical-graph" or "nodes" in doc:
+        return check_canonical(path, doc, allp, rep)
 
     # --- uses must name real core primitives
     unknown = sorted(set(doc.get("uses") or []) - allp)

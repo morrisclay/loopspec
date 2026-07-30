@@ -282,7 +282,9 @@ def vendor_of(model):
     for prefix, vendor in (("gpt", "openai"), ("o1", "openai"), ("o3", "openai"),
                            ("o4", "openai"), ("codex", "openai"), ("claude", "anthropic"),
                            ("gemini", "google"), ("grok", "xai"), ("deepseek", "deepseek"),
-                           ("qwen", "alibaba"), ("llama", "meta"), ("mistral", "mistral")):
+                           ("qwen", "alibaba"), ("llama", "meta"), ("mistral", "mistral"),
+                           ("kimi", "moonshot"), ("moonshot", "moonshot"),
+                           ("glm", "zhipu")):
         if prefix in m:
             return vendor
     return "unknown"
@@ -304,10 +306,17 @@ def load_adjudications():
     nor the prose, on anonymised claims.
     """
     out = {"surfaced": {}, "breaks": {}, "by_encoding": {}}
-    vpath = os.path.join(ROOT, "adjudication", "round1_verdicts.yaml")
-    lpath = os.path.join(ROOT, "adjudication", "round1_label_map.json")
-    spath = os.path.join(ROOT, "adjudication", "surfaced_cases.yaml")
-    bpath = os.path.join(ROOT, "adjudication", "breaks_cases.yaml")
+    # Prefer the highest-numbered round: later rounds cover strictly more claims.
+    rounds = sorted(glob.glob(os.path.join(ROOT, "adjudication", "round*_verdicts.yaml")))
+    if not rounds:
+        return None
+    latest = rounds[-1]
+    n = os.path.basename(latest).split("_")[0]        # e.g. "round2"
+    out["round"] = n
+    vpath = latest
+    lpath = os.path.join(ROOT, "adjudication", f"{n}_label_map.json")
+    spath = os.path.join(ROOT, "adjudication", f"{n}_surfaced_cases.yaml")
+    bpath = os.path.join(ROOT, "adjudication", f"{n}_breaks_cases.yaml")
     if not all(os.path.exists(p) for p in (vpath, lpath, spath, bpath)):
         return None
     v = yaml.safe_load(open(vpath))

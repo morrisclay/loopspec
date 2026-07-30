@@ -1,198 +1,180 @@
-# Status — Round 2
+# Status
 
 ```
 SCORE                     0.000
-sub-score (excl. U)       0.763     DIAGNOSTIC ONLY
+sub-score (excl. U)       0.748     DIAGNOSTIC ONLY
 binding term              U_usefulness = 0.000
 
 S simplicity              0.812
-E expressivity            0.896     adjudicated, not self-assessed
-D determinacy             0.772     4 vendors, 12 pairs
-U usefulness              0.000     every claim rejected by blind adjudication
-C comprehensibility       0.560
+E expressivity            0.821     adjudicated over 47 claims
+D determinacy             0.805     5 vendors, 20 pairs
+U usefulness              0.000     11 of 11 claims rejected
+C comprehensibility       0.582
 gate negative_control     pass
-gate reduction            pass      independently confirmed by 4 encoders
+gate reduction            pass      independently confirmed by 5 encoders
 ```
 
-**The score is zero and that is the correct answer.** The geometric mean is designed to
-collapse when any term fails, and `U` fails: no encoding has been shown to surface anything a
-practitioner did not already have. The sub-score exists only so progress on the other four
-terms stays visible, and it is not an achievement.
+**The score is zero and that is the correct answer.** The geometric mean is built to collapse
+when a term fails. `U` fails: no encoding, by any model, has been shown to surface anything a
+practitioner did not already have. The sub-score exists only to keep gradient visible on the
+other four terms and is not an achievement.
 
 ---
 
-## 1. Determinacy is real, and my own caveat was wrong
+## 1. Determinacy is real. My caveat about it was wrong.
 
-Four encoders across four vendors — `claude-opus-5` (anthropic), `gpt-5-codex` (openai),
-`gemini-2.5-pro` (google), `deepseek-v3.2` (deepseek) — encoded the same two systems from the
-same stripped inputs, independently.
+Five encoders across five vendors, same stripped inputs, independently, no shared context:
+`claude-opus-5` (anthropic), `gpt-5-codex` (openai), `gemini-2.5-pro` (google),
+`deepseek-v3.2` (deepseek), `kimi-k2-thinking` (moonshot). **D = 0.805 over 20 pairs.**
 
-I had cautioned that `D` was inflated because one encoder was the author of the ontology and
-the prose. **Measured, that caveat is false:**
+I had warned `D` was inflated by including the ontology's own author. Measured:
 
 | | D | pairs |
 |---|---|---|
-| author pairs | 0.782 | 6 |
-| independent-only pairs | 0.762 | 6 |
-| **author effect** | **+0.021** | |
+| author pairs | 0.790 | 8 |
+| independent-only pairs | 0.789 | 12 |
+| **author effect** | **+0.001** | |
 
-Two points. My encoding is not privileged, and the lowest single pair in the whole set is
-`claude-opus-5 vs gemini-2.5-pro` at 0.599 — the author pair, not an independent one. `D` is
-a real measurement, not an artifact of self-agreement.
+One thousandth. And the single lowest pair in the whole set is an *author* pair
+(`claude vs gemini`, 0.599). The caveat is refuted by measurement, not argued away.
 
-### The thermostat result is strong
+**Thermostat, across all five vendors: estimand agreement 1.00, loop agreement 1.00**, every
+one independently setting `reduces_to: classical_control_loop`. The reduction floor from
+`research/prior_art_gate.md` is now confirmed by five independent parties rather than asserted.
 
-Across all four vendors: **estimand agreement 1.00, loop agreement 1.00.** Every encoder
-independently identified the same single estimand (`room_comfort`), the same single loop, and
-independently set `reduces_to: classical_control_loop`. Only primitive *selection* varied
-(0.69–0.87).
+**Hospital is where the ontology is weak**: pairs 0.599–0.724, with estimand individuation
+the weak component at 0.43–0.67. Whether five parties assessing discharge readiness is five
+estimands or five estimates of one contested aggregate. I wrote that fork down before
+comparing, so it is a known ambiguity — knowing it has not resolved it.
 
-The reduction floor from `research/prior_art_gate.md` is therefore confirmed by four
-independent parties rather than asserted.
+## 2. Usefulness: 11 of 11 rejected, by four different models
 
-### The hospital result is where the ontology is weak
+Blind adjudication — a model that wrote neither the encodings, the ontology, nor the prose,
+on anonymised claims with encoder identity stripped, with three ways to fail and one to pass.
 
-Pairs range 0.599–0.724. The weak component is **estimand individuation, 0.43–0.67**: whether
-five parties assessing discharge readiness constitutes five estimands, or five estimates of
-one contested aggregate. I predicted this exact fork in writing before comparing, which
-makes it a known ambiguity rather than a latent one — but knowing it does not resolve it.
+| verdict | count |
+|---|---|
+| restatement | 8 |
+| unsupported | 3 |
+| **genuine** | **0** |
 
-## 2. Usefulness collapsed under blind adjudication
+**This is a much stronger finding than round 1, and it points somewhere different.** In round
+1 only my own six claims had been judged, and the obvious reading was author privilege — I
+knew what the prose was written to illustrate. Round 2 adds claims from Gemini and DeepSeek,
+which had no such privilege. They failed identically.
 
-A model that wrote neither the encodings, the ontology, nor the prose adjudicated all claims
-with encoder identity stripped and anonymised labels.
+So it is not that one encoder was bad at finding insight. **No encoder could.** The
+adjudicator's diagnosis is the sharpest sentence produced in this project:
 
-**All six of my surfaced claims were rejected** — four `restatement`, two `unsupported`, zero
-`genuine`. `gpt-5-codex` had surfaced none at all. So `U = 0`.
+> The encodings repeatedly mistake typed paraphrase or an excluded-variable list for
+> explanatory structure, so their declared handling and surfaced insights substantially
+> overstate what they actually establish.
 
-The adjudicator's own summary is the sharpest statement of the problem:
+*Typed paraphrase.* The encodings retype the prose with primitive labels attached and the
+result reads as analysis. That is the honest description of where URAS currently stands, and
+no amount of work on the other four terms addresses it.
 
-> The encodings mostly relabel facts already explicit in the prose as surfaced insights,
-> while their stronger hospital conclusions about causal disagreement and cross-timescale
-> ownership are not structurally established.
+**Adjudication is reproducible:** re-run on the six round-1 claims, it returned **6/6
+identical verdicts**.
 
-That is exactly right, and note *which* claims died: the two rated `unsupported` were the two
-I was most pleased with. I had asserted them in the `surfaced` field; the encoding structure
-does not actually derive them.
+## 3. Expressivity fell as adjudication widened — the honest direction
 
-### A flaw in my own metric, invisible until real data arrived
+`E` went 0.950 (self-assessed) → 0.896 → **0.821** across 47 adjudicated claims: 41 `handled`,
+5 `named_only`, 1 `not_handled`.
 
-The original `U` was additive, with an audit-fraction term meant to punish padding:
+A term that *falls* as measurement improves is behaving correctly. `named_only` — listing
+something under an "excluded" key and calling it handled — caught 5 over-claims, against the
+1 found when only 15 claims were judged.
 
-```
-U = 0.6 · clamp(mean_surfaced / 3) + 0.4 · (audited / total)     # WRONG
-```
+## 4. Two open questions closed, one gap closed at zero cost
 
-With all six claims audited and **all six failing**, this formula moves `U` from 0.3 to 0.7.
-Submitting failing claims for review would have *raised* the score, because the term rewarded
-having been audited rather than passing.
+**Loop identity — ADOPTED:** one loop per distinct (timescale, closing intervention). Tested
+against Toyota, the stated fragmentation risk: it yields five loops matching Toyota's own
+separately-named mechanisms, so it reproduces distinctions the organisation already draws.
+`gpt-5-codex` independently derived a near-identical rule, correctly excluded A3 and *genchi
+genbutsu* as practices rather than loops, and **found a loop I had missed** — kanban
+pull-replenishment.
 
-Now multiplicative, counting only adjudicated-`genuine` claims. The general caution is worth
-keeping: a term with a process component should always be checked for whether it rewards the
-process or the outcome, and synthetic reasoning did not reveal this — contact with verdicts did.
+**`Party` — NARROWED:** must bear a Consequence. Codex was right that the written definition
+admitted a thermostat controller; narrowed rather than broadened, since the alternative makes
+every relay a Party. This links `Party` to `Consequence` constitutively.
 
-## 3. Expressivity is no longer self-assessed
+**The gap that narrowing created, closed without spending budget.** Authority-holding
+mechanisms had nowhere to live. My first attempt invented a `Component` kind; the validator
+flagged it as uncatalogued within seconds. A controller *is* a sub-system — so it is a
+`System` with `part_of`, using recursion the catalog already had. 19/20 core, unchanged.
 
-`E` previously let an encoder score its own coverage, and rewarded optimism. It now uses
-adjudicated verdicts, with a third verdict `named_only` for the specific failure of listing
-something under an "excluded" key and calling it handled.
+## 5. The ontology had primitives but no shape
 
-Round 1 caught exactly one over-claim: `gpt-5-codex` claimed 5/5 breaks handled on the
-hospital including `incomplete_specification`; the adjudicator ruled `named_only`, agreeing
-with my dissent. `E` fell 0.950 → 0.896, which is the honest number.
-
-## 4. Two open questions resolved
-
-**Loop identity — ADOPTED:** one loop per distinct (timescale, closing intervention).
-
-Tested against Toyota, which was the stated risk — five timescales that might fragment. It
-yields five loops: station cycle, line stoppage, improvement, quality, platform. Those have
-different signals, different closing interventions and different authorities, and Toyota
-itself treats them as separate named mechanisms — jidoka, kaizen and hoshin kanri are not one
-loop in Toyota's own account. The rule reproduces distinctions the organisation already
-draws, which is the best available evidence it carves at a real joint.
-
-Corroboration: `gpt-5-codex` independently derived a near-identical rule for round 2
-("only a cycle with a returning measured signal and an intervention that changes the source
-of the next signal"), correctly excluded practices like A3 and *genchi genbutsu* as non-loops,
-and **found a loop I had missed** — kanban pull-replenishment.
-
-**`Party` — NARROWED:** a Party must bear a Consequence. It may also hold estimates, hold
-desired conditions and exercise authority, but consequence-bearing is the discriminator.
-
-Round 1 showed my definition was broader than my use of it — codex counted a thermostat
-controller as a Party because it exercises authority, and by the written definition codex was
-right. Narrowed rather than broadened, because the alternative makes every relay a Party.
-Side benefit: this links `Party` to `Consequence` constitutively, justifying `Consequence`
-beyond its coverage count.
-
-## 5. Scott and the adjudicator converged independently
-
-`research/external_critiques.md` recorded a prediction from James C. Scott: *metis* — local
-unwritten practical knowledge — is load-bearing and would be what the representation could
-not hold.
-
-The adjudicator, which never saw that document and worked only from encodings, reported
-unprompted:
-
-> The ontology appears to lack a way to represent load-bearing tacit institutional rules,
-> contextual exceptions, and informal credibility, forcing both hospital encodings to relegate
-> them to excluded variables rather than make them behaviorally operative.
-
-Two fully independent routes to the same gap is the strongest evidence available that the
-philosophical critique was substantive rather than decorative.
-
-Acted on with an `informal_influence` field on `Party` — recording *that* influence exceeds
-declared authority and in which direction, without codifying its content. Scott is right that
-codifying metis destroys it; recording the discrepancy is enough to make it operative in a
-policy. A field, not a primitive: no budget cost.
-
-## 6. The biggest structural finding: the ontology had primitives but no shape
-
-Four encoders produced four incompatible document structures — lowercase plurals, PascalCase
-primitive names as keys, everything nested under one `System`.
-
-`D` was measurable only because the encoding task happened to pin the top-level keys. Below
-that, nothing was constrained, and the Semantic Validator could not locate sections to check
-referential integrity or loop closure across encoders.
+Five encoders produced five incompatible document structures — lowercase plurals, PascalCase
+primitive names as keys, everything nested under one `System`. `D` was measurable only because
+the encoding task happened to pin the top-level keys; below that nothing was constrained, and
+the validator could not locate sections to check.
 
 `schema/uras.graph.md` now defines the canonical shape: a **flat typed graph** of `nodes` plus
-`edges` with a closed `rel` vocabulary, replacing nesting. Flat wins twice — more comparable
-and more readable, and nesting was already the cause of the two worst `C` results (depth 5–6
-against a target of 4).
+`edges` over a closed `rel` vocabulary. Implemented once, for the thermostat, to test whether
+the spec was real rather than aspirational — it validates clean at **depth 4** against the
+nested version's 5.
+
+Writing it produced two findings the nested form had hidden: the `Component` gap above, and
+that my nested encoding had **silently omitted the householder's consequence entirely**. Flat
+made both visible in one line.
 
 **Recorded in advance:** normalising shape will raise `D` by removing divergence that was
-never conceptual. That rise is a measurement artifact and must be reported as such. The real
-ambiguities — estimand individuation, whether `Estimator` is needed when a party already holds
-an estimate — are untouched by it.
+never conceptual. That rise will be a measurement artifact, not progress, and must be reported
+as such — exactly as the coverage-measurement fix was.
+
+## 6. Two independent routes to the same gap, twice
+
+`research/external_critiques.md` recorded Scott's prediction that *metis* — local unwritten
+practical knowledge — is load-bearing and would be what the representation could not hold.
+
+Both adjudication rounds, which never saw that document, reported it unprompted. Round 2:
+
+> The ontology lacks a way to represent load-bearing unwritten knowledge and its causal
+> influence on policy, and it also lacks an artifact/comprehensibility primitive for
+> expressing why a bounded representation such as A3 works.
+
+Acted on with an `informal_influence` field on `Party` — recording *that* influence exceeds
+declared authority and in which direction, without codifying content, since Scott is right
+that codifying metis destroys it.
+
+The second half of that finding is new and lands on my own earliest suggestion: the ontology
+cannot represent *representations*, so it cannot say why A3 works. That is the dogfooding gap —
+URAS cannot yet describe URAS — arrived at independently from the encodings.
 
 ## 7. The validator earns its place
 
-`tools/validate.py` implements 11 graph-level invariants that JSON Schema cannot express:
-loop closure, referential integrity, estimator idempotency, algebraic-loop detection,
-scalarization prohibition, depth ceiling, reserved-word keys.
+`tools/validate.py` implements graph-level invariants JSON Schema cannot express: loop closure,
+referential integrity, closed edge vocabulary, estimator idempotency, algebraic-loop detection,
+Party-bears-Consequence, scalarization prohibition, depth ceiling, reserved-word keys.
 
-It caught a real defect in third-party output it had never seen: `gpt-5-codex` used `on:` as a
-key in three places, which YAML 1.1 parses as boolean `True`. It also would have caught, in
-under a second, the same list-then-mapping-key error I made three times by hand.
+It caught a real defect in third-party output it had never seen — `gpt-5-codex` used `on:` as a
+key in three places, which YAML 1.1 parses as boolean `True` — and it caught my invented
+`Component` kind immediately. It would have caught, in under a second, the same
+list-then-mapping-key error I made three times by hand.
 
 ---
 
-## Where a human is still required
+## What is actually blocking
 
-**Auditing whether an encoding is useful to a practitioner.** The adjudicator can catch
-restatement — and did, decisively — but it cannot tell whether a claim would tell a real
-clinician or founder something new. `U = 0` currently means "no claim survived model
-adjudication," which is a necessary condition and not the real bar.
+**One thing, and it is not a tooling problem.** Until a single surfaced claim survives
+adjudication, `U = 0` and the score is zero regardless of the other four terms. Eleven attempts
+by four models produced none, and the diagnosis is that the encodings are typed paraphrase.
 
-Everything else on the round-1 list is now closed.
+This is the correct binding constraint for the project to have. It says: the representation is
+internally consistent (S), broadly expressive (E), determinate across five model families (D),
+degrades to classical control (gate), and **has not yet been shown to tell anyone anything**.
 
-## Next, in order of leverage
+Two paths, and they are not equivalent:
 
-1. **Re-encode in the canonical shape** and separate the artifact rise in `D` from real
-   convergence.
-2. **Resolve estimand individuation** — the dominant remaining conceptual divergence.
-3. **Try to produce one genuinely `genuine` surfaced claim.** Until one exists, `U = 0` and
-   the total score is zero regardless of the other four terms. This is the whole project's
-   binding constraint.
-4. Flatten encodings to lift `C` from 0.560.
+1. **Derive rather than assert.** A claim should fall out of the graph structure — for
+   instance, computing which parties hold estimates of an estimand they have no authority to
+   act on. That is a query over the encoding, not a sentence written into a `surfaced` field.
+   Every rejected claim so far was asserted prose.
+2. **A real practitioner.** Model adjudication catches restatement decisively and reproducibly,
+   but cannot tell whether something would be news to an actual clinician or founder. `U = 0`
+   currently means "no claim survived model adjudication" — a necessary condition, not the bar.
+
+Path 1 is available autonomously and is the honest next step. Path 2 needs a human, and it is
+the only item on the round-1 list still open.

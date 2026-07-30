@@ -1,0 +1,82 @@
+uras_version: 0
+encodes: thermostat
+set: seed
+domain: engineering
+encoded_by: claude-opus-5
+encoder_role: author-intent
+shape: canonical-graph          # conforms to schema/uras.graph.md
+
+uses: [System, Boundary, Party, Estimand, Signal, Estimate, Estimator, DesiredCondition,
+       Intervention, Policy, Loop, Delay, TimeScale, Constraint, Consequence]
+estimands: [room_comfort]
+parties: [householder]
+
+nodes:
+  - {id: heating, kind: System, name: domestic_heating}
+  - {id: edge, kind: Boundary, inside: [sensor, controller, relay, boiler],
+     outside: [householder, thermal_mass, weather]}
+
+  - {id: householder, kind: Party}
+  - {id: cold_discomfort, kind: Consequence, borne_by: householder, measured: false}
+  - {id: controller, kind: System, part_of: heating,
+     note: holds authority over fire_boiler, bears no consequence — a sub-System, not a Party}
+
+  - {id: room_comfort, kind: Estimand, observable: false}
+  - {id: hallway_temp, kind: Signal, fidelity: proxy, position: hallway_wall_1500mm,
+     divergence_causes: [sun_on_wall, door_draught, closed_interior_door]}
+  - {id: comfort_est, kind: Estimate, uncertainty: unquantified}
+  - {id: passthrough, kind: Estimator, form: identity, idempotency_basis: stateless,
+     declared_flaw: treats signal as estimand; cannot detect divergence}
+
+  - {id: comfort_target, kind: DesiredCondition, value: 20C, specification_status: specified}
+  - {id: deadband, kind: Constraint, rule: no actuation within 0.5C of target,
+     purpose: prevent relay chatter and boiler short-cycling}
+
+  - {id: fire_boiler, kind: Intervention, target: world, actuator: relay}
+  - {id: bang_bang, kind: Policy, form: hysteresis}
+  - {id: thermal_lag, kind: Delay, magnitude: 15_to_40_min,
+     note: heat keeps arriving after actuation stops}
+  - {id: sample_rate, kind: TimeScale, period: seconds}
+
+edges:
+  - {from: heating, to: edge, rel: contains}
+  - {from: hallway_temp, to: room_comfort, rel: measures}
+  - {from: passthrough, to: comfort_est, rel: estimates}
+  - {from: hallway_temp, to: passthrough, rel: measures}
+  - {from: householder, to: comfort_target, rel: holds}
+  - {from: householder, to: cold_discomfort, rel: bears}
+  - {from: comfort_target, to: room_comfort, rel: targets}
+  - {from: deadband, to: fire_boiler, rel: constrains}
+  - {from: thermal_lag, to: fire_boiler, rel: delays}
+  - {from: controller, to: fire_boiler, rel: authorizes}
+  - {from: bang_bang, to: fire_boiler, rel: closes}
+
+loops:
+  - {id: temperature_regulation, timescale: sample_rate, signal: hallway_temp,
+     intervention: fire_boiler}
+
+excluded_variables: [sensor_drift_over_years, per_room_occupancy, wind_direction]
+
+breaks_declared: [goal_holder_mandatory, target_as_bare_number, signal_equals_estimand]
+breaks_handled: [goal_holder_mandatory, target_as_bare_number, signal_equals_estimand]
+surfaced: []
+reduces_to: classical_control_loop
+
+shape_notes: >
+  Written to test whether schema/uras.graph.md is implementable rather than aspirational.
+  Two findings from doing it.
+
+  First, the flat form forced an explicit decision the nested form let me duck: is the
+  controller a Party? Under the narrowed definition it bears no consequence, so it is a
+  Component and the householder is the Party — and the flat graph makes that visible in one
+  line instead of buried in nesting. The nested version silently omitted the householder's
+  consequence entirely, which the validator then flagged.
+
+  Second, `Component` is not a catalogued kind. I used it because the narrowed Party
+  definition requires somewhere for authority-holding mechanisms to live. Either the catalog
+  needs Component, or authority must attach to a System rather than to a party-like node.
+  This is a real gap the canonical shape surfaced immediately and the nested shape hid.
+
+  surfaced is deliberately empty. Every claim I made in the nested version was adjudicated
+  restatement or unsupported, so asserting new ones here without evidence would repeat the
+  error rather than correct it.

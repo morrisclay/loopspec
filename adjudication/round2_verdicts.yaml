@@ -1,0 +1,185 @@
+surfaced:
+  - id: S01
+    verdict: unsupported
+    reason: "The encoding shows a daily ward round and continuous nursing observation, but it does not represent synchrony, a bottleneck, or information loss."
+  - id: S02
+    verdict: restatement
+    reason: "The encoding supports the authority-observation inversion, but the source states that inversion explicitly."
+  - id: S03
+    verdict: unsupported
+    reason: "Both the source and encoding give the parties different evidence, so the claim that differing information does not contribute is not established."
+  - id: S04
+    verdict: unsupported
+    reason: "The encoding gives the hourly and fortnightly loops different interventions and does not assign ownership to either loop, so the claimed shared intervention and ownership gap are not established."
+  - id: S05
+    verdict: restatement
+    reason: "The encoding represents the consultant's daily evidence and formal authority versus the nurse's continuous evidence and informal block, exactly as the source already explains."
+  - id: S06
+    verdict: restatement
+    reason: "The hourly bed-pressure loop, daily discharge loop, four-hour target, and financial consequence are all stated plainly in the source."
+  - id: S07
+    verdict: restatement
+    reason: "The source explicitly says the deadband prevents relay chatter and is not measurement tolerance."
+  - id: S08
+    verdict: restatement
+    reason: "The source already identifies hallway temperature as a potentially divergent proxy for room comfort that the controller cannot diagnose."
+  - id: S09
+    verdict: restatement
+    reason: "Calling the proxy mapping an identity estimator formalizes, but does not add to, the source's explicit statement that the controller cannot detect signal-comfort divergence."
+  - id: S10
+    verdict: restatement
+    reason: "The encoding correctly separates the deadband as a constraint, but its anti-chatter purpose and non-tolerance status are explicit in the source."
+  - id: S11
+    verdict: restatement
+    reason: "The source directly states that the goal-holder is outside the loop and that the thermostat cannot decide its target is wrong."
+breaks:
+  - id: B01
+    verdict: handled
+    reason: "Full-profile flight evidence is structurally marked as costing a vehicle, irreversible, and possibly available only once."
+  - id: B02
+    verdict: handled
+    reason: "Separate cost and reversibility fields distinguish the tethered test, full-profile flight, and procurement decision."
+  - id: B03
+    verdict: handled
+    reason: "The Air Force is outside the boundary yet is explicitly the holder of the mission desired condition."
+  - id: B04
+    verdict: handled
+    reason: "Distinct loops and delays represent seconds, weeks or months, quarters, and years, including the conflict between procurement response and runway."
+  - id: B05
+    verdict: handled
+    reason: "Licensing, range safety, and export control are encoded as constraints rather than desired conditions."
+  - id: B06
+    verdict: handled
+    reason: "Consequences are assigned separately by party, including the regulator's public-harm downside with no upside."
+  - id: B07
+    verdict: handled
+    reason: "Five party-held estimates of distinct readiness dimensions feed a ward-round policy that reconciles them before discharge."
+  - id: B08
+    verdict: handled
+    reason: "Evidence and estimates are represented separately from intervention authority, including consultant discharge authority and the nurse's informal block."
+  - id: B09
+    verdict: handled
+    reason: "Party-specific preference orderings encode conflicting throughput, readmission, and patient priorities without a single scalar objective."
+  - id: B10
+    verdict: handled
+    reason: "Each party bears a separately represented consequence tied to the kind of error relevant to that party."
+  - id: B11
+    verdict: handled
+    reason: "Consultant off-hours availability is retained as a party attribute whose specification status is deliberately unspecified rather than silently assumed."
+  - id: B12
+    verdict: handled
+    reason: "The encoding represents five party-specific estimands plus an explicitly contested, non-scalarized aggregate resolved by negotiation."
+  - id: B13
+    verdict: handled
+    reason: "Each party's observations and estimates are structurally separate from its authority, including the nurse-consultant inversion."
+  - id: B14
+    verdict: handled
+    reason: "The objective ordering is explicitly partial, non-scalarized, and spans five incommensurable concerns."
+  - id: B15
+    verdict: handled
+    reason: "Consequences are separately assigned to each party and distinguish who bears readmission, unsafe discharge, blockage, breach, and wrong-discharge costs."
+  - id: B16
+    verdict: handled
+    reason: "Five holder-specific estimates with distinct signals and estimands are explicit inputs to the discharge policy."
+  - id: B17
+    verdict: handled
+    reason: "Party-specific signals and estimates are encoded independently of the authority attached to interventions."
+  - id: B18
+    verdict: handled
+    reason: "The preference ordering is structurally partial and leaves exchange rates among the five objectives unspecified."
+  - id: B19
+    verdict: handled
+    reason: "The consequence structure assigns materially different error costs to the consultant, nurse, coordinator, bed manager, and patient."
+  - id: B20
+    verdict: named_only
+    reason: "The load-bearing informal variables are only listed under excluded variables and are not connected to estimates, policies, authority, or outcomes."
+  - id: B21
+    verdict: handled
+    reason: "The encoding contains five separate party estimates based on their respective signals and readiness dimensions."
+  - id: B22
+    verdict: handled
+    reason: "Observation cadence and estimate basis are represented separately from each party's intervention authority."
+  - id: B23
+    verdict: handled
+    reason: "The consequence map distinguishes the different costs borne by every named party."
+  - id: B24
+    verdict: handled
+    reason: "Five party-specific estimate objects separately represent the clinical, functional, logistical, bed-value, and patient perspectives."
+  - id: B25
+    verdict: handled
+    reason: "Estimate evidence and intervention authority are separate structures, preserving the mismatch between nursing information and consultant authority."
+  - id: B26
+    verdict: not_handled
+    reason: "The encoding contains no desired conditions or preference ordering and therefore does not represent the hospital's multiple incommensurable objectives."
+  - id: B27
+    verdict: handled
+    reason: "Separate consequence objects assign readmission, unsafe-discharge, stranded-patient, and breach costs to different parties."
+  - id: B28
+    verdict: named_only
+    reason: "The unwritten variables are merely listed as excluded and have no represented role in how discharge decisions are made."
+  - id: B29
+    verdict: handled
+    reason: "The boundary places the householder outside while the inside system contains no party required to hold the desired condition."
+  - id: B30
+    verdict: handled
+    reason: "Room comfort is a distinct estimand from the hallway-air signal, so the measured quantity is not collapsed into the quantity of interest."
+  - id: B31
+    verdict: handled
+    reason: "The householder is explicitly outside the boundary and holds the desired condition from there."
+  - id: B32
+    verdict: named_only
+    reason: "Although a deadband and anti-chatter hysteresis are mentioned, the deadband remains embedded in the desired condition rather than being structurally tied to the policy as a non-goal constraint."
+  - id: B33
+    verdict: handled
+    reason: "The encoding gives room comfort and hallway temperature separate estimand and signal objects instead of treating them as the same quantity."
+  - id: B34
+    verdict: handled
+    reason: "The householder is outside the system boundary yet explicitly holds the comfort desired condition."
+  - id: B35
+    verdict: named_only
+    reason: "The deadband appears only inside a numeric desired-condition specification and its structural anti-oscillation role is not represented."
+  - id: B36
+    verdict: handled
+    reason: "The hallway signal is explicitly described as a proxy for room comfort and as a source of divergence between the goal and reality."
+  - id: B37
+    verdict: handled
+    reason: "The inside controller is explicitly assigned no desired condition while the outside householder holds it."
+  - id: B38
+    verdict: handled
+    reason: "The policy structurally represents two thresholds, state retention inside the deadband, and the deadband's equipment-protection motive."
+  - id: B39
+    verdict: handled
+    reason: "A room-comfort estimate is explicitly based on the separate hallway-temperature signal with proxy error recorded as unrepresented uncertainty."
+  - id: B40
+    verdict: handled
+    reason: "The only desired-condition holder is the householder, who is explicitly outside the boundary."
+  - id: B41
+    verdict: handled
+    reason: "The numeric comfort target and anti-chatter deadband are separate desired-condition and constraint structures."
+  - id: B42
+    verdict: handled
+    reason: "The encoding represents the signal as a fallible proxy and the identity estimator as an explicit flaw that cannot detect divergence."
+  - id: B43
+    verdict: handled
+    reason: "Direct worker observation is linked to worker authority to stop the line, independently of managerial position."
+  - id: B44
+    verdict: handled
+    reason: "Separate desired conditions, a partial ordering, and an objective-negotiation loop structurally preserve conflict across organizational levels."
+  - id: B45
+    verdict: handled
+    reason: "A routine-incremental revision regime and standard-improvement loop represent evidence-triggered replacement of the current method."
+  - id: B46
+    verdict: handled
+    reason: "Reported and gemba conditions are separate signals, report drift is explicit, and the estimator prefers physical observation."
+  - id: B47
+    verdict: named_only
+    reason: "A3 size is only listed as a one-sheet constraint, with no problem artifact or comprehensibility mechanism to which that bound applies."
+summary:
+  harshest_observation: >
+    The encodings repeatedly mistake typed paraphrase or an excluded-variable list for
+    explanatory structure, so their declared handling and surfaced insights substantially
+    overstate what they actually establish.
+  ontology_gap: >
+    The ontology lacks a way to represent load-bearing unwritten knowledge and its causal
+    influence on policy, and it also lacks an artifact/comprehensibility primitive for
+    expressing why a bounded representation such as A3 works.

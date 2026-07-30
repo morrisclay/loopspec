@@ -1,0 +1,72 @@
+surfaced_cases:
+- id: S05
+  encoding: hospital-D
+  system: hospital
+  claim: The consultant's estimate is based on sparse daily observations but carries formal authority,
+    while the nurse's estimate is based on continuous presence but carries only informal blocking power.
+  decision_affected: Discharge timing and readmission risk trade-off.
+- id: S10
+  encoding: thermostat-E
+  system: thermostat
+  claim: The deadband is a Constraint preventing relay oscillation, not a tolerance on the desired condition.
+  decision_affected: "tuning it trades relay lifetime against comfort \u2014 a tradeoff that disappears\
+    \ entirely if it is modelled as measurement error"
+- id: S04
+  encoding: hospital-B
+  system: hospital
+  claim: The hourly and fortnightly loops have opposite gradients on the same intervention, and no party
+    owns both.
+  decision_affected: who, if anyone, should be accountable for the readmission consequence of an hourly
+    bed decision
+- id: S02
+  encoding: hospital-B
+  system: hospital
+  claim: "Authority and observation are inversely distributed \u2014 the party with continuous observation\
+    \ (nurse) holds no discharge authority, and the party with authority (consultant) observes once daily."
+  decision_affected: whether to change who may discharge, or to change what the consultant's once-daily
+    observation is composed of
+- id: S01
+  encoding: hospital-A
+  system: hospital
+  claim: The daily, synchronous ward round is the primary bottleneck for integrating the nurse's continuous
+    observations, creating a structural lag and information loss in assessing functional capacity.
+  decision_affected: Whether to invest in asynchronous communication tools to allow nurses' concerns to
+    be registered and seen by consultants outside the ward round.
+- id: S11
+  encoding: thermostat-E
+  system: thermostat
+  claim: No party inside the boundary holds the desired condition, so the system cannot represent "the
+    target is wrong."
+  decision_affected: any request for learning or adaptive behaviour requires first moving the goal inside
+    the boundary
+- id: S07
+  encoding: thermostat-A
+  system: thermostat
+  claim: The deadband is a structural feature to prevent oscillation, not a measurement tolerance.
+  decision_affected: Controller design choice between hysteresis and proportional control.
+- id: S08
+  encoding: thermostat-C
+  system: thermostat
+  claim: The system's failure to regulate room comfort is a structural consequence of using hallway temperature
+    as a proxy signal, not a fault in the control logic itself.
+  decision_affected: Deciding where to place the sensor, or whether to add more sensors, to improve performance.
+- id: S06
+  encoding: hospital-D
+  system: hospital
+  claim: The four-hour target creates a separate loop (hourly) that pressures the daily discharge loop,
+    with financial consequences attached.
+  decision_affected: Prioritization of emergency department waits versus discharge safety.
+- id: S09
+  encoding: thermostat-E
+  system: thermostat
+  claim: "The estimator is the identity function \u2014 the controller treats the signal AS the estimand,\
+    \ and nothing in the system can detect when the two diverge."
+  decision_affected: whether to add or re-site a sensor, and whether any "smart" feature is worth adding
+    before the proxy gap is closed
+- id: S03
+  encoding: hospital-B
+  system: hospital
+  claim: The five estimates differ because the five consequences differ, not because the parties are differently
+    informed. Equalising information would not converge them.
+  decision_affected: "whether better shared dashboards would help at all \u2014 this predicts they would\
+    \ not"
