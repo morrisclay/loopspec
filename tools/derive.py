@@ -275,6 +275,33 @@ def q_delay_without_feedback_owner(d, nodes, edges):
     return out
 
 
+def q_invariant_on_unmeasured(d, nodes, edges):
+    """
+    A Constraint whose rule names an estimand nothing observes.
+
+    Same defect as policy_on_unmeasured_inputs, in a different construct: an invariant that
+    cannot be checked because the quantity it constrains is never collected. In a textual
+    surface the invariant and the observe statements sit lines apart and the gap is invisible.
+    """
+    measured = {b for _, b in rel(edges, "measures")}
+    estimands = {i for i, n in nodes.items() if n.get("kind") == "Estimand"}
+    out = []
+    for i, n in nodes.items():
+        if n.get("kind") != "Constraint":
+            continue
+        rule = str(n.get("rule") or "")
+        named = [e for e in estimands if e in rule and e not in measured]
+        if named:
+            out.append({
+                "pattern": "invariant_on_unmeasured",
+                "claim": (f"Constraint `{i}` states `{rule}`, which names estimand(s) {named} "
+                          f"that no signal measures. The invariant cannot be checked — nothing "
+                          f"in the system would detect its violation."),
+                "evidence": {"constraint": i, "rule": rule, "unmeasured": named},
+            })
+    return out
+
+
 def q_hinge_without_sensor(d, nodes, edges):
     """
     Existential hinges with nothing observing them.
@@ -333,9 +360,28 @@ def q_uncalibrated_estimator(d, nodes, edges):
                   and (n.get("criticality") or "").lower() == "existential"}
     if not hinge_ests:
         return []
+    # An estimator over a COMPUTED estimand needs no calibration: arithmetic makes no
+    # prediction, so there is nothing to score. Skipping these is the computed/latent
+    # distinction doing real work — without it this query fires on every division.
+    computed = {i for i, n in nodes.items()
+                if n.get("kind") == "Estimand" and n.get("determination") == "computed"}
+    est_targets = {}
+    for a, b in rel(edges, "estimates"):
+        est_targets.setdefault(a, set()).add(b)
+    measures_to = {}
+    for a, b in rel(edges, "measures"):
+        measures_to.setdefault(a, set()).add(b)
+
     out = []
     for i, n in nodes.items():
         if n.get("kind") != "Estimator" or i in calibrated:
+            continue
+        if n.get("form") == "expression":
+            continue
+        produced = est_targets.get(i, set())
+        if produced and all(
+                any(t in computed for t in measures_to.get(p, {p})) or p in computed
+                for p in produced):
             continue
         out.append({
             "pattern": "uncalibrated_estimator",
@@ -387,6 +433,7 @@ def q_policy_on_unmeasured_inputs(d, nodes, edges):
 
 QUERIES = [
     q_policy_on_unmeasured_inputs,
+    q_invariant_on_unmeasured,
     q_hinge_without_sensor,
     q_hinge_without_resolution,
     q_uncalibrated_estimator,

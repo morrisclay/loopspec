@@ -103,6 +103,16 @@ primitives:
           existential | high | moderate | low. How much of the system's viability rests on
           this quantity. An Estimand with criticality `existential` is what practitioners
           call a HINGE — the whole thing turns on it.
+      - determination: >
+          computed | latent. A COMPUTED estimand is a deterministic function of signals —
+          runway is cash_balance divided by burn_rate — and carries no uncertainty of its own
+          beyond its inputs. A LATENT estimand is inferred and irreducibly uncertain —
+          willingness to pay is not a function of anything observed.
+
+          The distinction is load-bearing rather than cosmetic: a computed estimand needs no
+          Calibration, because there is no prediction to score. A latent one does. Conflating
+          them causes a venture to calibrate an arithmetic identity while leaving the actual
+          bet unscored.
       - resolution_condition: >
           The observation, declared IN ADVANCE, that would settle this estimand. Required
           when criticality is existential.
@@ -172,9 +182,18 @@ primitives:
     tier: core
     depth: 2
     definition: >
-      The process mapping evidence to an estimate. May have no locus: in the immune system
+      The process mapping signals to an estimate. May have no locus: in the immune system
       the population's composition IS the estimate, and no cell assesses anything.
       Must declare its idempotency basis.
+    attributes:
+      - expression: >
+          For estimators over COMPUTED estimands, the actual function — `cash_balance /
+          burn_rate`. Writing it down is what makes the estimate checkable rather than
+          asserted, and it is what distinguishes an arithmetic identity from a judgement.
+      - form: >
+          bayesian | identity | expression | population | judgement. `identity` is the
+          degenerate case where the estimator passes a signal through as though it were the
+          estimand — the thermostat's flaw, and worth being able to state explicitly.
     demanded_by: [immune_system, hospital, thermostat]
 
   - name: DesiredCondition
@@ -266,6 +285,14 @@ primitives:
     depth: 3
     definition: >
       Mapping from estimates to choice of intervention.
+    attributes:
+      - guard: >
+          The condition under which the policy fires — `when runway < 12 months`. Distinct
+          from `based_on`, which lists the quantities read. A policy may read many quantities
+          and fire on a predicate over one.
+      - based_on: >
+          The estimands the decision reads. Every entry should be measured by some signal;
+          entries that are not are the policy_on_unmeasured_inputs defect.
     demanded_by: [thermostat, hospital]
 
   - name: Loop
