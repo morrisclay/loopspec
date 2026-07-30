@@ -7,7 +7,7 @@ encoder_role: author-intent
 shape: canonical-graph          # conforms to schema/uras.graph.md
 
 uses: [System, Boundary, Party, Estimand, Signal, Estimate, Estimator, DesiredCondition,
-       Intervention, Policy, Loop, Delay, TimeScale, Constraint, Consequence]
+       Intervention, Policy, Loop, Delay, TimeScale, Constraint, Consequence, Revision]
 estimands: [room_comfort]
 parties: [householder]
 
@@ -33,6 +33,8 @@ nodes:
      purpose: prevent relay chatter and boiler short-cycling}
 
   - {id: fire_boiler, kind: Intervention, target: world, actuator: relay}
+  - {id: set_dial, kind: Intervention, target: own-structure,
+     motive: change the desired condition itself — the only act available to the goal-holder}
   - {id: bang_bang, kind: Policy, form: hysteresis}
   - {id: thermal_lag, kind: Delay, magnitude: 15_to_40_min,
      note: heat keeps arriving after actuation stops}
@@ -49,6 +51,8 @@ edges:
   - {from: deadband, to: fire_boiler, rel: constrains}
   - {from: thermal_lag, to: fire_boiler, rel: delays}
   - {from: controller, to: fire_boiler, rel: authorizes}
+  - {from: householder, to: set_dial, rel: authorizes}
+  - {from: set_dial, to: comfort_target, rel: revises}
   - {from: bang_bang, to: fire_boiler, rel: closes}
 
 loops:

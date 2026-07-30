@@ -131,6 +131,10 @@ def check_canonical(path, doc, allp, rep):
             if not doc.get("loops"):
                 rep.warn(where, "`uses` declares `Loop` but the loops list is empty")
             continue          # loops are declared top-level, not as nodes
+        if prim == "Revision":
+            if not [e for e in edges if e.get("rel") == "revises"]:
+                rep.warn(where, "`uses` declares `Revision` but no `revises` edge exists")
+            continue          # revision is an edge relation, not a node
         if prim not in kinds:
             rep.warn(where, f"`uses` declares `{prim}` but no node has that kind")
 
