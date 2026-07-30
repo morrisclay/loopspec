@@ -1,0 +1,202 @@
+uras_version: 0
+encodes: family
+set: held_out
+domain: family
+encoded_by: deepseek-v3.2
+encoder_role: independent
+nodes:
+- id: miller_household
+  kind: System
+- id: household_boundary
+  kind: Boundary
+- id: sarah
+  kind: Party
+- id: tom
+  kind: Party
+- id: sanity_meter
+  kind: Estimand
+  criticality: high
+  determination: latent
+  resolution_condition: explicit self-report of emotional state from each member
+- id: money_balance
+  kind: Estimand
+  criticality: high
+  determination: computed
+  resolution_condition: bank account statement
+- id: time_availability
+  kind: Estimand
+  criticality: moderate
+  determination: latent
+  resolution_condition: complete log of all activities and free time
+- id: child_emotional_state
+  kind: Estimand
+  criticality: moderate
+  determination: latent
+  resolution_condition: direct observation and verification of child's expressed feelings
+- id: bank_balance_signal
+  kind: Signal
+- id: calendar_events_signal
+  kind: Signal
+- id: behavioral_cues_signal
+  kind: Signal
+- id: mental_budget_estimator
+  kind: Estimator
+  form: judgement
+  idempotency_basis: weekly check-in is episodic; duplicate processing of same week would double-count
+    decisions
+- id: sanity_estimate
+  kind: Estimate
+- id: money_estimate
+  kind: Estimate
+- id: time_estimate
+  kind: Estimate
+- id: avoid_meltdown
+  kind: DesiredCondition
+- id: meet_financial_obligations
+  kind: DesiredCondition
+- id: preserve_sanity
+  kind: DesiredCondition
+- id: household_consequence
+  kind: Consequence
+- id: sarah_consequence
+  kind: Consequence
+- id: child_consequence
+  kind: Consequence
+- id: make_tradeoff_decision
+  kind: Intervention
+  target: world
+- id: weekly_triage_policy
+  kind: Policy
+  guard: when weekly check-in occurs
+  based_on:
+  - money_balance
+  - time_availability
+  - sanity_meter
+- id: weekly_loop
+  kind: Loop
+  timescale: weekly_timescale
+  signal: bank_balance_signal
+  intervention: make_tradeoff_decision
+- id: weekly_timescale
+  kind: TimeScale
+- id: time_delay
+  kind: Delay
+- id: money_resource
+  kind: Resource
+- id: time_resource
+  kind: Resource
+- id: energy_resource
+  kind: Resource
+- id: fungibility_constraint
+  kind: Constraint
+edges:
+- from: miller_household
+  to: household_boundary
+  rel: contains
+- from: household_boundary
+  to: sarah
+  rel: contains
+- from: household_boundary
+  to: tom
+  rel: contains
+- from: sarah
+  to: sarah_consequence
+  rel: bears
+- from: tom
+  to: household_consequence
+  rel: bears
+- from: sarah
+  to: child_consequence
+  rel: bears
+- from: tom
+  to: child_consequence
+  rel: bears
+- from: mental_budget_estimator
+  to: sanity_meter
+  rel: estimates
+- from: mental_budget_estimator
+  to: money_balance
+  rel: estimates
+- from: mental_budget_estimator
+  to: time_availability
+  rel: estimates
+- from: mental_budget_estimator
+  to: child_emotional_state
+  rel: estimates
+- from: mental_budget_estimator
+  to: bank_balance_signal
+  rel: measures
+- from: mental_budget_estimator
+  to: calendar_events_signal
+  rel: measures
+- from: mental_budget_estimator
+  to: behavioral_cues_signal
+  rel: measures
+- from: sarah
+  to: sanity_estimate
+  rel: holds
+- from: tom
+  to: money_estimate
+  rel: holds
+- from: sarah
+  to: time_estimate
+  rel: holds
+- from: sarah
+  to: avoid_meltdown
+  rel: holds
+- from: tom
+  to: meet_financial_obligations
+  rel: holds
+- from: sarah
+  to: preserve_sanity
+  rel: holds
+- from: avoid_meltdown
+  to: child_emotional_state
+  rel: targets
+- from: meet_financial_obligations
+  to: money_balance
+  rel: targets
+- from: preserve_sanity
+  to: sanity_meter
+  rel: targets
+- from: weekly_triage_policy
+  to: make_tradeoff_decision
+  rel: authorizes
+- from: make_tradeoff_decision
+  to: money_resource
+  rel: consumes
+- from: make_tradeoff_decision
+  to: time_resource
+  rel: consumes
+- from: make_tradeoff_decision
+  to: energy_resource
+  rel: consumes
+- from: make_tradeoff_decision
+  to: time_delay
+  rel: delays
+- from: fungibility_constraint
+  to: make_tradeoff_decision
+  rel: constrains
+loops:
+- id: weekly_loop
+  timescale: weekly_timescale
+  signal: bank_balance_signal
+  intervention: make_tradeoff_decision
+excluded_variables: []
+breaks_declared:
+- The assumption of a single, stable utility function.
+- The assumption of rational, optimizing agents.
+- The assumption of fungible resources.
+- The assumption that information is available for decision-making.
+- The assumption that costs are explicit and evenly distributed.
+- The assumption of fixed rules.
+- The assumption of independent decisions.
+breaks_handled:
+- fungibility_constraint captures non-fungibility
+- multiple desired conditions and shifting priorities captured
+- latent estimands for sanity and child state capture incomplete information
+- multiple consequence nodes capture uneven cost distribution
+surfaced: []
+reduces_to: null
+new_primitives_needed: []
+shape: canonical-graph

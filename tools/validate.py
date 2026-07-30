@@ -99,7 +99,9 @@ def ids_in(section):
 
 
 CANONICAL_RELS = {"measures", "estimates", "holds", "targets", "closes", "delays",
-                  "constrains", "authorizes", "consumes", "revises", "contains", "bears"}
+                  "constrains", "authorizes", "consumes", "revises", "contains", "bears",
+                  # added after the held-out set demanded them — relations, not primitives
+                  "asserts", "replenishes", "produces"}
 
 
 def check_canonical(path, doc, allp, rep):

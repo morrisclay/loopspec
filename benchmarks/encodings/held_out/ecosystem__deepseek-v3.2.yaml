@@ -1,0 +1,172 @@
+uras_version: 0
+encodes: ecosystem
+set: held_out
+domain: ecosystem
+encoded_by: deepseek-v3.2
+encoder_role: independent
+nodes:
+- id: north_sea_cod_fishery
+  kind: System
+- id: boundary
+  kind: Boundary
+- id: ices
+  kind: Party
+- id: national_representatives
+  kind: Party
+- id: fishing_industry
+  kind: Party
+- id: true_stock_size
+  kind: Estimand
+  criticality: existential
+  determination: latent
+  resolution_condition: direct census of all cod in the North Sea
+- id: recruitment
+  kind: Estimand
+  criticality: high
+  determination: latent
+  resolution_condition: future commercial catch data showing year-class strength
+- id: survey_catch_data
+  kind: Signal
+- id: commercial_landings_data
+  kind: Signal
+- id: stock_assessment_model
+  kind: Estimator
+  form: bayesian
+  idempotency_basis: data is timestamped; duplicate processing of same data batch would double-count
+- id: ssb_estimate
+  kind: Estimate
+- id: f_estimate
+  kind: Estimate
+- id: msy_target
+  kind: DesiredCondition
+- id: tac_advice
+  kind: DesiredCondition
+- id: final_tac
+  kind: DesiredCondition
+- id: economic_consequence
+  kind: Consequence
+- id: ecological_consequence
+  kind: Consequence
+- id: set_tac
+  kind: Intervention
+  target: world
+- id: political_negotiation
+  kind: Policy
+  guard: when scientific advice is received
+  based_on:
+  - tac_advice
+- id: annual_management_loop
+  kind: Loop
+  timescale: annual_timescale
+  signal: commercial_landings_data
+  intervention: set_tac
+- id: annual_timescale
+  kind: TimeScale
+- id: one_year_delay
+  kind: Delay
+- id: fish_stock
+  kind: Resource
+- id: choke_species_constraint
+  kind: Constraint
+- id: landing_obligation
+  kind: Constraint
+- id: black_fish
+  kind: Revision
+  regime: episodic-discontinuous
+edges:
+- from: north_sea_cod_fishery
+  to: boundary
+  rel: contains
+- from: boundary
+  to: ices
+  rel: contains
+- from: boundary
+  to: national_representatives
+  rel: contains
+- from: boundary
+  to: fishing_industry
+  rel: contains
+- from: ices
+  to: economic_consequence
+  rel: bears
+- from: national_representatives
+  to: economic_consequence
+  rel: bears
+- from: fishing_industry
+  to: economic_consequence
+  rel: bears
+- from: national_representatives
+  to: ecological_consequence
+  rel: bears
+- from: fishing_industry
+  to: ecological_consequence
+  rel: bears
+- from: stock_assessment_model
+  to: true_stock_size
+  rel: estimates
+- from: stock_assessment_model
+  to: recruitment
+  rel: estimates
+- from: stock_assessment_model
+  to: survey_catch_data
+  rel: measures
+- from: stock_assessment_model
+  to: commercial_landings_data
+  rel: measures
+- from: ices
+  to: ssb_estimate
+  rel: holds
+- from: ices
+  to: f_estimate
+  rel: holds
+- from: ices
+  to: msy_target
+  rel: holds
+- from: ices
+  to: tac_advice
+  rel: holds
+- from: national_representatives
+  to: final_tac
+  rel: holds
+- from: msy_target
+  to: true_stock_size
+  rel: targets
+- from: tac_advice
+  to: true_stock_size
+  rel: targets
+- from: final_tac
+  to: true_stock_size
+  rel: targets
+- from: political_negotiation
+  to: set_tac
+  rel: authorizes
+- from: set_tac
+  to: fish_stock
+  rel: consumes
+- from: set_tac
+  to: one_year_delay
+  rel: delays
+- from: choke_species_constraint
+  to: set_tac
+  rel: constrains
+- from: landing_obligation
+  to: set_tac
+  rel: constrains
+- from: black_fish
+  to: commercial_landings_data
+  rel: revises
+loops:
+- id: annual_management_loop
+  timescale: annual_timescale
+  signal: commercial_landings_data
+  intervention: set_tac
+excluded_variables: []
+breaks_declared:
+- The assumption that reported landings data is a faithful and unbiased representation of actual
+  catch mortality.
+breaks_handled:
+- black_fish revision node captures misreporting
+surfaced: []
+reduces_to: null
+new_primitives_needed: []
+shape: canonical-graph

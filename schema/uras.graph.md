@@ -54,7 +54,8 @@ edges:
   - from: <id>
     to: <id>
     rel: measures | estimates | holds | targets | closes | delays | constrains |
-         authorizes | consumes | revises | contains | bears
+         authorizes | consumes | revises | contains | bears |
+         asserts | replenishes | produces
   ...
 loops:                              # derived view, but declared explicitly
   - id: <slug>
@@ -74,6 +75,25 @@ Relationships in round-1 encodings were expressed inline as ad-hoc fields (`meas
 `held_by:`, `from:`, `to:`), and every encoder chose different field names. Naming the
 relation set closes that: `rel` is a **closed vocabulary**, so two encoders describing the
 same relationship must use the same token or fail validation.
+
+### Relations added by the held-out set
+
+Three relations were added after the held-out benchmarks were opened. All three were demanded
+by independent encoders, and all three are relations rather than primitives — the node
+vocabulary held, the edge vocabulary did not.
+
+| rel | from → to | Why it was needed |
+|---|---|---|
+| `asserts` | Party → Signal | A **reported** quantity is not a measured one. Reported fish landings are assertions by parties under economic pressure and may knowingly differ from the catch. Without this, the graph cannot say who authored a datum or that incentives shape its content. |
+| `replenishes` | Intervention or Signal → Resource | `consumes` was the only resource relation, so stocks could only deplete. Payday replenishes money, rest replenishes attention, a kanban card replenishes parts. |
+| `produces` | System or Intervention → Signal | Distinguishes a **produced** artifact from an **observed** one. Tool directives, retrieved passages and synthesized plans are passed between components and can lose meaning without becoming invalid. |
+
+`asserts` is the most consequential of the three, and it is not confined to the system that
+demanded it. The same structure recurs throughout the existing corpus: how arrival time gets
+recorded against a four-hour target, why *genchi genbutsu* exists as doctrine at all, a
+founder's pipeline number, a competitor's selectively published result. The representation
+previously had no way to distinguish a measurement from a claim, which for institutional
+systems is close to the central fact.
 
 ## 3. Hard rules
 

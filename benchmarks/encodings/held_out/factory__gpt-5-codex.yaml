@@ -1,0 +1,386 @@
+uras_version: 0
+encodes: factory
+set: held_out
+domain: factory
+encoded_by: gpt-5-codex
+encoder_role: independent
+nodes:
+- id: apex_sw77b_job
+  kind: System
+  description: Procurement, stamping, assembly, inspection, and delivery of 10000 SW-77B units.
+- id: job_boundary
+  kind: Boundary
+  scope: Apex production plus supplier and customer dependencies through delivery.
+- id: apex_planning
+  kind: Party
+  role: Commits material and judges supplier delivery.
+- id: apex_operations
+  kind: Party
+  role: Schedules, sets up, produces, and bears job economics.
+  informal_influence: Local setup convenience and customer loudness alter priorities.
+- id: apex_quality
+  kind: Party
+  role: Approves first article and samples production.
+- id: starkweather
+  kind: Party
+  role: Defines formal product requirements and receives the assemblies.
+  informal_influence: Expected price-downs and negotiated fault narratives shape behavior.
+- id: motor_arrival_by_need_date
+  kind: Estimand
+  criticality: high
+  determination: latent
+  resolution_condition: The Globex shipment arrives before assembly requires the motors.
+- id: true_assembly_capacity
+  kind: Estimand
+  criticality: high
+  determination: latent
+  resolution_condition: Observed conforming output per shift under current staffing and equipment.
+- id: lot_defect_rate
+  kind: Estimand
+  criticality: high
+  determination: latent
+  resolution_condition: A complete functional and dimensional inspection of the lot.
+- id: final_job_margin
+  kind: Estimand
+  criticality: high
+  determination: latent
+  resolution_condition: All labor, scrap, penalties, sorting, chargebacks, and revenue are settled.
+- id: supplier_portal_status
+  kind: Signal
+  observation: Globex displays the motor order as In Process with a six-week lead time.
+  limitation: The label hides actual production and quality-hold state.
+- id: standard_time_and_floor_cues
+  kind: Signal
+  observation: A 4.5-minute standard plus operator skill and tool-condition observations.
+- id: cmm_first_article
+  kind: Signal
+  observation: Fifteen dimensions on a first stamped housing.
+- id: five_per_hour_function_test
+  kind: Signal
+  observation: Five sampled assemblies each hour.
+- id: packed_box_count
+  kind: Signal
+  observation: Units packed for Friday shipment.
+  limitation: Rework inventory is omitted from the Tuesday production number.
+- id: supplier_delivery_estimate
+  kind: Estimate
+  uncertainty: Portal state is coarse and prior quality holds matter.
+- id: capacity_estimate
+  kind: Estimate
+  uncertainty: Standard time omits current operator and equipment effects.
+- id: quality_estimate
+  kind: Estimate
+  uncertainty: A five-piece sample may miss a ten-percent defect batch.
+- id: margin_estimate
+  kind: Estimate
+  uncertainty: Failure costs and reputational damage are negotiated later.
+- id: supplier_judgement
+  kind: Estimator
+  form: judgement
+  idempotency_basis: Supplier order, portal snapshot timestamp, and prior-incident dataset version.
+- id: capacity_judgement
+  kind: Estimator
+  form: judgement
+  idempotency_basis: Shift, staffing roster, equipment state, and routing version.
+- id: sample_quality_estimator
+  kind: Estimator
+  form: expression
+  expression: sample failures divided by five
+  idempotency_basis: Lot, hour, and sampled serial numbers.
+- id: job_margin_estimator
+  kind: Estimator
+  form: expression
+  expression: recognized revenue minus settled job costs
+  idempotency_basis: Job ledger close version.
+- id: ship_1250_weekly
+  kind: DesiredCondition
+  condition: Deliver 1250 accepted units each week starting in week eight.
+- id: conform_to_current_drawing
+  kind: DesiredCondition
+  condition: Output passes the currently authorized engineering drawing.
+- id: preserve_job_economics
+  kind: DesiredCondition
+  condition: Retain the quoted six-percent gross margin and future business.
+- id: local_factory_preferences
+  kind: PreferenceOrdering
+  ordering: Partial ordering over Starkweather delivery, Genodyne penalties, quality, margin, and
+    shift effort.
+  scalarized: 'false'
+- id: material_release_policy
+  kind: Policy
+  based_on: motor_arrival_by_need_date
+  guard: Long-lead material threatens the eight-week start.
+- id: first_article_policy
+  kind: Policy
+  based_on: lot_defect_rate
+  guard: A first article is outside the current drawing.
+- id: sampling_policy
+  kind: Policy
+  based_on: lot_defect_rate
+  guard: Any of five hourly samples fails.
+- id: schedule_triage_policy
+  kind: Policy
+  based_on: true_assembly_capacity, motor_arrival_by_need_date, final_job_margin
+  guard: Weekly delivery or another customer's penalty is at risk.
+- id: practical_tolerance_policy
+  kind: Policy
+  based_on: lot_defect_rate
+  guard: Flatness is between .005 and the tacitly accepted .010 inches.
+- id: order_buffered_motors
+  kind: Intervention
+  target: world
+  description: Order 10500 sole-source motors.
+- id: shim_and_rerun_die
+  kind: Intervention
+  target: world
+  description: Adjust the die and submit another first article.
+- id: stop_and_sort
+  kind: Intervention
+  target: world
+  description: Stop production and inspect or rework suspect output.
+- id: reschedule_or_add_overtime
+  kind: Intervention
+  target: world
+  description: Move press time or add labor to protect shipment.
+- id: change_work_definition
+  kind: Intervention
+  target: own-structure
+  motive: Implement a customer ECO and re-establish an inspectable production baseline.
+- id: motors
+  kind: Resource
+  stock: Sole-source stepper motor inventory.
+- id: press_hours
+  kind: Resource
+  stock: Minster stamping capacity.
+- id: job_margin
+  kind: Resource
+  stock: Quoted gross-margin buffer.
+- id: formal_drawing
+  kind: Constraint
+  invariant: Current Starkweather dimensions and approved components.
+- id: sole_source_motor
+  kind: Constraint
+  invariant: No motor substitution without written customer deviation.
+- id: supplier_lead_time
+  kind: Delay
+  duration: Six weeks nominal plus hidden quality-hold risk.
+- id: minutes_scale
+  kind: TimeScale
+  cadence: first-article iterations
+- id: hourly_scale
+  kind: TimeScale
+  cadence: hourly
+- id: weekly_scale
+  kind: TimeScale
+  cadence: weekly
+- id: setup_loop
+  kind: Loop
+  description: CMM results drive die adjustment until approval.
+- id: quality_loop
+  kind: Loop
+  description: Sample failures can stop and sort production.
+- id: delivery_loop
+  kind: Loop
+  description: Packed output drives weekly schedule intervention.
+- id: drain_hole_eco
+  kind: Revision
+  regime: episodic-discontinuous
+  change: Add a drain hole and require a new first article.
+- id: planner_firefighting
+  kind: Consequence
+  outcome: Expediting, overtime, and professional accountability.
+- id: apex_loss
+  kind: Consequence
+  outcome: Scrap, rework, penalties, chargebacks, and lost future business.
+- id: quality_accountability
+  kind: Consequence
+  outcome: Missed defects trigger investigation and corrective action.
+- id: customer_downtime
+  kind: Consequence
+  outcome: Bad units interrupt Starkweather assembly.
+edges:
+- from: apex_sw77b_job
+  to: job_boundary
+  rel: contains
+- from: apex_sw77b_job
+  to: setup_loop
+  rel: contains
+- from: apex_sw77b_job
+  to: quality_loop
+  rel: contains
+- from: apex_sw77b_job
+  to: delivery_loop
+  rel: contains
+- from: supplier_portal_status
+  to: motor_arrival_by_need_date
+  rel: measures
+- from: standard_time_and_floor_cues
+  to: true_assembly_capacity
+  rel: measures
+- from: cmm_first_article
+  to: lot_defect_rate
+  rel: measures
+- from: five_per_hour_function_test
+  to: lot_defect_rate
+  rel: measures
+- from: packed_box_count
+  to: true_assembly_capacity
+  rel: measures
+- from: supplier_judgement
+  to: supplier_delivery_estimate
+  rel: estimates
+- from: capacity_judgement
+  to: capacity_estimate
+  rel: estimates
+- from: sample_quality_estimator
+  to: quality_estimate
+  rel: estimates
+- from: job_margin_estimator
+  to: margin_estimate
+  rel: estimates
+- from: supplier_delivery_estimate
+  to: motor_arrival_by_need_date
+  rel: estimates
+- from: capacity_estimate
+  to: true_assembly_capacity
+  rel: estimates
+- from: quality_estimate
+  to: lot_defect_rate
+  rel: estimates
+- from: margin_estimate
+  to: final_job_margin
+  rel: estimates
+- from: apex_planning
+  to: supplier_delivery_estimate
+  rel: holds
+- from: apex_operations
+  to: capacity_estimate
+  rel: holds
+- from: apex_quality
+  to: quality_estimate
+  rel: holds
+- from: apex_operations
+  to: local_factory_preferences
+  rel: holds
+- from: starkweather
+  to: conform_to_current_drawing
+  rel: holds
+- from: starkweather
+  to: ship_1250_weekly
+  rel: holds
+- from: apex_operations
+  to: preserve_job_economics
+  rel: holds
+- from: ship_1250_weekly
+  to: true_assembly_capacity
+  rel: targets
+- from: conform_to_current_drawing
+  to: lot_defect_rate
+  rel: targets
+- from: preserve_job_economics
+  to: final_job_margin
+  rel: targets
+- from: apex_planning
+  to: order_buffered_motors
+  rel: authorizes
+- from: apex_operations
+  to: shim_and_rerun_die
+  rel: authorizes
+- from: apex_quality
+  to: stop_and_sort
+  rel: authorizes
+- from: apex_operations
+  to: reschedule_or_add_overtime
+  rel: authorizes
+- from: starkweather
+  to: change_work_definition
+  rel: authorizes
+- from: order_buffered_motors
+  to: motors
+  rel: targets
+- from: shim_and_rerun_die
+  to: press_hours
+  rel: consumes
+- from: stop_and_sort
+  to: job_margin
+  rel: consumes
+- from: reschedule_or_add_overtime
+  to: press_hours
+  rel: consumes
+- from: formal_drawing
+  to: shim_and_rerun_die
+  rel: constrains
+- from: sole_source_motor
+  to: order_buffered_motors
+  rel: constrains
+- from: supplier_lead_time
+  to: supplier_portal_status
+  rel: delays
+- from: drain_hole_eco
+  to: formal_drawing
+  rel: revises
+- from: drain_hole_eco
+  to: first_article_policy
+  rel: revises
+- from: setup_loop
+  to: shim_and_rerun_die
+  rel: closes
+- from: quality_loop
+  to: stop_and_sort
+  rel: closes
+- from: delivery_loop
+  to: reschedule_or_add_overtime
+  rel: closes
+- from: apex_planning
+  to: planner_firefighting
+  rel: bears
+- from: apex_operations
+  to: apex_loss
+  rel: bears
+- from: apex_quality
+  to: quality_accountability
+  rel: bears
+- from: starkweather
+  to: customer_downtime
+  rel: bears
+loops:
+- id: setup_loop
+  timescale: minutes_scale
+  signal: cmm_first_article
+  intervention: shim_and_rerun_die
+- id: quality_loop
+  timescale: hourly_scale
+  signal: five_per_hour_function_test
+  intervention: stop_and_sort
+- id: delivery_loop
+  timescale: weekly_scale
+  signal: packed_box_count
+  intervention: reschedule_or_add_overtime
+excluded_variables:
+- Exact tacit die-setting and operator methods.
+- Negotiated blame and reputation effects after a failure.
+- Globex internal production state.
+breaks_declared:
+- static_product_specifications
+- system_data_reliably_reflects_reality
+- failure_cost_known_and_quantifiable
+- single_global_utility_optimization
+- process_steps_independent
+- purchase_order_defines_rules
+breaks_handled:
+- static_product_specifications
+- system_data_reliably_reflects_reality
+- failure_cost_known_and_quantifiable
+- single_global_utility_optimization
+- purchase_order_defines_rules
+surfaced: []
+reduces_to: null
+new_primitives_needed:
+- name: ProcessCoupling
+  why: A borderline stamped housing remains conforming yet makes downstream assembly slower and harder.
+    This is a contingent transfer of difficulty between interventions, not a stock, lag, invariant,
+    or goal.
+  which_existing_fails: Constraint is invariant and cannot represent a quality-dependent effect.
+    Delay represents lag only. Resource represents a depletable stock and loses the workpiece state
+    that causes the downstream effect.
+shape: canonical-graph

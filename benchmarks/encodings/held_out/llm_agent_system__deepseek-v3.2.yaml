@@ -1,0 +1,240 @@
+uras_version: 0
+encodes: llm_agent_system
+set: held_out
+domain: llm_agent_system
+encoded_by: deepseek-v3.2
+encoder_role: independent
+nodes:
+- id: travelflex_itinerary_engine
+  kind: System
+- id: system_boundary
+  kind: Boundary
+- id: core_ai_team
+  kind: Party
+- id: accommodations_team
+  kind: Party
+- id: product_manager
+  kind: Party
+- id: customer_support
+  kind: Party
+- id: user_intent_fidelity
+  kind: Estimand
+  criticality: high
+  determination: latent
+  resolution_condition: user confirmation that plan matches their intent
+- id: plan_quality
+  kind: Estimand
+  criticality: high
+  determination: latent
+  resolution_condition: user booking conversion or explicit satisfaction rating
+- id: component_semantic_alignment
+  kind: Estimand
+  criticality: moderate
+  determination: latent
+  resolution_condition: manual audit of intermediate outputs across all services
+- id: entity_extraction_f1
+  kind: Signal
+- id: user_thumbs_signal
+  kind: Signal
+- id: error_rate_signal
+  kind: Signal
+- id: query_parser
+  kind: Estimator
+  form: bayesian
+  idempotency_basis: each query is unique; duplicate processing of same query would double-count
+    in metrics
+- id: orchestrator
+  kind: Estimator
+  form: judgement
+  idempotency_basis: prompt-based; duplicate calls with same input would produce same output
+- id: intent_fidelity_estimate
+  kind: Estimate
+- id: quality_estimate
+  kind: Estimate
+- id: alignment_estimate
+  kind: Estimate
+- id: generate_useful_itinerary
+  kind: DesiredCondition
+- id: meet_latency_target
+  kind: DesiredCondition
+- id: control_cost
+  kind: DesiredCondition
+- id: user_time_waste
+  kind: Consequence
+- id: support_burden
+  kind: Consequence
+- id: oncall_fatigue
+  kind: Consequence
+- id: deploy_model_change
+  kind: Intervention
+  target: own-structure
+  motive: reduce cost or improve latency
+- id: hotfix_prompt
+  kind: Intervention
+  target: own-structure
+  motive: mitigate unforeseen semantic breakdown
+- id: run_golden_queries
+  kind: Intervention
+  target: world
+- id: deployment_policy
+  kind: Policy
+  guard: when model change proposed
+  based_on:
+  - plan_quality
+  - component_semantic_alignment
+- id: cost_latency_policy
+  kind: Policy
+  guard: when cost or latency exceeds threshold
+  based_on:
+  - plan_quality
+- id: main_loop
+  kind: Loop
+  timescale: request_timescale
+  signal: user_thumbs_signal
+  intervention: deploy_model_change
+- id: calibration_loop
+  kind: Loop
+  timescale: weekly_timescale
+  signal: entity_extraction_f1
+  intervention: hotfix_prompt
+- id: request_timescale
+  kind: TimeScale
+- id: weekly_timescale
+  kind: TimeScale
+- id: attribution_delay
+  kind: Delay
+- id: cost_resource
+  kind: Resource
+- id: latency_resource
+  kind: Resource
+- id: trust_resource
+  kind: Resource
+- id: golden_set_constraint
+  kind: Constraint
+- id: prompt_revision
+  kind: Revision
+  regime: episodic-discontinuous
+edges:
+- from: travelflex_itinerary_engine
+  to: system_boundary
+  rel: contains
+- from: system_boundary
+  to: core_ai_team
+  rel: contains
+- from: system_boundary
+  to: accommodations_team
+  rel: contains
+- from: system_boundary
+  to: product_manager
+  rel: contains
+- from: system_boundary
+  to: customer_support
+  rel: contains
+- from: core_ai_team
+  to: oncall_fatigue
+  rel: bears
+- from: accommodations_team
+  to: oncall_fatigue
+  rel: bears
+- from: product_manager
+  to: user_time_waste
+  rel: bears
+- from: customer_support
+  to: support_burden
+  rel: bears
+- from: query_parser
+  to: user_intent_fidelity
+  rel: estimates
+- from: orchestrator
+  to: plan_quality
+  rel: estimates
+- from: orchestrator
+  to: component_semantic_alignment
+  rel: estimates
+- from: query_parser
+  to: entity_extraction_f1
+  rel: measures
+- from: orchestrator
+  to: user_thumbs_signal
+  rel: measures
+- from: orchestrator
+  to: error_rate_signal
+  rel: measures
+- from: core_ai_team
+  to: intent_fidelity_estimate
+  rel: holds
+- from: product_manager
+  to: quality_estimate
+  rel: holds
+- from: core_ai_team
+  to: alignment_estimate
+  rel: holds
+- from: product_manager
+  to: generate_useful_itinerary
+  rel: holds
+- from: core_ai_team
+  to: meet_latency_target
+  rel: holds
+- from: accommodations_team
+  to: control_cost
+  rel: holds
+- from: generate_useful_itinerary
+  to: plan_quality
+  rel: targets
+- from: meet_latency_target
+  to: plan_quality
+  rel: targets
+- from: control_cost
+  to: plan_quality
+  rel: targets
+- from: deployment_policy
+  to: deploy_model_change
+  rel: authorizes
+- from: cost_latency_policy
+  to: hotfix_prompt
+  rel: authorizes
+- from: deploy_model_change
+  to: cost_resource
+  rel: consumes
+- from: deploy_model_change
+  to: latency_resource
+  rel: consumes
+- from: hotfix_prompt
+  to: trust_resource
+  rel: consumes
+- from: run_golden_queries
+  to: attribution_delay
+  rel: delays
+- from: golden_set_constraint
+  to: deploy_model_change
+  rel: constrains
+- from: prompt_revision
+  to: component_semantic_alignment
+  rel: revises
+loops:
+- id: main_loop
+  timescale: request_timescale
+  signal: user_thumbs_signal
+  intervention: deploy_model_change
+- id: calibration_loop
+  timescale: weekly_timescale
+  signal: entity_extraction_f1
+  intervention: hotfix_prompt
+excluded_variables: []
+breaks_declared:
+- The assumption that all components operate on a single, consistent world-state.
+- The assumption of a stable, mathematically defined objective function.
+- The assumption that communication between components is lossless.
+- The assumption that failure is a binary, observable state.
+- The assumption that human oversight is an out-of-band corrective process.
+- The assumption that the behavior of a component is fixed by its code and model weights.
+breaks_handled:
+- component_semantic_alignment estimand captures incommensurable models
+- multiple desired conditions capture political compromise
+- prompt_revision captures semantic breakdown and ad-hoc changes
+- latent estimands capture non-binary failure
+- golden_set_constraint captures human oversight as core component
+surfaced: []
+reduces_to: null
+new_primitives_needed: []
+shape: canonical-graph

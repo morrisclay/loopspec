@@ -1,0 +1,370 @@
+uras_version: 0
+encodes: llm_agent_system
+set: held_out
+domain: llm_agent_system
+encoded_by: gpt-5-codex
+encoder_role: independent
+nodes:
+- id: itinerary_engine
+  kind: System
+  description: A multi-service LLM system that turns a travel request into an itinerary.
+- id: service_boundary
+  kind: Boundary
+  scope: Request parsing, orchestration, retrieval, partner search, synthesis, and response.
+- id: query_parser
+  kind: System
+- id: orchestrator
+  kind: System
+- id: hotel_recommender
+  kind: System
+- id: activity_suggester
+  kind: System
+- id: response_generator
+  kind: System
+- id: traveler
+  kind: Party
+  role: Requests and evaluates the itinerary.
+- id: product_manager
+  kind: Party
+  role: Judges plan quality and controls the de facto golden-query gate.
+  informal_influence: Personal golden-query results override automated evaluations.
+- id: engineering_teams
+  kind: Party
+  role: Own service quality, latency, deployment, and incidents.
+- id: finance
+  kind: Party
+  role: Pressures daily cost per itinerary.
+- id: customer_support
+  kind: Party
+  role: Repairs failed itineraries for users.
+- id: user_intent_fidelity
+  kind: Estimand
+  criticality: high
+  determination: latent
+  resolution_condition: The traveler confirms or corrects an explicit interpretation of the request.
+- id: plan_practical_quality
+  kind: Estimand
+  criticality: high
+  determination: latent
+  resolution_condition: The traveler attempts the plan or an expert checks feasibility against current
+    facts.
+- id: p95_latency
+  kind: Estimand
+  criticality: high
+  determination: computed
+  resolution_condition: The request-latency distribution for a fixed window is complete.
+- id: cost_per_itinerary
+  kind: Estimand
+  criticality: high
+  determination: computed
+  resolution_condition: All model and tool charges for a request are recorded.
+- id: raw_user_request
+  kind: Signal
+  observation: Traveler's natural-language request.
+- id: parser_json
+  kind: Signal
+  observation: Extracted destination, duration, trip type, interests, and constraints.
+  limitation: Presence of a field does not establish faithful interpretation.
+- id: weekly_parser_f1
+  kind: Signal
+  observation: Entity extraction score on a hand-labeled dataset.
+- id: thumb_and_click_feedback
+  kind: Signal
+  observation: Weak ratings and delayed noisy booking clicks.
+- id: golden_query_results
+  kind: Signal
+  observation: Manual outcomes for the product manager's thirty regression prompts.
+- id: latency_and_cost_metrics
+  kind: Signal
+  observation: Request traces, P95 latency, and per-request model charges.
+- id: partner_api_and_error_metrics
+  kind: Signal
+  observation: Partner payload freshness, parse errors, and service error rate.
+- id: intent_estimate
+  kind: Estimate
+  uncertainty: Semantic ambiguity is hidden by a well-formed JSON result.
+- id: quality_estimate
+  kind: Estimate
+  uncertainty: Tone, feasibility, freshness, and conversion signals disagree.
+- id: llm_intent_parser
+  kind: Estimator
+  form: judgement
+  idempotency_basis: Request id, model version, prompt version, sampling seed, and parser schema.
+- id: product_quality_judgement
+  kind: Estimator
+  form: judgement
+  idempotency_basis: Deployment version, feedback window, and golden-query snapshot.
+- id: telemetry_aggregation
+  kind: Estimator
+  form: expression
+  expression: latency percentile and recorded cost by deployment window
+  idempotency_basis: Request ids, deployment version, and aggregation-window close.
+- id: useful_coherent_plan
+  kind: DesiredCondition
+  condition: The itinerary is relevant, feasible, current, and coherent.
+- id: latency_under_15_seconds
+  kind: DesiredCondition
+  condition: P95 end-to-end latency is at most fifteen seconds.
+- id: acceptable_query_cost
+  kind: DesiredCondition
+  condition: Per-itinerary spend remains within the finance budget.
+- id: political_objective_ordering
+  kind: PreferenceOrdering
+  ordering: Partial ordering over quality, latency, cost, reliability, and team burden.
+  scalarized: 'false'
+- id: orchestration_policy
+  kind: Policy
+  based_on: user_intent_fidelity, plan_practical_quality
+  guard: A parsed request requires hotel and activity choices.
+  implementation: Database-stored master prompt.
+- id: golden_query_release_policy
+  kind: Policy
+  based_on: plan_practical_quality
+  guard: A major deployment fails any decisive golden query.
+- id: cost_latency_policy
+  kind: Policy
+  based_on: cost_per_itinerary, p95_latency, plan_practical_quality
+  guard: Daily cost pressure or latency target breach.
+- id: incident_policy
+  kind: Policy
+  based_on: plan_practical_quality, p95_latency
+  guard: Partner parsing errors or qualitative regressions cross local thresholds.
+- id: serve_itinerary
+  kind: Intervention
+  target: world
+  description: Return the synthesized itinerary to the traveler.
+- id: block_deployment
+  kind: Intervention
+  target: own-structure
+  motive: Prevent a golden-query regression from entering production.
+- id: switch_orchestrator_model
+  kind: Intervention
+  target: own-structure
+  motive: Trade cost against quality and latency.
+- id: hot_patch_or_rollback_prompt
+  kind: Intervention
+  target: own-structure
+  motive: Restore behavior during an incident without a formal deployment.
+- id: partner_schema
+  kind: Constraint
+  invariant: Tool calls and payload parsing conform to current partner interfaces.
+- id: feedback_delay
+  kind: Delay
+  duration: Booking evidence arrives days or weeks after itinerary generation.
+- id: daily_scale
+  kind: TimeScale
+  cadence: daily
+- id: release_scale
+  kind: TimeScale
+  cadence: weekly or before major deployment
+- id: incident_scale
+  kind: TimeScale
+  cadence: minutes
+- id: cost_latency_loop
+  kind: Loop
+- id: release_gate_loop
+  kind: Loop
+- id: incident_loop
+  kind: Loop
+- id: runtime_prompt_revision
+  kind: Revision
+  regime: episodic-discontinuous
+  change: Replace the effective orchestration policy outside normal deployment.
+- id: traveler_wasted_time
+  kind: Consequence
+  outcome: A useless plan wastes time and trust.
+- id: product_failure
+  kind: Consequence
+  outcome: Quality regressions harm adoption and product accountability.
+- id: on_call_burden
+  kind: Consequence
+  outcome: Engineers trace cascades, wake for alerts, and patch production.
+- id: budget_overrun
+  kind: Consequence
+  outcome: Inference spend exceeds financial expectations.
+- id: manual_rework
+  kind: Consequence
+  outcome: Support manually researches stale or incoherent recommendations.
+edges:
+- from: itinerary_engine
+  to: service_boundary
+  rel: contains
+- from: itinerary_engine
+  to: query_parser
+  rel: contains
+- from: itinerary_engine
+  to: orchestrator
+  rel: contains
+- from: itinerary_engine
+  to: hotel_recommender
+  rel: contains
+- from: itinerary_engine
+  to: activity_suggester
+  rel: contains
+- from: itinerary_engine
+  to: response_generator
+  rel: contains
+- from: itinerary_engine
+  to: cost_latency_loop
+  rel: contains
+- from: itinerary_engine
+  to: release_gate_loop
+  rel: contains
+- from: itinerary_engine
+  to: incident_loop
+  rel: contains
+- from: raw_user_request
+  to: user_intent_fidelity
+  rel: measures
+- from: parser_json
+  to: user_intent_fidelity
+  rel: measures
+- from: weekly_parser_f1
+  to: user_intent_fidelity
+  rel: measures
+- from: thumb_and_click_feedback
+  to: plan_practical_quality
+  rel: measures
+- from: golden_query_results
+  to: plan_practical_quality
+  rel: measures
+- from: latency_and_cost_metrics
+  to: p95_latency
+  rel: measures
+- from: latency_and_cost_metrics
+  to: cost_per_itinerary
+  rel: measures
+- from: partner_api_and_error_metrics
+  to: plan_practical_quality
+  rel: measures
+- from: llm_intent_parser
+  to: intent_estimate
+  rel: estimates
+- from: product_quality_judgement
+  to: quality_estimate
+  rel: estimates
+- from: telemetry_aggregation
+  to: p95_latency
+  rel: estimates
+- from: telemetry_aggregation
+  to: cost_per_itinerary
+  rel: estimates
+- from: intent_estimate
+  to: user_intent_fidelity
+  rel: estimates
+- from: quality_estimate
+  to: plan_practical_quality
+  rel: estimates
+- from: engineering_teams
+  to: intent_estimate
+  rel: holds
+- from: product_manager
+  to: quality_estimate
+  rel: holds
+- from: product_manager
+  to: useful_coherent_plan
+  rel: holds
+- from: engineering_teams
+  to: latency_under_15_seconds
+  rel: holds
+- from: finance
+  to: acceptable_query_cost
+  rel: holds
+- from: product_manager
+  to: political_objective_ordering
+  rel: holds
+- from: useful_coherent_plan
+  to: plan_practical_quality
+  rel: targets
+- from: latency_under_15_seconds
+  to: p95_latency
+  rel: targets
+- from: acceptable_query_cost
+  to: cost_per_itinerary
+  rel: targets
+- from: engineering_teams
+  to: serve_itinerary
+  rel: authorizes
+- from: product_manager
+  to: block_deployment
+  rel: authorizes
+- from: engineering_teams
+  to: switch_orchestrator_model
+  rel: authorizes
+- from: engineering_teams
+  to: hot_patch_or_rollback_prompt
+  rel: authorizes
+- from: partner_schema
+  to: serve_itinerary
+  rel: constrains
+- from: feedback_delay
+  to: thumb_and_click_feedback
+  rel: delays
+- from: runtime_prompt_revision
+  to: orchestration_policy
+  rel: revises
+- from: cost_latency_loop
+  to: switch_orchestrator_model
+  rel: closes
+- from: release_gate_loop
+  to: block_deployment
+  rel: closes
+- from: incident_loop
+  to: hot_patch_or_rollback_prompt
+  rel: closes
+- from: traveler
+  to: traveler_wasted_time
+  rel: bears
+- from: product_manager
+  to: product_failure
+  rel: bears
+- from: engineering_teams
+  to: on_call_burden
+  rel: bears
+- from: finance
+  to: budget_overrun
+  rel: bears
+- from: customer_support
+  to: manual_rework
+  rel: bears
+loops:
+- id: cost_latency_loop
+  timescale: daily_scale
+  signal: latency_and_cost_metrics
+  intervention: switch_orchestrator_model
+- id: release_gate_loop
+  timescale: release_scale
+  signal: golden_query_results
+  intervention: block_deployment
+- id: incident_loop
+  timescale: incident_scale
+  signal: partner_api_and_error_metrics
+  intervention: hot_patch_or_rollback_prompt
+excluded_variables:
+- Hidden chain-of-thought content.
+- Exact semantics induced by each prompt and component-local vocabulary.
+- Unobserved reasons for thumbs, abandonment, and later bookings.
+breaks_declared:
+- single_consistent_world_state
+- stable_mathematically_defined_objective
+- lossless_component_communication
+- binary_observable_failure
+- human_oversight_out_of_band
+- component_behavior_fixed_by_code_and_weights
+breaks_handled:
+- stable_mathematically_defined_objective
+- binary_observable_failure
+- human_oversight_out_of_band
+- component_behavior_fixed_by_code_and_weights
+surfaced: []
+reduces_to: null
+new_primitives_needed:
+- name: SemanticArtifact
+  why: Parser JSON, tool directives, retrieved passages, API payloads, and synthesized plans are
+    versioned representations passed between components. Each has local semantics and can lose or
+    distort meaning without becoming technically invalid.
+  which_existing_fails: Signal is an observation rather than a produced message or command. Estimate
+    must assess a resolvable estimand and cannot represent directives or retrieved context. System
+    contains components but the closed relations cannot express production, consumption, or translation
+    of semantic artifacts.
+shape: canonical-graph

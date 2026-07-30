@@ -1,0 +1,278 @@
+uras_version: 0
+encodes: ecosystem
+set: held_out
+domain: ecosystem
+encoded_by: gpt-5-codex
+encoder_role: independent
+nodes:
+- id: north_sea_cod_governance
+  kind: System
+  description: Annual assessment, TAC negotiation, quota allocation, and fleet response.
+- id: governance_boundary
+  kind: Boundary
+  scope: North Sea cod stock, assessment institutions, TAC decision, and regulated removals.
+- id: ices_scientists
+  kind: Party
+  role: Produce stock estimates and scientific TAC advice.
+- id: fisheries_ministers
+  kind: Party
+  role: Negotiate and authorize the final TAC.
+  informal_influence: Industry pressure raises the political weight of near-term catch.
+- id: fleet_and_coastal_communities
+  kind: Party
+  role: Harvest quota and bear immediate livelihood effects.
+  informal_influence: Skipper observations influence belief beyond formal authority.
+- id: future_fishers
+  kind: Party
+  role: Depend on a reproducing stock but lack present authority.
+- id: true_spawning_stock_biomass
+  kind: Estimand
+  criticality: existential
+  determination: latent
+  resolution_condition: A complete census of mature cod biomass at the assessment date.
+- id: actual_fishing_mortality
+  kind: Estimand
+  criticality: existential
+  determination: latent
+  resolution_condition: Independently verified total removals and stock exposure for the fishing
+    year.
+- id: incoming_recruitment
+  kind: Estimand
+  criticality: high
+  determination: latent
+  resolution_condition: Cohort abundance observed when the year-class enters the fishery.
+- id: survey_catch_age_data
+  kind: Signal
+  observation: Standard trawl counts, weights, lengths, and otolith ages on a fixed grid.
+- id: reported_landings_effort
+  kind: Signal
+  observation: Mandatory logbooks and sampled landings from the prior year.
+  limitation: May omit illegal discards or misreported catch under choke pressure.
+- id: on_water_codling_and_location
+  kind: Signal
+  observation: Skipper sightings of small cod and current fish concentrations.
+- id: assessment_ssb
+  kind: Estimate
+  uncertainty: Model and survey uncertainty.
+- id: assessment_mortality
+  kind: Estimate
+  uncertainty: Sensitive to unreported removals.
+- id: assessment_recruitment
+  kind: Estimate
+  uncertainty: High natural variability and regime sensitivity.
+- id: fleet_stock_estimate
+  kind: Estimate
+  uncertainty: Qualitative and local to recent fishing grounds.
+- id: stock_assessment_model
+  kind: Estimator
+  form: bayesian
+  idempotency_basis: Assessment year plus immutable survey, landing, and model-version snapshot.
+- id: skipper_judgement
+  kind: Estimator
+  form: judgement
+  idempotency_basis: Vessel, ground, observation date, and radio-report snapshot.
+- id: msy_stock_condition
+  kind: DesiredCondition
+  condition: Biomass and mortality remain compatible with maximum sustainable yield.
+- id: viable_fishing_year
+  kind: DesiredCondition
+  condition: Quota supports vessels, processors, and coastal employment.
+- id: tac_tradeoffs
+  kind: PreferenceOrdering
+  ordering: Partial ordering over stock protection, livelihoods, and other species quotas.
+  scalarized: 'false'
+- id: scientific_tac_policy
+  kind: Policy
+  based_on: true_spawning_stock_biomass, actual_fishing_mortality, incoming_recruitment
+  guard: Projected removals depart from the MSY path.
+- id: negotiated_tac_policy
+  kind: Policy
+  based_on: true_spawning_stock_biomass, actual_fishing_mortality, incoming_recruitment
+  guard: December TAC meeting.
+- id: recommend_tac
+  kind: Intervention
+  target: world
+  description: Issue scientific catch advice for the following year.
+- id: set_and_allocate_tac
+  kind: Intervention
+  target: world
+  description: Set final TAC and divide it into national and vessel quotas.
+- id: relocate_fishing_effort
+  kind: Intervention
+  target: world
+  description: Move effort toward current fish concentrations.
+- id: cod_stock
+  kind: Resource
+  stock: Reproducing North Sea cod population.
+- id: landing_obligation
+  kind: Constraint
+  invariant: Caught cod must be landed rather than discarded.
+- id: mixed_fishery_choke
+  kind: Constraint
+  invariant: Exhausted cod quota can halt fishing despite unused quota for other species.
+- id: assessment_and_action_lag
+  kind: Delay
+  duration: Prior-year landings plus current surveys inform the following fishing year.
+- id: annual_management_scale
+  kind: TimeScale
+  cadence: annual
+- id: fleet_adaptation_scale
+  kind: TimeScale
+  cadence: daily
+- id: annual_tac_loop
+  kind: Loop
+  description: Assessment and negotiation alter next year's removals.
+- id: fleet_location_loop
+  kind: Loop
+  description: Current observations redirect fishing effort.
+- id: ices_credibility_loss
+  kind: Consequence
+  outcome: Repeatedly wrong advice erodes scientific credibility.
+- id: political_backlash
+  kind: Consequence
+  outcome: Ministers bear pressure for immediate losses or later collapse.
+- id: livelihood_loss
+  kind: Consequence
+  outcome: Low quota or closure causes unemployment, default, and community decline.
+- id: lost_future_fishery
+  kind: Consequence
+  outcome: Stock collapse removes ecological and livelihood options for future generations.
+edges:
+- from: north_sea_cod_governance
+  to: governance_boundary
+  rel: contains
+- from: north_sea_cod_governance
+  to: annual_tac_loop
+  rel: contains
+- from: north_sea_cod_governance
+  to: fleet_location_loop
+  rel: contains
+- from: survey_catch_age_data
+  to: true_spawning_stock_biomass
+  rel: measures
+- from: survey_catch_age_data
+  to: incoming_recruitment
+  rel: measures
+- from: reported_landings_effort
+  to: actual_fishing_mortality
+  rel: measures
+- from: on_water_codling_and_location
+  to: incoming_recruitment
+  rel: measures
+- from: stock_assessment_model
+  to: assessment_ssb
+  rel: estimates
+- from: stock_assessment_model
+  to: assessment_mortality
+  rel: estimates
+- from: stock_assessment_model
+  to: assessment_recruitment
+  rel: estimates
+- from: skipper_judgement
+  to: fleet_stock_estimate
+  rel: estimates
+- from: assessment_ssb
+  to: true_spawning_stock_biomass
+  rel: estimates
+- from: assessment_mortality
+  to: actual_fishing_mortality
+  rel: estimates
+- from: assessment_recruitment
+  to: incoming_recruitment
+  rel: estimates
+- from: fleet_stock_estimate
+  to: true_spawning_stock_biomass
+  rel: estimates
+- from: ices_scientists
+  to: assessment_ssb
+  rel: holds
+- from: fleet_and_coastal_communities
+  to: fleet_stock_estimate
+  rel: holds
+- from: ices_scientists
+  to: msy_stock_condition
+  rel: holds
+- from: fleet_and_coastal_communities
+  to: viable_fishing_year
+  rel: holds
+- from: fisheries_ministers
+  to: tac_tradeoffs
+  rel: holds
+- from: future_fishers
+  to: msy_stock_condition
+  rel: holds
+- from: msy_stock_condition
+  to: true_spawning_stock_biomass
+  rel: targets
+- from: viable_fishing_year
+  to: actual_fishing_mortality
+  rel: targets
+- from: ices_scientists
+  to: recommend_tac
+  rel: authorizes
+- from: fisheries_ministers
+  to: set_and_allocate_tac
+  rel: authorizes
+- from: fleet_and_coastal_communities
+  to: relocate_fishing_effort
+  rel: authorizes
+- from: set_and_allocate_tac
+  to: cod_stock
+  rel: constrains
+- from: relocate_fishing_effort
+  to: cod_stock
+  rel: consumes
+- from: landing_obligation
+  to: relocate_fishing_effort
+  rel: constrains
+- from: mixed_fishery_choke
+  to: relocate_fishing_effort
+  rel: constrains
+- from: assessment_and_action_lag
+  to: reported_landings_effort
+  rel: delays
+- from: annual_tac_loop
+  to: set_and_allocate_tac
+  rel: closes
+- from: fleet_location_loop
+  to: relocate_fishing_effort
+  rel: closes
+- from: ices_scientists
+  to: ices_credibility_loss
+  rel: bears
+- from: fisheries_ministers
+  to: political_backlash
+  rel: bears
+- from: fleet_and_coastal_communities
+  to: livelihood_loss
+  rel: bears
+- from: future_fishers
+  to: lost_future_fishery
+  rel: bears
+loops:
+- id: annual_tac_loop
+  timescale: annual_management_scale
+  signal: survey_catch_age_data
+  intervention: set_and_allocate_tac
+- id: fleet_location_loop
+  timescale: fleet_adaptation_scale
+  signal: on_water_codling_and_location
+  intervention: relocate_fishing_effort
+excluded_variables:
+- Exact content of skipper tacit fishing knowledge.
+- Unobserved illegal discards and black-fish landings.
+- Future temperature, plankton, and predator regimes.
+breaks_declared:
+- reported_landings_are_faithful_unbiased_actual_catch_mortality
+breaks_handled: []
+surfaced: []
+reduces_to: null
+new_primitives_needed:
+- name: Report
+  why: Reported landings are assertions generated by regulated parties under economic pressure, and
+    may differ knowingly from both catch and measurement. The graph cannot express who asserted a
+    datum or that incentives shape its content.
+  which_existing_fails: Signal is what is actually measured and has no reporting-party relation.
+    Estimate is an uncertainty-bearing assessment of an estimand, not a strategic declaration. Intervention
+    changes the world or system structure, not an information record.
+shape: canonical-graph

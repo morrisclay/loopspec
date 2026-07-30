@@ -1,0 +1,235 @@
+uras_version: 0
+encodes: factory
+set: held_out
+domain: factory
+encoded_by: deepseek-v3.2
+encoder_role: independent
+nodes:
+- id: apex_manufacturing
+  kind: System
+- id: factory_boundary
+  kind: Boundary
+- id: maria_planner
+  kind: Party
+- id: frank_manager
+  kind: Party
+- id: dave_diesetter
+  kind: Party
+- id: sarah_qc
+  kind: Party
+- id: globex_reliability
+  kind: Estimand
+  criticality: high
+  determination: latent
+  resolution_condition: actual on-time delivery record over next shipment
+- id: true_assembly_capacity
+  kind: Estimand
+  criticality: high
+  determination: latent
+  resolution_condition: complete production log showing actual output vs. planned
+- id: process_stability
+  kind: Estimand
+  criticality: moderate
+  determination: latent
+  resolution_condition: 100% inspection of lot showing defect rate
+- id: supplier_portal_status
+  kind: Signal
+- id: time_study_data
+  kind: Signal
+- id: qc_sample_results
+  kind: Signal
+- id: gut_feeling_estimator
+  kind: Estimator
+  form: judgement
+  idempotency_basis: estimates are based on episodic observations; duplicate processing of same event
+    would over-weight
+- id: reliability_estimate
+  kind: Estimate
+- id: capacity_estimate
+  kind: Estimate
+- id: stability_estimate
+  kind: Estimate
+- id: meet_delivery_schedule
+  kind: DesiredCondition
+- id: maintain_margin
+  kind: DesiredCondition
+- id: avoid_car
+  kind: DesiredCondition
+- id: scrap_cost
+  kind: Consequence
+- id: penalty_cost
+  kind: Consequence
+- id: reputation_damage
+  kind: Consequence
+- id: issue_po
+  kind: Intervention
+  target: world
+- id: schedule_production
+  kind: Intervention
+  target: world
+- id: dial_in_die
+  kind: Intervention
+  target: world
+- id: perform_inspection
+  kind: Intervention
+  target: world
+- id: material_check_policy
+  kind: Policy
+  guard: when PO received
+  based_on:
+  - globex_reliability
+- id: scheduling_policy
+  kind: Policy
+  guard: when work order released
+  based_on:
+  - true_assembly_capacity
+- id: quality_policy
+  kind: Policy
+  guard: when first article produced
+  based_on:
+  - process_stability
+- id: production_loop
+  kind: Loop
+  timescale: weekly_timescale
+  signal: qc_sample_results
+  intervention: dial_in_die
+- id: weekly_timescale
+  kind: TimeScale
+- id: lead_time_delay
+  kind: Delay
+- id: margin_resource
+  kind: Resource
+- id: time_resource
+  kind: Resource
+- id: eco_constraint
+  kind: Constraint
+- id: sole_source_constraint
+  kind: Constraint
+- id: tolerance_relaxation
+  kind: Revision
+  regime: routine-incremental
+edges:
+- from: apex_manufacturing
+  to: factory_boundary
+  rel: contains
+- from: factory_boundary
+  to: maria_planner
+  rel: contains
+- from: factory_boundary
+  to: frank_manager
+  rel: contains
+- from: factory_boundary
+  to: dave_diesetter
+  rel: contains
+- from: factory_boundary
+  to: sarah_qc
+  rel: contains
+- from: maria_planner
+  to: scrap_cost
+  rel: bears
+- from: frank_manager
+  to: penalty_cost
+  rel: bears
+- from: dave_diesetter
+  to: scrap_cost
+  rel: bears
+- from: sarah_qc
+  to: reputation_damage
+  rel: bears
+- from: gut_feeling_estimator
+  to: globex_reliability
+  rel: estimates
+- from: gut_feeling_estimator
+  to: true_assembly_capacity
+  rel: estimates
+- from: gut_feeling_estimator
+  to: process_stability
+  rel: estimates
+- from: gut_feeling_estimator
+  to: supplier_portal_status
+  rel: measures
+- from: gut_feeling_estimator
+  to: time_study_data
+  rel: measures
+- from: gut_feeling_estimator
+  to: qc_sample_results
+  rel: measures
+- from: maria_planner
+  to: reliability_estimate
+  rel: holds
+- from: frank_manager
+  to: capacity_estimate
+  rel: holds
+- from: sarah_qc
+  to: stability_estimate
+  rel: holds
+- from: maria_planner
+  to: meet_delivery_schedule
+  rel: holds
+- from: frank_manager
+  to: maintain_margin
+  rel: holds
+- from: sarah_qc
+  to: avoid_car
+  rel: holds
+- from: meet_delivery_schedule
+  to: globex_reliability
+  rel: targets
+- from: maintain_margin
+  to: true_assembly_capacity
+  rel: targets
+- from: avoid_car
+  to: process_stability
+  rel: targets
+- from: material_check_policy
+  to: issue_po
+  rel: authorizes
+- from: scheduling_policy
+  to: schedule_production
+  rel: authorizes
+- from: quality_policy
+  to: perform_inspection
+  rel: authorizes
+- from: issue_po
+  to: margin_resource
+  rel: consumes
+- from: schedule_production
+  to: time_resource
+  rel: consumes
+- from: dial_in_die
+  to: margin_resource
+  rel: consumes
+- from: issue_po
+  to: lead_time_delay
+  rel: delays
+- from: eco_constraint
+  to: schedule_production
+  rel: constrains
+- from: sole_source_constraint
+  to: issue_po
+  rel: constrains
+- from: tolerance_relaxation
+  to: process_stability
+  rel: revises
+loops:
+- id: production_loop
+  timescale: weekly_timescale
+  signal: qc_sample_results
+  intervention: dial_in_die
+excluded_variables: []
+breaks_declared:
+- An assumption that the specifications of the product are static.
+- An assumption that data from the system is a reliable reflection of reality.
+- An assumption that the cost of a failure is a known, quantifiable variable.
+- An assumption that agents make decisions to optimize a single, global utility function.
+- An assumption that process steps are independent.
+- An assumption that the contract defines the rules of engagement.
+breaks_handled:
+- eco_constraint and tolerance_relaxation capture moving goalposts
+- latent estimands capture unreliable data
+- multiple consequence nodes capture ambiguous costs
+- multiple desired conditions and policies capture local optimization
+surfaced: []
+reduces_to: null
+new_primitives_needed: []
+shape: canonical-graph

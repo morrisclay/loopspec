@@ -1,0 +1,334 @@
+uras_version: 0
+encodes: family
+set: held_out
+domain: family
+encoded_by: gpt-5-codex
+encoder_role: independent
+nodes:
+- id: miller_household
+  kind: System
+  description: A household allocating money, time, and emotional capacity under uncertainty.
+- id: household_boundary
+  kind: Boundary
+  scope: Sarah, Tom, Leo, Maya, shared resources, commitments, and near-term disruptions.
+- id: sarah
+  kind: Party
+  role: Co-planner and default resolver of scheduling conflicts.
+  informal_influence: Reads family cues and can veto plans that exceed emotional reserves.
+- id: tom
+  kind: Party
+  role: Co-planner and income-constrained chore participant.
+- id: leo
+  kind: Party
+  role: Child with activities and context-sensitive needs.
+- id: maya
+  kind: Party
+  role: Child with health needs and context-sensitive tolerance.
+- id: cash_through_payday
+  kind: Estimand
+  criticality: high
+  determination: computed
+  resolution_condition: Bank balance less known obligations through Friday.
+- id: weekly_schedule_feasibility
+  kind: Estimand
+  criticality: high
+  determination: latent
+  resolution_condition: Whether all essential commitments are completed without a cancellation.
+- id: meltdown_before_bedtime
+  kind: Estimand
+  criticality: high
+  determination: latent
+  resolution_condition: Whether a child or parent has a disruptive emotional collapse before bedtime.
+- id: unexpected_cost_before_payday
+  kind: Estimand
+  criticality: moderate
+  determination: latent
+  resolution_condition: All expenses incurred before the next payday become known.
+- id: bank_and_obligations
+  kind: Signal
+  observation: Current balance, payday date, dental co-pay, fuel, and known purchases.
+- id: shared_calendar
+  kind: Signal
+  observation: Work, school, medical, and soccer commitments.
+- id: family_behavior_cues
+  kind: Signal
+  observation: Argumentativeness, quietness, sighing, and accumulated exhaustion.
+- id: school_note_and_car_noise
+  kind: Signal
+  observation: Late field-trip notice and a new mechanical symptom.
+- id: cash_estimate
+  kind: Estimate
+  uncertainty: Known arithmetic with uncertain incidental spending.
+- id: schedule_estimate
+  kind: Estimate
+  uncertainty: Qualitative and vulnerable to new commitments.
+- id: meltdown_risk_estimate
+  kind: Estimate
+  uncertainty: Qualitative, person-specific, and rapidly changing.
+- id: surprise_cost_estimate
+  kind: Estimate
+  uncertainty: Unknown until school or mechanic costs resolve.
+- id: cash_check
+  kind: Estimator
+  form: expression
+  expression: bank balance minus known obligations through payday
+  idempotency_basis: Bank snapshot timestamp, obligation list version, and payday date.
+- id: calendar_triage
+  kind: Estimator
+  form: judgement
+  idempotency_basis: Calendar version and three-day planning-window start.
+- id: cue_reading
+  kind: Estimator
+  form: judgement
+  idempotency_basis: Person, observation window, and cue set.
+- id: ghost_cost_judgement
+  kind: Estimator
+  form: judgement
+  idempotency_basis: Notice or symptom event plus current quote status.
+- id: meet_essential_needs
+  kind: DesiredCondition
+  condition: Pay essential costs through payday.
+- id: avoid_household_red_zone
+  kind: DesiredCondition
+  condition: Keep emotional demand below current family tolerance.
+- id: honor_near_term_commitments
+  kind: DesiredCondition
+  condition: Cover care, work, school, and health commitments.
+- id: contextual_household_preferences
+  kind: PreferenceOrdering
+  ordering: Partial ordering over solvency, care, time, rest, and enjoyment that changes with context.
+  scalarized: 'false'
+- id: weekly_satisficing_policy
+  kind: Policy
+  based_on: cash_through_payday, weekly_schedule_feasibility, meltdown_before_bedtime
+  guard: Sunday check-in or a material surprise.
+  choice_rule: Take the first feasible plan that protects essentials and avoids immediate overload.
+- id: context_exception_policy
+  kind: Policy
+  based_on: meltdown_before_bedtime, unexpected_cost_before_payday
+  guard: A standing heuristic conflicts with health, bravery, or exhaustion.
+- id: adjust_week_plan
+  kind: Intervention
+  target: world
+  description: Change spending, meals, transport, chores, or appointments.
+- id: reallocate_parent_work
+  kind: Intervention
+  target: world
+  description: Move a chore or schedule disruption between parents.
+- id: postpone_discretionary_plan
+  kind: Intervention
+  target: world
+  description: Delay camp, outing, takeout, or social acceptance.
+- id: money
+  kind: Resource
+  stock: Cash available before payday.
+  fungibility: Cannot substitute for patience or unavailable time.
+- id: parent_time
+  kind: Resource
+  stock: Schedulable parent hours.
+  fungibility: Saturday surplus cannot repair a missed Tuesday commitment.
+- id: parent_energy
+  kind: Resource
+  stock: Attention, patience, and recovery capacity.
+  fungibility: Not exchangeable with cash at the moment of overload.
+- id: childcare_and_health
+  kind: Constraint
+  invariant: Children receive necessary supervision and urgent health care.
+- id: surprise_resolution_lag
+  kind: Delay
+  duration: Costs and sickness become clear only after plans have been made.
+- id: weekly_scale
+  kind: TimeScale
+  cadence: weekly
+- id: reactive_scale
+  kind: TimeScale
+  cadence: hours to three days
+- id: weekly_planning_loop
+  kind: Loop
+  description: The Sunday check reallocates the coming week's resources.
+- id: reactive_triage_loop
+  kind: Loop
+  description: New cues and surprises trigger immediate replanning.
+- id: sarah_cognitive_load
+  kind: Consequence
+  outcome: Lost work time, sleep, and emotional capacity.
+- id: tom_overload
+  kind: Consequence
+  outcome: Additional chores and reduced recovery time.
+- id: leo_disruption
+  kind: Consequence
+  outcome: Missed activity, reduced outings, or emotional escalation.
+- id: maya_disruption
+  kind: Consequence
+  outcome: Pain, fatigue, denied preferences, or meltdown.
+edges:
+- from: miller_household
+  to: household_boundary
+  rel: contains
+- from: miller_household
+  to: weekly_planning_loop
+  rel: contains
+- from: miller_household
+  to: reactive_triage_loop
+  rel: contains
+- from: bank_and_obligations
+  to: cash_through_payday
+  rel: measures
+- from: shared_calendar
+  to: weekly_schedule_feasibility
+  rel: measures
+- from: family_behavior_cues
+  to: meltdown_before_bedtime
+  rel: measures
+- from: school_note_and_car_noise
+  to: unexpected_cost_before_payday
+  rel: measures
+- from: cash_check
+  to: cash_estimate
+  rel: estimates
+- from: calendar_triage
+  to: schedule_estimate
+  rel: estimates
+- from: cue_reading
+  to: meltdown_risk_estimate
+  rel: estimates
+- from: ghost_cost_judgement
+  to: surprise_cost_estimate
+  rel: estimates
+- from: cash_estimate
+  to: cash_through_payday
+  rel: estimates
+- from: schedule_estimate
+  to: weekly_schedule_feasibility
+  rel: estimates
+- from: meltdown_risk_estimate
+  to: meltdown_before_bedtime
+  rel: estimates
+- from: surprise_cost_estimate
+  to: unexpected_cost_before_payday
+  rel: estimates
+- from: sarah
+  to: schedule_estimate
+  rel: holds
+- from: sarah
+  to: meltdown_risk_estimate
+  rel: holds
+- from: tom
+  to: cash_estimate
+  rel: holds
+- from: sarah
+  to: contextual_household_preferences
+  rel: holds
+- from: tom
+  to: contextual_household_preferences
+  rel: holds
+- from: sarah
+  to: avoid_household_red_zone
+  rel: holds
+- from: tom
+  to: meet_essential_needs
+  rel: holds
+- from: sarah
+  to: honor_near_term_commitments
+  rel: holds
+- from: meet_essential_needs
+  to: cash_through_payday
+  rel: targets
+- from: avoid_household_red_zone
+  to: meltdown_before_bedtime
+  rel: targets
+- from: honor_near_term_commitments
+  to: weekly_schedule_feasibility
+  rel: targets
+- from: sarah
+  to: adjust_week_plan
+  rel: authorizes
+- from: tom
+  to: adjust_week_plan
+  rel: authorizes
+- from: sarah
+  to: reallocate_parent_work
+  rel: authorizes
+- from: tom
+  to: reallocate_parent_work
+  rel: authorizes
+- from: sarah
+  to: postpone_discretionary_plan
+  rel: authorizes
+- from: tom
+  to: postpone_discretionary_plan
+  rel: authorizes
+- from: adjust_week_plan
+  to: money
+  rel: consumes
+- from: adjust_week_plan
+  to: parent_time
+  rel: consumes
+- from: reallocate_parent_work
+  to: parent_energy
+  rel: consumes
+- from: postpone_discretionary_plan
+  to: parent_energy
+  rel: constrains
+- from: childcare_and_health
+  to: adjust_week_plan
+  rel: constrains
+- from: surprise_resolution_lag
+  to: school_note_and_car_noise
+  rel: delays
+- from: weekly_planning_loop
+  to: adjust_week_plan
+  rel: closes
+- from: reactive_triage_loop
+  to: reallocate_parent_work
+  rel: closes
+- from: sarah
+  to: sarah_cognitive_load
+  rel: bears
+- from: tom
+  to: tom_overload
+  rel: bears
+- from: leo
+  to: leo_disruption
+  rel: bears
+- from: maya
+  to: maya_disruption
+  rel: bears
+loops:
+- id: weekly_planning_loop
+  timescale: weekly_scale
+  signal: bank_and_obligations
+  intervention: adjust_week_plan
+- id: reactive_triage_loop
+  timescale: reactive_scale
+  signal: family_behavior_cues
+  intervention: reallocate_parent_work
+excluded_variables:
+- Content of the family's tacit interpersonal knowledge.
+- Exact timing of illness, car failure, school charges, and invitations.
+breaks_declared:
+- single_stable_utility_function
+- rational_optimizing_agents
+- fungible_resources
+- information_available_for_decision_making
+- costs_explicit_and_evenly_distributed
+- fixed_rules
+- independent_decisions
+breaks_handled:
+- single_stable_utility_function
+- rational_optimizing_agents
+- fungible_resources
+- information_available_for_decision_making
+- costs_explicit_and_evenly_distributed
+- fixed_rules
+- independent_decisions
+surfaced: []
+reduces_to: null
+new_primitives_needed:
+- name: ResourceFlow
+  why: Payday replenishes money and rest replenishes emotional capacity. These inflows are central
+    to the rolling forecast, but the graph can encode only stocks and consumption.
+  which_existing_fails: Resource represents a depletable stock, while consumes represents only depletion.
+    Intervention is an act and cannot state that an exogenous event replenishes a stock; no closed
+    relation means replenishes or produces.
+shape: canonical-graph
