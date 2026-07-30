@@ -91,12 +91,28 @@ primitives:
     tier: core
     depth: 2
     definition: >
-      An identified item that moves estimates. Carries stable identity and provenance.
-    demanded_by: [hospital, startup]
+      An identified item that moves estimates. Carries stable identity, provenance, and the
+      cost and reversibility of having acquired it.
+    demanded_by: [hospital, startup, toyota]
+    attributes:
+      - cost: >
+          What acquiring this evidence consumed. Spans six orders of magnitude across the
+          reference set — a GitHub issue against a destroyed launch vehicle.
+      - reversibility: >
+          Whether the acquisition can be repeated or undone. Independent of cost: a slow
+          government procurement decision is cheap to observe and irreversible; a destroyed
+          rocket is expensive and irreversible; an issue is cheap and reversible.
     note: >
       Stable identity is a correctness requirement, not bookkeeping. Under at-least-once
       execution (see research/flue_notes.md) an un-identified evidence item can be applied
       twice, silently double-counting into a well-formed but wrong posterior.
+    note_cost: >
+      Added from the reference set (benchmarks/reference_set.md), which spans evidence cost
+      almost perfectly and revealed it as the dominant axis for organisations — it
+      determines whether iteration is possible at all. Critically, cost is a VARIABLE not a
+      constraint: Toyota manufactures physical cars and engineered its way to cheap
+      immediate local evidence via andon, kanban and go-and-see. So an intervention may
+      target the cost of future evidence, which is also exactly what Lumi Science sells.
 
   - name: Estimator
     tier: core
@@ -114,10 +130,19 @@ primitives:
       A target on an estimand, held by a party. May be held by a party OUTSIDE the
       boundary (the householder at the dial), or by no party at all (the immune system
       regulates without anyone wanting anything).
-    demanded_by: [thermostat, hospital, startup]
+    demanded_by: [thermostat, hospital, startup, toyota]
     note: >
       Includes structural tolerance — the thermostat's deadband is not measurement error,
       it is a feature preventing oscillation. Modelling it as error gets it wrong.
+    note_external_holder: >
+      An externally-held desired condition is the NORMAL case, not an edge case. The
+      reference set shows three distinct arrangements, and the seeds contained all three
+      without this being noticed: goal-holder outside the boundary (thermostat; Hop Aero
+      steered by a USAF contract, Lodestar by ESA/MoD grants exceeding its equity), no
+      goal-holder anywhere (immune system; Supabase and xorq validated by a diffuse
+      community with no locus), and plural goal-holders inside negotiating with each other
+      (Toyota — which had NO seed exemplar). Requiring an internal goal-holder is therefore
+      a hard error, not a simplification.
 
   - name: PreferenceOrdering
     tier: core
@@ -214,7 +239,13 @@ primitives:
       replaced by choice, a new estimand admitted to the vocabulary, a boundary redrawn.
       Records what changed, when, on whose recognition, and whether the prior condition
       was refuted or merely abandoned.
-    demanded_by: [startup, immune_system]
+    demanded_by: [startup, immune_system, toyota]
+    attributes:
+      - regime: >
+          routine-incremental | episodic-discontinuous. Toyota revises continuously in small
+          increments against a documented baseline (kaizen on standardized work); the startup
+          revised once, discontinuously, under a clock. Same primitive, and treating the two
+          alike loses whether the prior condition was refuted or abandoned.
     note: >
       The refuted/abandoned distinction is load-bearing. The startup's pivot left the old
       question open — nobody proved late-delivery prediction was a bad business. Modelled
@@ -266,11 +297,31 @@ honest_notes:
     - Delay — two seeds, both engineering-adjacent
 
   loci_hypothesis: >
-    research/prior_art_gate.md predicts Party, Revision and recursive System are one
-    capability at three scales. Derivation did NOT collapse them — they arrived as three
-    separate demands from the seeds. That is evidence against the unification, or evidence
-    that derivation from prose cannot see it. Unresolved, and the most important open
-    question in the ontology.
+    RESOLVED IN FAVOUR, reversing the previous entry. research/prior_art_gate.md predicted
+    Party, Revision and recursive System are one capability at three scales. Derivation from
+    the four seeds did NOT collapse them, and that was recorded here as evidence against the
+    unification.
+
+    Toyota overturns it. Goal decomposition-with-pushback (hoshin kanri) is simultaneously
+    nested across levels, plural within each level, and endogenous — positions change through
+    negotiation rather than by learning what the true target was. One mechanism, all three
+    faces, engineered deliberately and running for decades.
+
+    The reason the seed derivation got this wrong matters more than the answer: none of the
+    four seeds contained an organisation that does goal formation WELL. The hospital has
+    plural goals and handles them badly; the startup revises episodically under duress.
+    Only against a system that does it as routine practice is it visible that the three are
+    the same thing.
+
+    A GAP IN THE CORPUS PRODUCED A WRONG FINDING ABOUT THE ONTOLOGY. This is the clearest
+    available argument for why the corpus must come first and must be chosen for structural
+    spread rather than for variety — and a warning that "derivation from data" is only as
+    good as the data selected.
+
+    Consequence: whether the three primitives should MERGE is now a live question rather than
+    a closed one. Not merging yet — Toyota shows they are one capability, not that they are
+    one construct, and collapsing them prematurely would lose the distinction the score
+    cannot see disappearing.
 
   untested_against_seeds: >
     Calibration was in the charter's list and no seed demanded it. Deliberately omitted
