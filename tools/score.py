@@ -83,6 +83,10 @@ def load_encodings():
                 continue
         if isinstance(doc, dict):
             doc["_path"] = path
+            # canonical encodings may omit `uses`; it is derivable from node kinds
+            if "uses" not in doc and "nodes" in doc:
+                doc["uses"] = sorted({n.get("kind") for n in (doc.get("nodes") or [])
+                                      if n.get("kind")})
             out.append(doc)
     return out
 

@@ -209,6 +209,17 @@ def check_canonical(path, doc, allp, rep):
 def check_encoding(path, doc, core, allp, rep):
     where = os.path.basename(path)
 
+    # In the canonical flat shape `uses` is DERIVABLE from node kinds, so it is optional
+    # there and synthesised when absent. Both independent encoders omitted it on all four
+    # held-out systems — unanimous omission is better evidence of redundancy than an
+    # argument. It remains required for pre-normal nested encodings, where nothing else
+    # records which primitives an encoding relies on.
+    canonical = doc.get("shape") == "canonical-graph" or "nodes" in doc
+    if canonical and "uses" not in doc:
+        doc["uses"] = sorted({n.get("kind") for n in (doc.get("nodes") or [])
+                              if n.get("kind")})
+        doc["_uses_derived"] = True
+
     for k in REQUIRED_TOP:
         if k not in doc:
             rep.err(where, f"missing required top-level key `{k}`")

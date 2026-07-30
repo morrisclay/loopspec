@@ -43,6 +43,11 @@ domain: <slug>
 encoded_by: <model-or-person>
 encoder_role: author-intent | independent
 
+uses: [...]                         # OPTIONAL and derivable — the set of node kinds.
+                                    # Both independent encoders omitted it on all four
+                                    # held-out systems. In the flat shape it restates
+                                    # what `nodes[].kind` already says; it was only
+                                    # load-bearing in the pre-normal nested shape.
 nodes:                              # ALL nodes, flat, one list
   - id: <slug>                      # unique within the document
     kind: System | Boundary | Party | Estimand | Signal | Estimate | Evidence |
