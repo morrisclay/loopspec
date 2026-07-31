@@ -685,6 +685,91 @@ def _loop_of(d, nid, edges):
 # deadband is for. Almost nothing does this.
 # ---------------------------------------------------------------------------------------
 
+
+# ---------------------------------------------------------------------------------------
+# ATTENTION.
+#
+# Every Calibration in this project scores an ESTIMATOR — was my conclusion right. Nothing
+# scored a SIGNAL — was my LOOKING right. That asymmetry was invisible until someone named it,
+# and it has three independent instances in the corpus already:
+#
+#   meeseeks_sourcing   `viability_review` retires a channel that finds nothing. It scores the
+#                       SOURCE, not the candidate. Flagged as "unusual" long before it had a name.
+#   conviction_termination  the stop rule reads `expected_info_gain` — is more looking worth
+#                       it? — and nothing computes it.
+#   customer_acquisition    `customer_interviews` is cost: high and nothing reviews whether it
+#                       earns that.
+#
+# Three instances, three authors: the project's own bar for admitting a concept.
+# ---------------------------------------------------------------------------------------
+
+def q_informs_no_decision(d, nodes, edges):
+    """
+    Paying to learn something no decision depends on.
+
+    Sharper than `orphan_signal`, which catches a signal informing NOTHING. This catches a
+    signal that informs a belief which no rule reads — the value-of-information failure. The
+    loop is not wrong about anything. It is spending attention it will not get back.
+    """
+    read = {t for i, n in nodes.items() if n.get("kind") == "Policy"
+            for t in (n.get("inputs") or [])}
+    if not read:
+        return []            # no rule reads anything; a different check's problem
+    # what a belief reaches, transitively, through explanation
+    reach = {}
+    for a, b in rel(edges, "explains") + rel(edges, "asserts"):
+        reach.setdefault(a, set()).add(b)
+
+    def touches(est, seen=None):
+        seen = seen or set()
+        if est in read:
+            return True
+        if est in seen:
+            return False
+        seen.add(est)
+        return any(touches(x, seen) for x in reach.get(est, ()))
+
+    out = []
+    for sig, est in rel(edges, "measures"):
+        n = nodes.get(sig, {})
+        if n.get("kind") != "Signal" or touches(est):
+            continue
+        cost = n.get("cost")
+        out.append({
+            "pattern": "informs_no_decision",
+            "claim": (f"`{sig}` is collected"
+                      + (f" at {cost} cost" if cost else "")
+                      + f" and tells you about `{est}`, and no decision rule reads `{est}`. "
+                        f"The loop is not wrong about anything here — it is paying attention "
+                        f"to something that changes nothing it does. Either a rule should read "
+                        f"`{est}`, or this observation should stop."),
+            "evidence": {"signal": sig, "estimand": est, "cost": cost},
+        })
+    return out
+
+
+def q_expensive_signal_unreviewed(d, nodes, edges):
+    """An expensive source that nothing ever asks was worth it."""
+    scored = {b for a, b in rel(edges, "revises")
+              if nodes.get(a, {}).get("kind") == "Calibration"
+              and nodes.get(b, {}).get("kind") == "Signal"}
+    out = []
+    for i, n in nodes.items():
+        if n.get("kind") != "Signal" or n.get("cost") not in ("high", "medium"):
+            continue
+        if i in scored:
+            continue
+        out.append({
+            "pattern": "expensive_signal_unreviewed",
+            "claim": (f"`{i}` costs `{n['cost']}` to obtain and nothing reviews whether it "
+                      f"earns that. Beliefs here get scored against outcomes; the SOURCES do "
+                      f"not. Add `checked_by:` naming what asks whether looking here was "
+                      f"worth it — the way a channel that finds nothing gets retired."),
+            "evidence": {"signal": i, "cost": n.get("cost")},
+        })
+    return out
+
+
 def q_unbounded_loop(d, nodes, edges):
     """A loop that declares nothing it can run out of."""
     if not (d.get("loops") or []):
@@ -1070,6 +1155,8 @@ def q_no_escalation_path(d, nodes, edges):
 
 QUERIES = [
     q_belief_never_checked,
+    q_informs_no_decision,
+    q_expensive_signal_unreviewed,
     q_unbounded_loop,
     q_ceiling_without_correction,
     q_spends_without_limit,

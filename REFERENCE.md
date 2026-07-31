@@ -68,6 +68,7 @@ What data actually arrives.
 | `how` *(alias: `obtained_as`)* | `measured` \| `reported` \| `calculated` |  | The other half, and orthogonal to `origin` — measured by a mechanism, reported by someone with interests, or derived from other numbers. The two axes must stay separate: `origin: ourselves` + `how: reported` is an agent's own self-assessment, which is a claim and not a measurement, and collapsing provenance to one axis cannot say it. |
 | `reported_by` *(alias: `asserted_by`)* | str |  | Who reports it, when `how: reported`. A reported number is a claim by someone. |
 | `produced_by` | str |  | Which of our own actions creates this, when `origin: ourselves`. |
+| `checked_by` | str |  | What reviews whether this observation is worth what it costs — whether looking here earned the attention. Distinct from calibrating a belief. Every Calibration in this project scored an ESTIMATOR: was my conclusion right. Nothing scored a SIGNAL: was my LOOKING right. A loop that keeps paying for a source that never changed a decision is not wrong about anything; it is spending attention it will not get back. |
 
 ## `actions.<name>`
 

@@ -225,6 +225,20 @@ Stated plainly, because the value of the above depends on it.
 
 ---
 
+## The reframe that came last and should have come first
+
+See `ATTENTION.md`. The linter is a consumer of the format, not the point. The contribution is
+**a simple YAML for describing and arguing about loops** — and a notation is an attention
+device operating at three levels: it directs the *author's* attention (a field is a place you
+have to look), it describes the *loop's* attention (`observes` with cost and provenance, and
+the finding that nothing ever scored a signal), and it allocates *human* attention across a
+group (`sees` and `bears`, where O'Reilly's unresolved point about the oversight loop having no
+exit condition lives).
+
+This changes what a wrong check costs. **A linter that is wrong is a bad product. A notation
+that is wrong is still useful, because you can say precisely what you disagree with** — which
+is the right posture given that only two of these checks survived independent encoding.
+
 ## In one sentence
 
 The field can tell you **that** your agent failed, and increasingly **how much**. This can tell

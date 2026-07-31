@@ -246,6 +246,10 @@
         "produced_by": {
           "type": "string",
           "description": "Which of our own actions creates this, when `origin: ourselves`."
+        },
+        "checked_by": {
+          "type": "string",
+          "description": "What reviews whether this observation is worth what it costs \u2014 whether looking here earned the attention. Distinct from calibrating a belief. Every Calibration in this project scored an ESTIMATOR: was my conclusion right. Nothing scored a SIGNAL: was my LOOKING right. A loop that keeps paying for a source that never changed a decision is not wrong about anything; it is spending attention it will not get back."
         }
       }
     },

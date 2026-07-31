@@ -315,6 +315,9 @@ def expand_one(g, spec, path="<spec>", scope=None):
                 g.edge(body["produced_by"], sig, "produces")
             else:
                 g.edge(lid + "_system", sig, "produces")
+        if body.get("checked_by"):
+            cid = g.node(body["checked_by"], "Calibration", scores=slug(sig))
+            g.edge(cid, sig, "revises")
         timescale(g, body.get("every"), sig)
         # a REPORTED number is a claim by someone, not a measurement
         if body.get("reported_by"):
