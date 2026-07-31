@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/morrisclay/uras/schema/loop.schema.json",
-  "title": "URAS loop format v0",
+  "title": "URAS loop format v1",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -12,35 +12,35 @@
       "type": "string",
       "description": "The loop's name. One document per loop; `---` separates loops in a group."
     },
-    "every": {
+    "runs": {
       "type": "string",
-      "description": "The loop's clock \u2014 how often it runs. Free text (`weekly`, `per_question`, `5m`) because cadence is domain-specific; the linter checks presence, not units."
+      "description": "How often the loop runs \u2014 `weekly`, `every 6 hours`, `per_question`. Free text, since cadence is domain-specific; the linter checks that one exists, not its units."
     },
-    "regulates": {
+    "goal": {
       "type": "object",
       "additionalProperties": {
-        "$ref": "#/$defs/regulates_entry"
+        "$ref": "#/$defs/goal_entry"
       },
-      "description": "What the loop steers toward a target."
+      "description": "What the loop is steering, and toward what."
     },
-    "estimates": {
+    "beliefs": {
       "type": "object",
       "additionalProperties": {
-        "$ref": "#/$defs/estimates_entry"
+        "$ref": "#/$defs/beliefs_entry"
       },
-      "description": "What it believes but cannot see directly."
+      "description": "What it holds a view on but cannot read off directly."
     },
     "observes": {
       "type": "object",
       "additionalProperties": {
         "$ref": "#/$defs/observes_entry"
       },
-      "description": "What actually arrives from the world."
+      "description": "What data actually arrives."
     },
-    "acts": {
+    "actions": {
       "type": "object",
       "additionalProperties": {
-        "$ref": "#/$defs/acts_entry"
+        "$ref": "#/$defs/actions_entry"
       },
       "description": "The levers it may pull."
     },
@@ -49,90 +49,148 @@
       "items": {
         "$ref": "#/$defs/when_entry"
       },
-      "description": "The rule selecting among acts."
+      "description": "The rule choosing among actions, evaluated in order. Structured rather than prose: prose reads better and cannot be checked, and the checking is the point."
     },
-    "parties": {
+    "asks_human_when": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "The conditions under which the loop stops and asks a person. Top-level and on its own, because burying escalation inside the decision rule is how it goes missing \u2014 this is the list a reader scans first to find out whether the thing can run away."
+    },
+    "people": {
       "type": "object",
       "additionalProperties": {
-        "$ref": "#/$defs/parties_entry"
+        "$ref": "#/$defs/people_entry"
       },
-      "description": "Who is involved and what it costs them."
+      "description": "Who is involved \u2014 human or agent \u2014 and what each stands to lose."
     },
     "never": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "Guardrails that hold regardless of the objective."
+      "description": "Hard limits that hold regardless of the goal."
+    },
+    "not_modelling": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Knowingly out of scope. Not decoration: this is the first list to revisit when the loop misbehaves for reasons it cannot see."
+    },
+    "name": {
+      "type": "string",
+      "description": "The loop's name. One document per loop; `---` separates loops in a group."
+    },
+    "every": {
+      "type": "string",
+      "description": "How often the loop runs \u2014 `weekly`, `every 6 hours`, `per_question`. Free text, since cadence is domain-specific; the linter checks that one exists, not its units."
+    },
+    "regulates": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/goal_entry"
+      },
+      "description": "What the loop is steering, and toward what."
+    },
+    "estimates": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/beliefs_entry"
+      },
+      "description": "What it holds a view on but cannot read off directly."
+    },
+    "acts": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/actions_entry"
+      },
+      "description": "The levers it may pull."
+    },
+    "parties": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/people_entry"
+      },
+      "description": "Who is involved \u2014 human or agent \u2014 and what each stands to lose."
     },
     "ignoring": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "Declared out of scope. Not decoration \u2014 this is the revision frontier, the list you revisit when the loop misbehaves for reasons it cannot see."
-    },
-    "name": {
-      "type": "string",
-      "description": "The loop's name. One document per loop; `---` separates loops in a group."
+      "description": "Knowingly out of scope. Not decoration: this is the first list to revisit when the loop misbehaves for reasons it cannot see."
     }
   },
   "$defs": {
-    "regulates_entry": {
+    "goal_entry": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "target": {
+        "keep": {
           "type": "string",
-          "description": "The setpoint, as a readable comparison \u2014 `< 400`, `>= 3 sources`, prose is fine."
+          "description": "The target, read as a sentence: `keep: below 400`, `keep: above 3 sources`."
         },
-        "computed_from": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Inputs this quantity is derived from."
-        },
-        "confidence": {
-          "type": "number",
-          "description": "How firmly the target itself is held, 0\u20131. Uncertainty about what you WANT, distinct from uncertainty about the world. A target held at 0.7 and one held at 0.99 warrant different revision policies. Candidate finding, per Briefing \u00a77 \u2014 accepted here as an OPTIONAL field only, and it does not enter the primitive catalog on this evidence."
-        }
-      }
-    },
-    "estimates_entry": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
         "from": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "Signals feeding this belief. Each must appear in `observes`."
+          "description": "What this quantity is computed from."
         },
-        "method": {
+        "unit": {
           "type": "string",
-          "description": "How the belief is formed: bayesian, judgement, frequency, model\u2026"
+          "description": "USD, days, percent \u2014 whatever makes the number meaningful."
         },
-        "calibrated_by": {
+        "confidence": {
+          "type": "number",
+          "description": "How firmly the goal ITSELF is held, 0\u20131 \u2014 uncertainty about what you want, as distinct from uncertainty about the world. Optional, and deliberately not a primitive: it enters on one book sketch and that is not enough evidence."
+        }
+      }
+    },
+    "beliefs_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "question": {
           "type": "string",
-          "description": "What scores this estimator's PAST predictions against what happened. Its absence is the single most common defect found in real loops \u2014 three independent authors, none careless."
+          "description": "The belief in plain language, as the question it answers \u2014 \"will the customers we buy this month stay?\". Optional and worth writing: it is the line a reader understands first, and the one that exposes a belief nobody can actually state."
         },
-        "window": {
+        "from": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Which observations feed this. Each must appear in `observes`."
+        },
+        "how": {
           "type": "string",
-          "description": "Over what period calibration scores."
+          "description": "How the view is formed: bayesian, judgement, a formula, an LLM call."
+        },
+        "checked_by": {
+          "type": "string",
+          "description": "What scores this belief's PAST calls against what actually happened. Its absence is the most common defect in real loops \u2014 found in three independent systems by three careful authors. A belief nothing checks cannot be shown to track anything."
+        },
+        "every": {
+          "type": "string",
+          "description": "How often the check runs."
         },
         "explains": {
           "type": "string",
-          "description": "The quantity this belief is a MODEL OF. Conant & Ashby 1970: every good regulator of a system must be a model of that system. Without this the loop is a reflex."
+          "description": "The quantity this belief is a model OF. A loop steering something it has no model of is a reflex against a setpoint \u2014 it can correct but never anticipate."
         },
         "settled_by": {
           "type": "string",
-          "description": "The observable that would finally decide this \u2014 what makes the belief refutable."
+          "description": "The observation that would finally decide this \u2014 what makes the belief refutable."
         },
-        "idempotency_basis": {
+        "known_bias": {
           "type": "string",
-          "description": "What makes a repeated update safe. Execution is at-least-once on every durable runtime, and a Bayesian update applied twice double-counts into a well-formed but WRONG posterior."
+          "description": "The direction this belief is expected to be wrong in, and why."
+        },
+        "safe_to_repeat": {
+          "type": "string",
+          "description": "What makes re-running the update safe. Execution is at-least-once on every durable runtime, and an update applied twice double-counts into a confident wrong answer."
         }
       }
     },
@@ -140,13 +198,16 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "measures": {
-          "type": "string",
-          "description": "The estimand this signal informs. Omit and it is an orphan."
+        "informs": {
+          "type": [
+            "string",
+            "array"
+          ],
+          "description": "Which belief or goal this tells you about. Omit and it is data nobody uses."
         },
         "every": {
           "type": "string",
-          "description": "Sampling period."
+          "description": "How often it arrives."
         },
         "cost": {
           "enum": [
@@ -156,50 +217,68 @@
           ],
           "description": "What it costs to obtain."
         },
-        "asserted_by": {
+        "origin": {
+          "enum": [
+            "outside",
+            "ourselves"
+          ],
+          "description": "Did something OUTSIDE this system cause this data to exist, or did we? Half of provenance, and the half that decides whether the loop can be surprised. A loop whose every input has `origin: ourselves` is sealed \u2014 it can only agree with itself."
+        },
+        "how": {
+          "enum": [
+            "measured",
+            "reported",
+            "calculated"
+          ],
+          "description": "The other half, and orthogonal to `origin` \u2014 measured by a mechanism, reported by someone with interests, or derived from other numbers. The two axes must stay separate: `origin: ourselves` + `how: reported` is an agent's own self-assessment, which is a claim and not a measurement, and collapsing provenance to one axis cannot say it."
+        },
+        "reported_by": {
           "type": "string",
-          "description": "A party who REPORTS this rather than a mechanism that measures it. A reported number is a claim by someone with interests, not an observation."
+          "description": "Who reports it, when `how: reported`. A reported number is a claim by someone."
         },
         "produced_by": {
           "type": "string",
-          "description": "An act inside this system that manufactures this signal. Load-bearing for groups: a loop whose every input is produced_by something inside it cannot be corrected from outside."
+          "description": "Which of our own actions creates this, when `origin: ourselves`."
         }
       }
     },
-    "acts_entry": {
+    "actions_entry": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "moves": {
-          "type": "string",
-          "description": "The estimand this act drives. Absence means the target is a wish."
+          "type": [
+            "string",
+            "array"
+          ],
+          "description": "The quantity this drives. Nothing pointing at a goal makes that goal a wish."
         },
-        "delay": {
+        "can_undo": {
+          "enum": [
+            "yes",
+            "costly",
+            "no"
+          ],
+          "description": "THE LOAD-BEARING FIELD, phrased as the question anyone would actually ask. Approval demanded everywhere gets ignored; approval demanded where the answer is `no` is a rule people follow. `costly` means undoable at real expense. NOTE: YAML 1.1 reads bare yes/no as booleans, so `can_undo: no` arrives as False. That is accepted and normalised rather than rejected \u2014 the natural phrasing must not be a trap. It is the one place this format tolerates YAML's ambiguity, because the blind test showed people write exactly this."
+        },
+        "needs_approval": {
           "type": "string",
-          "description": "Lag between acting and seeing the effect."
+          "description": "The person who must say yes first. Must name someone in `people`."
+        },
+        "effect_after": {
+          "type": "string",
+          "description": "How long until the effect is visible. Lag with no damping is what makes loops thrash."
         },
         "damping": {
           "type": "string",
           "description": "Deadband"
-        },
-        "reversibility": {
-          "enum": [
-            "reversible",
-            "costly",
-            "irreversible"
-          ],
-          "description": "THE LOAD-BEARING FIELD. Approval demanded everywhere is ignored; approval demanded where the act cannot be undone is a rule people follow. `costly` means undoable at real cost."
-        },
-        "approval": {
-          "type": "string",
-          "description": "Party whose approval gates this act. Must name a party in `parties`."
         },
         "consumes": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "Finite resources this act draws down."
+          "description": "Finite things this draws down."
         }
       }
     },
@@ -209,22 +288,22 @@
       "properties": {
         "if": {
           "type": "string",
-          "description": "The condition"
+          "description": "The condition."
         },
         "do": {
           "type": [
             "string",
             "array"
           ],
-          "description": "Act(s) to take. Must name entries in `acts`."
+          "description": "Action(s) to take. Must name entries in `actions`."
         },
         "escalate": {
           "type": "string",
-          "description": "Party the loop stops and asks. Must name a party in `parties`."
+          "description": "Person to ask instead. Must name someone in `people`."
         }
       }
     },
-    "parties_entry": {
+    "people_entry": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -240,28 +319,28 @@
           "enum": [
             "human",
             "agent",
+            "group",
             "system"
           ],
-          "description": "Explicit alternative to the above."
+          "description": "Explicit alternative."
         },
-        "bears": {
-          "type": "string",
-          "description": "What this party loses when the loop is wrong. `nothing` is a legitimate and revealing answer \u2014 an agent that bears nothing and a human who bears everything is the asymmetry that explains overrides looking irrational against the agent's objective."
+        "loses_if_wrong": {
+          "type": [
+            "string",
+            "array"
+          ],
+          "description": "What this one actually loses when the loop is wrong. `nothing` is a legitimate and revealing answer \u2014 an agent that loses nothing beside a human who loses everything is the asymmetry that explains overrides looking irrational against the agent's objective."
         },
         "sees": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "Estimands whose value reaches this party. A party that bears a consequence and sees nothing is accountable and blind \u2014 human oversight as compliance theatre."
+          "description": "What information actually reaches them. Someone who loses something and sees nothing is accountable and blind, which is oversight in name only."
         },
-        "authority": {
+        "may_decide": {
           "type": "string",
-          "description": "What this party may decide."
-        },
-        "asymmetry": {
-          "type": "string",
-          "description": "How this party's exposure differs from others'."
+          "description": "What this person has authority over."
         }
       }
     }

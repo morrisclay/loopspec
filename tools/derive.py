@@ -666,6 +666,47 @@ def _loop_of(d, nid, edges):
     return ls
 
 
+
+def q_belief_never_checked(d, nodes, edges):
+    """
+    A belief formed by judgement that nothing ever scores against what happened.
+
+    THE HEADLINE DEFECT, and until now it could not fire on an ordinary spec: the existing
+    `uncalibrated_estimator` requires `criticality: existential` on the estimand, a field the
+    authoring format has no key for. So the project's most-cited finding — three independent
+    systems, three careful authors, an estimator nothing scores — was gated behind something
+    nobody could write. This is the general form.
+
+    A COMPUTED quantity is exempt: arithmetic makes no prediction, so there is nothing to
+    score. Only latent beliefs — where a judgement is being made — can be wrong in the way
+    calibration measures.
+    """
+    calibrated = {b for a, b in rel(edges, "revises")
+                  if nodes.get(a, {}).get("kind") == "Calibration"}
+    latent = {i for i, n in nodes.items()
+              if n.get("kind") == "Estimand" and n.get("determination") == "latent"}
+    out = []
+    for a, b in rel(edges, "estimates"):
+        if b not in latent or a in calibrated:
+            continue
+        n = nodes.get(a, {})
+        if (n.get("form") or "").lower() in ("formula", "arithmetic", "computed"):
+            continue
+        q = nodes.get(b, {}).get("question")
+        out.append({
+            "pattern": "belief_never_checked",
+            "claim": (f"The loop forms a belief about `{b}`"
+                      + (f' — "{q}" — ' if q else " ")
+                      + f"by {n.get('form') or 'unspecified means'}, and nothing ever scores "
+                        f"it against what actually happened. Add `checked_by:` naming what "
+                        f"compares past calls to outcomes. Until then its confidence is a "
+                        f"number nobody has ever been graded on, and it can be confidently "
+                        f"wrong forever."),
+            "evidence": {"belief": b, "how": n.get("form"), "checked_by": None},
+        })
+    return out
+
+
 def q_shared_estimand_no_arbiter(d, nodes, edges):
     """
     Two loops estimate the same quantity and nothing reconciles them.
@@ -841,6 +882,7 @@ def q_no_escalation_path(d, nodes, edges):
 
 
 QUERIES = [
+    q_belief_never_checked,
     q_shared_estimand_no_arbiter,
     q_no_exogenous_grounding,
     q_unowned_act,
@@ -868,6 +910,38 @@ QUERIES = [
 ]
 
 
+
+# ---------------------------------------------------------------------------------------
+# Findings are the product's user-facing text, so they speak the format's vocabulary rather
+# than the IR's. The graph internally calls things Intervention and Estimand; nobody writing
+# a spec ever types those words, and a linter that answers in a vocabulary the author never
+# used is the same unintuitiveness one layer out.
+#
+# A display layer, deliberately: --json emits the raw claim, so downstream tooling and the
+# archived studies keep the stable internal names.
+# ---------------------------------------------------------------------------------------
+
+PLAIN = [
+    ("DesiredCondition", "target"), ("Intervention", "action"), ("Estimator", "belief rule"),
+    ("Estimand", "quantity"), ("Calibration", "check"), ("Explanation", "model"),
+    ("Signal", "observation"), ("Party", "person"), ("Consequence", "exposure"),
+    ("Constraint", "limit"), ("Estimate", "belief"),
+    ("intervention", "action"), ("estimand", "quantity"), ("signal", "observation"),
+    ("party", "person"), ("parties", "people"), ("estimator", "belief rule"),
+    ("interventions", "actions"), ("estimands", "quantities"), ("signals", "observations"),
+    ("requires_approval_from", "needs_approval"), ("reversibility", "can_undo"),
+    ("irreversible", "can_undo: no"), ("costly", "can_undo: costly"),
+    ("holds no estimate", "sees nothing"), ("`measures`", "`informs`"),
+]
+
+
+def plain(text):
+    import re
+    for a, b in PLAIN:
+        text = re.sub(rf"(?<![\w]){re.escape(a)}(?![\w])", b, text)
+    return text[:1].upper() + text[1:] if text else text
+
+
 def main():
     paths = [a for a in sys.argv[1:] if not a.startswith("--")]
     if not paths:
@@ -891,7 +965,7 @@ def main():
             print("=" * 72)
             for c in claims:
                 print(f"\n[{c['pattern']}]")
-                print(f"  {c['claim']}")
+                print(f"  {plain(c['claim'])}")
     if as_json:
         print(json.dumps(allout, indent=2))
     return 0

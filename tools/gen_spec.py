@@ -20,13 +20,14 @@ G = yaml.safe_load(open(os.path.join(ROOT, "schema", "loop.keys.yaml")))
 
 SECTIONS = [("top_level", "Top level", "One document per loop. `---` separates loops in a "
              "group; **names resolve across the whole file**, so loops may reference each "
-             "other's acts and signals."),
-            ("regulates_entry", "`regulates.<name>`", "What the loop steers toward a target."),
-            ("estimates_entry", "`estimates.<name>`", "What it believes but cannot see."),
-            ("observes_entry", "`observes.<name>`", "What actually arrives."),
-            ("acts_entry", "`acts.<name>`", "The levers."),
-            ("when_entry", "`when[]`", "The rule selecting among acts. Evaluated in order."),
-            ("parties_entry", "`parties.<name>`", "Who is exposed.")]
+             "other's actions and observations."),
+            ("goal_entry", "`goal.<name>`", "What the loop is steering, and toward what."),
+            ("beliefs_entry", "`beliefs.<name>`",
+             "What it holds a view on but cannot read off directly."),
+            ("observes_entry", "`observes.<name>`", "What data actually arrives."),
+            ("actions_entry", "`actions.<name>`", "The levers."),
+            ("when_entry", "`when[]`", "The rule choosing among actions, in order."),
+            ("people_entry", "`people.<name>`", "Who is involved and what they stand to lose.")]
 
 
 def typestr(r):
@@ -64,12 +65,14 @@ def markdown():
         o.write("\n")
     o.write("## Referential rules\n\n")
     o.write("Checked at parse time, because a name pointing at nothing is a silent hole:\n\n")
-    for a, b in [("`acts.*.approval`", "a party in `parties`"),
-                 ("`when[].do`", "an act in `acts`"),
-                 ("`when[].escalate`", "a party in `parties`"),
-                 ("`estimates.*.from`", "a signal in `observes`"),
-                 ("`parties.*.sees`", "an estimand in `regulates` or `estimates`"),
-                 ("`observes.*.produced_by`", "an act in `acts`")]:
+    for a, b in [("`actions.*.needs_approval`", "someone in `people`"),
+                 ("`actions.*.moves`", "something in `goal` or `beliefs`"),
+                 ("`when[].do`", "an action in `actions`"),
+                 ("`when[].escalate`", "someone in `people`"),
+                 ("`beliefs.*.from`", "an observation in `observes`"),
+                 ("`observes.*.informs`", "something in `goal` or `beliefs`"),
+                 ("`people.*.sees`", "something in `goal` or `beliefs`"),
+                 ("`observes.*.produced_by`", "an action in `actions`")]:
         o.write(f"- {a} must name {b}\n")
     o.write("\nErrors carry a did-you-mean suggestion, so the message names the fix rather "
             "than only the fault.\n")
@@ -105,15 +108,15 @@ def schema():
         defs[key] = {"type": "object", "additionalProperties": False, "properties":
                      props(key)}
     top = props("top_level")
-    for k, entry in [("regulates", "regulates_entry"), ("estimates", "estimates_entry"),
-                     ("observes", "observes_entry"), ("acts", "acts_entry"),
-                     ("parties", "parties_entry")]:
+    for k, entry in [("goal", "goal_entry"), ("beliefs", "beliefs_entry"),
+                     ("observes", "observes_entry"), ("actions", "actions_entry"),
+                     ("people", "people_entry")]:
         top[k] = {"type": "object",
                   "additionalProperties": {"$ref": f"#/$defs/{entry}"},
                   "description": top[k].get("description", "")}
     top["when"] = {"type": "array", "items": {"$ref": "#/$defs/when_entry"},
                    "description": top["when"].get("description", "")}
-    for k in ("never", "ignoring"):
+    for k in ("never", "not_modelling", "asks_human_when"):
         top[k] = {"type": "array", "items": {"type": "string"},
                   "description": top[k].get("description", "")}
     for a, r in G["top_level"].items():

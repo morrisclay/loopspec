@@ -1,22 +1,33 @@
 # THE GRAMMAR. This file is the language definition.
 #
-# It is the single source of truth for three things that were drifting apart:
-#   1. validation      — tools/loop.py refuses unknown keys and bad enums
-#   2. the reference   — SPEC-FORMAT.md's key table is GENERATED from this
-#   3. JSON Schema     — schema/loop.schema.json is GENERATED from this
+# Single source of truth for: validation (tools/loop.py), REFERENCE.md, and
+# schema/loop.schema.json. Both of the latter are GENERATED — edit this file, run
+# `tools/gen_spec.py`, never edit them by hand.
 #
-# Briefing §6.2 asked for exactly this discipline for the book's notation, on the grounds that
-# hand-maintained notation went stale within hours. The same argument applies here and the
-# consequence is worse: a hand-maintained format reference that disagrees with the parser is
-# how an LLM writes a spec that silently does nothing.
+# ---------------------------------------------------------------------------------------
+# v1 NAMING COMES FROM A BLIND TEST, NOT FROM TASTE.
 #
-# WHY UNKNOWN KEYS ARE AN ERROR AND NOT A WARNING:
-# a spec misspelling `reversibility` as `reversability` on an act called `wipe_production`
-# previously parsed clean and produced no finding. The most dangerous declaration in the
-# format is the easiest to lose. In a format written mostly by LLMs, silent key loss is the
-# defining failure mode, so every key is closed and every enum is checked.
+# Three strong models were given the requirements — no sight of this format — and asked to
+# design the syntax from scratch. Where they converged is what a reader expects; where they
+# unanimously differed from v0 is where v0 was jargon. They rejected every borrowed word:
+#
+#     regulates    → goal        (3/3)        measures     → informs     (3/3)
+#     estimates    → beliefs     (3/3)        acts         → actions     (3/3)
+#     calibrated_by→ checked_by  (3/3)        parties      → people      (grok)
+#     ignoring     → not_modelling            bears        → loses_if_wrong
+#
+# They independently confirmed two v0 choices: `moves` and `sees`.
+#
+# Kept against the majority, with reasons:
+#   `when` stays a STRUCTURED list. Grok wrote the policy as prose (`chooses_actions: >`),
+#   which reads beautifully and cannot be linted at all — and the linter is the product.
+#   `never` stays instead of `constraints`; it is shorter and says the same thing.
+#
+# WHY UNKNOWN KEYS ARE ERRORS: a spec misspelling the undo field on an act called
+# `wipe_production` once parsed clean and produced no finding. The most dangerous
+# declaration is the easiest to lose, and this format is written mostly by LLMs.
 
-version: 0
+version: 1
 
 # ---------------------------------------------------------------------------------------
 top_level:
@@ -25,112 +36,201 @@ top_level:
     required: true
     doc: The loop's name. One document per loop; `---` separates loops in a group.
     aliases: [name]
-  every:
+  runs:
     type: str
     doc: >
-      The loop's clock — how often it runs. Free text (`weekly`, `per_question`, `5m`)
-      because cadence is domain-specific; the linter checks presence, not units.
-  regulates:  {type: map, of: regulates_entry, doc: What the loop steers toward a target.}
-  estimates:  {type: map, of: estimates_entry, doc: What it believes but cannot see directly.}
-  observes:   {type: map, of: observes_entry,  doc: What actually arrives from the world.}
-  acts:       {type: map, of: acts_entry,      doc: The levers it may pull.}
-  when:       {type: list, of: when_entry,     doc: The rule selecting among acts.}
-  parties:    {type: map, of: parties_entry,   doc: Who is involved and what it costs them.}
-  never:      {type: list, of: str, doc: Guardrails that hold regardless of the objective.}
-  ignoring:
+      How often the loop runs — `weekly`, `every 6 hours`, `per_question`. Free text, since
+      cadence is domain-specific; the linter checks that one exists, not its units.
+    aliases: [every]
+  goal:
+    type: map
+    of: goal_entry
+    doc: What the loop is steering, and toward what.
+    aliases: [regulates]
+  beliefs:
+    type: map
+    of: beliefs_entry
+    doc: What it holds a view on but cannot read off directly.
+    aliases: [estimates]
+  observes:
+    type: map
+    of: observes_entry
+    doc: What data actually arrives.
+  actions:
+    type: map
+    of: actions_entry
+    doc: The levers it may pull.
+    aliases: [acts]
+  when:
+    type: list
+    of: when_entry
+    doc: >
+      The rule choosing among actions, evaluated in order. Structured rather than prose:
+      prose reads better and cannot be checked, and the checking is the point.
+  asks_human_when:
     type: list
     of: str
     doc: >
-      Declared out of scope. Not decoration — this is the revision frontier, the list you
-      revisit when the loop misbehaves for reasons it cannot see.
+      The conditions under which the loop stops and asks a person. Top-level and on its own,
+      because burying escalation inside the decision rule is how it goes missing — this is
+      the list a reader scans first to find out whether the thing can run away.
+  people:
+    type: map
+    of: people_entry
+    doc: Who is involved — human or agent — and what each stands to lose.
+    aliases: [parties]
+  never:
+    type: list
+    of: str
+    doc: Hard limits that hold regardless of the goal.
+  not_modelling:
+    type: list
+    of: str
+    doc: >
+      Knowingly out of scope. Not decoration: this is the first list to revisit when the loop
+      misbehaves for reasons it cannot see.
+    aliases: [ignoring]
 
 # ---------------------------------------------------------------------------------------
-regulates_entry:
-  target:
+goal_entry:
+  keep:
     type: str
-    doc: The setpoint, as a readable comparison — `< 400`, `>= 3 sources`, prose is fine.
-  computed_from: {type: list, of: str, doc: Inputs this quantity is derived from.}
+    doc: "The target, read as a sentence: `keep: below 400`, `keep: above 3 sources`."
+    aliases: [target]
+  from:
+    type: list
+    of: str
+    doc: What this quantity is computed from.
+    aliases: [computed_from]
+  unit: {type: str, doc: "USD, days, percent — whatever makes the number meaningful."}
   confidence:
     type: number
     doc: >
-      How firmly the target itself is held, 0–1. Uncertainty about what you WANT, distinct
-      from uncertainty about the world. A target held at 0.7 and one held at 0.99 warrant
-      different revision policies. Candidate finding, per Briefing §7 — accepted here as an
-      OPTIONAL field only, and it does not enter the primitive catalog on this evidence.
+      How firmly the goal ITSELF is held, 0–1 — uncertainty about what you want, as distinct
+      from uncertainty about the world. Optional, and deliberately not a primitive: it enters
+      on one book sketch and that is not enough evidence.
 
-estimates_entry:
-  from:   {type: list, of: str, doc: Signals feeding this belief. Each must appear in `observes`.}
-  method: {type: str, doc: "How the belief is formed: bayesian, judgement, frequency, model…"}
-  calibrated_by:
+beliefs_entry:
+  question:
     type: str
     doc: >
-      What scores this estimator's PAST predictions against what happened. Its absence is the
-      single most common defect found in real loops — three independent authors, none careless.
-  window: {type: str, doc: Over what period calibration scores.}
+      The belief in plain language, as the question it answers — "will the customers we buy
+      this month stay?". Optional and worth writing: it is the line a reader understands
+      first, and the one that exposes a belief nobody can actually state.
+    aliases: [means, description]
+  from:
+    type: list
+    of: str
+    doc: Which observations feed this. Each must appear in `observes`.
+    aliases: [formed_from]
+  how:
+    type: str
+    doc: "How the view is formed: bayesian, judgement, a formula, an LLM call."
+    aliases: [method, how_formed]
+  checked_by:
+    type: str
+    doc: >
+      What scores this belief's PAST calls against what actually happened. Its absence is the
+      most common defect in real loops — found in three independent systems by three careful
+      authors. A belief nothing checks cannot be shown to track anything.
+    aliases: [calibrated_by, how_checked]
+  every: {type: str, doc: How often the check runs.}
   explains:
     type: str
     doc: >
-      The quantity this belief is a MODEL OF. Conant & Ashby 1970: every good regulator of a
-      system must be a model of that system. Without this the loop is a reflex.
+      The quantity this belief is a model OF. A loop steering something it has no model of is
+      a reflex against a setpoint — it can correct but never anticipate.
   settled_by:
     type: str
-    doc: The observable that would finally decide this — what makes the belief refutable.
-  idempotency_basis:
+    doc: The observation that would finally decide this — what makes the belief refutable.
+  known_bias:
+    type: str
+    doc: The direction this belief is expected to be wrong in, and why.
+  safe_to_repeat:
     type: str
     doc: >
-      What makes a repeated update safe. Execution is at-least-once on every durable runtime,
-      and a Bayesian update applied twice double-counts into a well-formed but WRONG posterior.
+      What makes re-running the update safe. Execution is at-least-once on every durable
+      runtime, and an update applied twice double-counts into a confident wrong answer.
+    aliases: [idempotency_basis]
 
 observes_entry:
-  measures: {type: str, doc: The estimand this signal informs. Omit and it is an orphan.}
-  every:    {type: str, doc: Sampling period.}
-  cost:     {type: str, enum: [low, medium, high], doc: What it costs to obtain.}
-  asserted_by:
+  informs:
+    type: [str, list]
+    doc: Which belief or goal this tells you about. Omit and it is data nobody uses.
+    aliases: [measures]
+  every: {type: str, doc: How often it arrives.}
+  cost: {type: str, enum: [low, medium, high], doc: What it costs to obtain.}
+  origin:
     type: str
+    enum: [outside, ourselves]
     doc: >
-      A party who REPORTS this rather than a mechanism that measures it. A reported number is
-      a claim by someone with interests, not an observation.
+      Did something OUTSIDE this system cause this data to exist, or did we? Half of
+      provenance, and the half that decides whether the loop can be surprised. A loop whose
+      every input has `origin: ourselves` is sealed — it can only agree with itself.
+  how:
+    type: str
+    enum: [measured, reported, calculated]
+    doc: >
+      The other half, and orthogonal to `origin` — measured by a mechanism, reported by
+      someone with interests, or derived from other numbers. The two axes must stay separate:
+      `origin: ourselves` + `how: reported` is an agent's own self-assessment, which is a
+      claim and not a measurement, and collapsing provenance to one axis cannot say it.
+    aliases: [obtained_as]
+  reported_by:
+    type: str
+    doc: "Who reports it, when `how: reported`. A reported number is a claim by someone."
+    aliases: [asserted_by]
   produced_by:
     type: str
-    doc: >
-      An act inside this system that manufactures this signal. Load-bearing for groups: a loop
-      whose every input is produced_by something inside it cannot be corrected from outside.
+    doc: "Which of our own actions creates this, when `origin: ourselves`."
 
-acts_entry:
-  moves:  {type: str, doc: The estimand this act drives. Absence means the target is a wish.}
-  delay:  {type: str, doc: Lag between acting and seeing the effect.}
-  damping: {type: str, doc: Deadband, hysteresis or rate limit. Delay without it oscillates.}
-  reversibility:
+actions_entry:
+  moves:
+    type: [str, list]
+    doc: The quantity this drives. Nothing pointing at a goal makes that goal a wish.
+  can_undo:
     type: str
-    enum: [reversible, costly, irreversible]
+    enum: ["yes", "costly", "no"]
     doc: >
-      THE LOAD-BEARING FIELD. Approval demanded everywhere is ignored; approval demanded where
-      the act cannot be undone is a rule people follow. `costly` means undoable at real cost.
-  approval:
+      THE LOAD-BEARING FIELD, phrased as the question anyone would actually ask. Approval
+      demanded everywhere gets ignored; approval demanded where the answer is `no` is a rule
+      people follow. `costly` means undoable at real expense.
+      NOTE: YAML 1.1 reads bare yes/no as booleans, so `can_undo: no` arrives as False. That
+      is accepted and normalised rather than rejected — the natural phrasing must not be a
+      trap. It is the one place this format tolerates YAML's ambiguity, because the blind
+      test showed people write exactly this.
+    aliases: [reversibility]
+  needs_approval:
     type: str
-    doc: Party whose approval gates this act. Must name a party in `parties`.
-  consumes: {type: list, of: str, doc: Finite resources this act draws down.}
+    doc: The person who must say yes first. Must name someone in `people`.
+    aliases: [approval]
+  effect_after:
+    type: str
+    doc: How long until the effect is visible. Lag with no damping is what makes loops thrash.
+    aliases: [delay, effect_shows_after, effect_shows_in]
+  damping: {type: str, doc: Deadband, cooldown or rate limit that stops it oscillating.}
+  consumes: {type: list, of: str, doc: Finite things this draws down.}
 
 when_entry:
-  if:       {type: str, doc: The condition, in readable prose or expression form.}
-  do:       {type: [str, list], doc: Act(s) to take. Must name entries in `acts`.}
-  escalate: {type: str, doc: Party the loop stops and asks. Must name a party in `parties`.}
+  if:       {type: str, doc: The condition.}
+  do:       {type: [str, list], doc: Action(s) to take. Must name entries in `actions`.}
+  escalate: {type: str, doc: Person to ask instead. Must name someone in `people`.}
 
-parties_entry:
+people_entry:
   human: {type: bool, doc: A person. Mutually exclusive with `agent`.}
   agent: {type: bool, doc: An automated actor. Mutually exclusive with `human`.}
-  kind:  {type: str, enum: [human, agent, system], doc: Explicit alternative to the above.}
-  bears:
-    type: str
+  kind:  {type: str, enum: [human, agent, group, system], doc: Explicit alternative.}
+  loses_if_wrong:
+    type: [str, list]
     doc: >
-      What this party loses when the loop is wrong. `nothing` is a legitimate and revealing
-      answer — an agent that bears nothing and a human who bears everything is the asymmetry
-      that explains overrides looking irrational against the agent's objective.
+      What this one actually loses when the loop is wrong. `nothing` is a legitimate and
+      revealing answer — an agent that loses nothing beside a human who loses everything is
+      the asymmetry that explains overrides looking irrational against the agent's objective.
+    aliases: [bears]
   sees:
     type: list
     of: str
     doc: >
-      Estimands whose value reaches this party. A party that bears a consequence and sees
-      nothing is accountable and blind — human oversight as compliance theatre.
-  authority: {type: str, doc: What this party may decide.}
-  asymmetry: {type: str, doc: How this party's exposure differs from others'.}
+      What information actually reaches them. Someone who loses something and sees nothing is
+      accountable and blind, which is oversight in name only.
+  may_decide: {type: str, doc: What this person has authority over.}

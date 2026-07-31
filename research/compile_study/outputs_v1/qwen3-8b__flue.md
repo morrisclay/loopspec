@@ -1,0 +1,123 @@
+<!-- model: qwen/qwen3-8b  tier: very weak  target: flue  finish: stop -->
+
+```typescript
+import { Loop, Belief, Observation, Action, Condition, HumanTrigger } from 'flue';
+
+export const customerAcquisitionLoop: Loop = {
+  loop: 'customer_acquisition',
+  runs: 'weekly',
+  goal: {
+    cost_per_customer: {
+      keep: 'below 400',
+      unit: 'USD',
+      from: ['ad_spend', 'new_customers'],
+    },
+    payback_months: {
+      keep: 'below 12',
+    },
+  },
+  beliefs: {
+    product_market_fit: {
+      question: 'If we keep buying customers like this month\'s, will they stay?',
+      from: ['customer_interviews', 'stripe'],
+      how: 'bayesian',
+      explains: 'cost_per_customer',
+      settled_by: 'a cohort retains above 80% at month 6',
+      known_bias: 'reads high when volume is low — interviews only reach people who reply',
+    },
+    channel_saturation: {
+      question: 'Can this channel absorb more money before cost climbs?',
+      from: ['ad_platform'],
+      how: 'judgement',
+      checked_by: 'monthly_spend_vs_cost_review',
+    },
+  },
+  observes: {
+    stripe: {
+      informs: 'cost_per_customer',
+      every: 'daily',
+      origin: 'outside',
+      how: 'measured',
+    },
+    ad_platform: {
+      informs: 'channel_saturation',
+      every: 'daily',
+      origin: 'ourselves',
+      how: 'measured',
+    },
+    customer_interviews: {
+      informs: 'product_market_fit',
+      every: 'weekly',
+      cost: 'high',
+      origin: 'outside',
+      how: 'reported',
+      reported_by: 'customers',
+    },
+    board_sentiment: {
+      every: 'monthly',
+      origin: 'outside',
+      how: 'reported',
+      reported_by: 'investor',
+    },
+  },
+  actions: {
+    increase_budget: {
+      moves: 'cost_per_customer',
+      can_undo: 'yes',
+      effect_after: '2w',
+      consumes: ['runway'],
+    },
+    change_pricing: {
+      moves: 'payback_months',
+      can_undo: 'costly',
+      effect_after: '4w',
+      needs_approval: 'founder',
+    },
+    exit_channel: {
+      moves: 'cost_per_customer',
+      can_undo: 'no',
+    },
+  },
+  when: [
+    {
+      if: 'cost_per_customer below 400 and product_market_fit above 0.6',
+      do: 'increase_budget',
+    },
+    {
+      if: 'payback_months above 12',
+      do: 'change_pricing',
+    },
+  ],
+  asks_human_when: [
+    'product_market_fit falls below 0.4',
+    'cost_per_customer stays above 600 for 14 days',
+    'any action whose can_undo is no becomes the chosen move',
+  ],
+  people: {
+    founder: {
+      human: 'yes',
+      loses_if_wrong: 'the company — runway, and 18-month survival odds',
+      sees: ['cost_per_customer', 'product_market_fit'],
+      may_decide: ['pricing', 'anything that cannot be undone'],
+    },
+    growth_agent: {
+      agent: 'yes',
+      loses_if_wrong: 'nothing',
+      sees: ['cost_per_customer', 'product_market_fit', 'channel_saturation'],
+    },
+    investor: {
+      human: 'yes',
+      loses_if_wrong: 'a position in the fund',
+      sees: [],
+    },
+  },
+  never: 'spend exceeds committed runway',
+  not_modelling: ['competitor_response', 'seasonality'],
+};
+```
+
+## did not survive
+- The `board_sentiment` observation does not inform any goal or belief, which is not explicitly supported in Flue's schema. This is a limitation of the target framework.
+- The `not_modelling` section is not directly representable in Flue's structure, as it's a meta-comment rather than a formal constraint.
+- The `settled_by` and `known_bias` fields in the `product_market_fit` belief are not part of Flue's standard belief schema, so they are omitted.
+- The `asks_human_when` section includes conditions that are not directly supported by Flue's event-driven architecture, requiring custom handling.

@@ -41,6 +41,58 @@ GRAMMAR = yaml.safe_load(
                       "schema", "loop.keys.yaml")))
 
 
+
+def _alias_map(section):
+    return {a: k for k, r in (GRAMMAR.get(section) or {}).items()
+            for a in (r.get("aliases") or [])}
+
+
+SECTION_OF = {"goal": "goal_entry", "beliefs": "beliefs_entry",
+              "observes": "observes_entry", "actions": "actions_entry",
+              "people": "people_entry"}
+
+
+VALUE_ALIASES = {
+    ("actions", "can_undo"): {"reversible": "yes", "irreversible": "no", "costly": "costly",
+                              True: "yes", False: "no"},
+    ("observes", "how"): {"measurement": "measured", "report": "reported",
+                          "computed": "calculated"},
+}
+
+
+def normalize(spec):
+    """
+    Rewrite v0 names to v1 before anything else looks at the spec.
+
+    v1 renamed most keys after a blind test showed three independent designers rejecting the
+    borrowed vocabulary. Aliases keep every v0 spec parsing — a format that breaks its own
+    corpus to improve its naming has bought legibility with trust.
+    """
+    if not isinstance(spec, dict):
+        return spec
+    top = _alias_map("top_level")
+    out = {top.get(k, k): v for k, v in spec.items()}
+    for sec, entry in SECTION_OF.items():
+        if not isinstance(out.get(sec), dict):
+            continue
+        am = _alias_map(entry)
+        def fix(body):
+            if not isinstance(body, dict):
+                return body
+            b = {am.get(k, k): v for k, v in body.items()}
+            for k, v in list(b.items()):
+                vmap = VALUE_ALIASES.get((sec, k))
+                if vmap and (isinstance(v, bool) or isinstance(v, str)) and v in vmap:
+                    b[k] = vmap[v]
+            return b
+        out[sec] = {nm: fix(body) for nm, body in out[sec].items()}
+    if isinstance(out.get("when"), list):
+        am = _alias_map("when_entry")
+        out["when"] = [{am.get(k, k): v for k, v in (r or {}).items()}
+                       if isinstance(r, dict) else r for r in out["when"]]
+    return out
+
+
 def _near(word, options):
     """Did-you-mean, so an error names the fix rather than only the fault."""
     import difflib
@@ -61,6 +113,10 @@ def _check_entry(spec_name, entry, section, errs, where):
             errs.append(f"{where}: unknown key `{k}`.{_near(k, rules)}")
             continue
         r = rules[k]
+        if v is True and "yes" in (r.get("enum") or []):
+            v = "yes"
+        elif v is False and "no" in (r.get("enum") or []):
+            v = "no"
         if r.get("enum") and v is not None and v not in r["enum"]:
             errs.append(f"{where}: `{k}` is `{v}`, which is not one of {r['enum']}."
                         f"{_near(v, r['enum'])}")
@@ -77,50 +133,62 @@ def validate(spec, path="<spec>", scope=None):
     if not (spec.get("loop") or spec.get("name")):
         errs.append("top level: every spec needs a `loop:` name.")
 
-    for section, entry_kind in [("regulates", "regulates_entry"),
-                                ("estimates", "estimates_entry"),
+    for section, entry_kind in [("goal", "goal_entry"),
+                                ("beliefs", "beliefs_entry"),
                                 ("observes", "observes_entry"),
-                                ("acts", "acts_entry"),
-                                ("parties", "parties_entry")]:
+                                ("actions", "actions_entry"),
+                                ("people", "people_entry")]:
         for nm, body in (spec.get(section) or {}).items():
             _check_entry(nm, body or {}, entry_kind, errs, f"{section}.{nm}")
     for i, r in enumerate(spec.get("when") or []):
         _check_entry(i, r or {}, "when_entry", errs, f"when[{i}]")
 
     # --- referential integrity: a name that points at nothing is a silent hole -------
-    acts = set((scope.get("acts") or {}).keys())
-    parties = set((scope.get("parties") or {}).keys())
+    acts = set((scope.get("actions") or {}).keys())
+    parties = set((scope.get("people") or {}).keys())
     signals = set((scope.get("observes") or {}).keys())
-    estimands = set((scope.get("regulates") or {}).keys()) | \
-                set((scope.get("estimates") or {}).keys())
+    estimands = set((scope.get("goal") or {}).keys()) | \
+                set((scope.get("beliefs") or {}).keys())
 
-    for nm, body in (spec.get("acts") or {}).items():
-        ap = (body or {}).get("approval")
+    for nm, body in (spec.get("actions") or {}).items():
+        ap = (body or {}).get("needs_approval")
         if ap and ap not in parties:
-            errs.append(f"acts.{nm}: `approval: {ap}` names no party in `parties`."
+            errs.append(f"actions.{nm}: `needs_approval: {ap}` names nobody in `people`."
                         f"{_near(ap, parties)} The gate is declared and does not exist.")
     for i, r in enumerate(spec.get("when") or []):
         for a in ([r.get("do")] if isinstance(r.get("do"), str) else (r.get("do") or [])):
             if a and a not in acts:
-                errs.append(f"when[{i}]: `do: {a}` names no entry in `acts`.{_near(a, acts)}")
+                errs.append(f"when[{i}]: `do: {a}` names no entry in `actions`."
+                            f"{_near(a, acts)}")
         esc = (r or {}).get("escalate")
         if esc and esc not in parties:
-            errs.append(f"when[{i}]: `escalate: {esc}` names no party."
+            errs.append(f"when[{i}]: `escalate: {esc}` names nobody in `people`."
                         f"{_near(esc, parties)}")
-    for nm, body in (spec.get("estimates") or {}).items():
+    for nm, body in (spec.get("beliefs") or {}).items():
         for src in ((body or {}).get("from") or []):
             if src not in signals:
-                errs.append(f"estimates.{nm}: `from: {src}` names no entry in `observes`."
+                errs.append(f"beliefs.{nm}: `from: {src}` names no entry in `observes`."
                             f"{_near(src, signals)}")
-    for nm, body in (spec.get("parties") or {}).items():
+    for nm, body in (spec.get("people") or {}).items():
         for e in ((body or {}).get("sees") or []):
             if e not in estimands:
-                errs.append(f"parties.{nm}: `sees: {e}` names no estimand."
+                errs.append(f"people.{nm}: `sees: {e}` names nothing in `goal` or `beliefs`."
                             f"{_near(e, estimands)}")
     for nm, body in (spec.get("observes") or {}).items():
         p = (body or {}).get("produced_by")
         if p and p not in acts:
-            errs.append(f"observes.{nm}: `produced_by: {p}` names no act.{_near(p, acts)}")
+            errs.append(f"observes.{nm}: `produced_by: {p}` names no action.{_near(p, acts)}")
+        inf = (body or {}).get("informs")
+        for t in ([inf] if isinstance(inf, str) else (inf or [])):
+            if t and t not in estimands:
+                errs.append(f"observes.{nm}: `informs: {t}` names nothing in `goal` or "
+                            f"`beliefs`.{_near(t, estimands)}")
+    for nm, body in (spec.get("actions") or {}).items():
+        mv = (body or {}).get("moves")
+        for t in ([mv] if isinstance(mv, str) else (mv or [])):
+            if t and t not in estimands:
+                errs.append(f"actions.{nm}: `moves: {t}` names nothing in `goal` or "
+                            f"`beliefs`.{_near(t, estimands)}")
 
     if errs:
         raise SpecError(f"{path}: {len(errs)} error(s)\n" +
@@ -173,6 +241,7 @@ def timescale(g, period, owner):
 
 
 def expand_one(g, spec, path="<spec>", scope=None):
+    spec = normalize(spec)
     validate(spec, path, scope)
     name = spec.get("loop") or spec.get("name")
     lid = slug(name)
@@ -181,30 +250,31 @@ def expand_one(g, spec, path="<spec>", scope=None):
     cadence = timescale(g, spec.get("every"), lid)
 
     # --- regulates: what the loop steers -------------------------------------------
-    for est, body in (spec.get("regulates") or {}).items():
+    for est, body in (spec.get("goal") or {}).items():
         body = body or {}
         g.node(est, "Estimand", determination="computed",
-               computed_from=body.get("computed_from"))
-        if body.get("target"):
+               computed_from=body.get("from"), unit=body.get("unit"))
+        if body.get("keep"):
             tid = g.node(f"{slug(est)}_target", "DesiredCondition",
-                         statement=str(body["target"]),
+                         statement=str(body["keep"]),
                          confidence_in_target=body.get("confidence"))
             g.edge(tid, est, "targets")
 
     # --- estimates: what it believes but cannot see --------------------------------
-    for est, body in (spec.get("estimates") or {}).items():
+    for est, body in (spec.get("beliefs") or {}).items():
         body = body or {}
         g.node(est, "Estimand", determination="latent",
-               settled_by=body.get("settled_by"))
+               settled_by=body.get("settled_by"), question=body.get("question"),
+               known_bias=body.get("known_bias"))
         eid = g.node(f"{lid}_estimate_{slug(est)}", "Estimator",
-                     form=body.get("method", "unspecified"),
-                     idempotency_basis=body.get("idempotency_basis",
+                     form=body.get("how", "unspecified"),
+                     idempotency_basis=body.get("safe_to_repeat",
                                                 f"observations feeding {slug(est)}"))
         g.edge(eid, est, "estimates")
         for src in body.get("from") or []:
             g.edge(src, est, "measures")
-        if body.get("calibrated_by"):
-            cid = g.node(body["calibrated_by"], "Calibration",
+        if body.get("checked_by"):
+            cid = g.node(body["checked_by"], "Calibration",
                          scores=slug(est), window=body.get("window"))
             g.edge(cid, eid, "revises")
         if body.get("explains"):
@@ -219,35 +289,44 @@ def expand_one(g, spec, path="<spec>", scope=None):
         # sampling period is a field, not an edge: the closed rel vocabulary has no
         # `sampled_at`, and inventing one to carry a scalar is how vocabularies rot.
         g.node(sig, "Signal", cost=body.get("cost"), period=body.get("every"),
-               asserted_by=body.get("asserted_by"),
+               origin=body.get("origin"), obtained=body.get("how"),
+               reported_by=body.get("reported_by"),
                produced_by=body.get("produced_by"))
-        if body.get("measures"):
-            g.edge(sig, body["measures"], "measures")
-        if body.get("produced_by"):
-            # An observation MANUFACTURED inside the system is not evidence from outside it.
-            # This is the edge the group checks read to find loops that cannot be corrected.
-            g.edge(body["produced_by"], sig, "produces")
+        inf = body.get("informs")
+        for tgt in ([inf] if isinstance(inf, str) else (inf or [])):
+            g.edge(sig, tgt, "measures")
+        # `origin: ourselves` is the load-bearing half of provenance: data this system
+        # caused to exist cannot correct it. produced_by merely names which act did it.
+        if body.get("origin") == "ourselves" or body.get("produced_by"):
+            if body.get("produced_by"):
+                g.edge(body["produced_by"], sig, "produces")
+            else:
+                g.edge(lid + "_system", sig, "produces")
         timescale(g, body.get("every"), sig)
-        if body.get("asserted_by"):
-            # a REPORTED number is not a measured one
-            g.edge(body["asserted_by"], sig, "asserts")
+        # a REPORTED number is a claim by someone, not a measurement
+        if body.get("reported_by"):
+            g.edge(body["reported_by"], sig, "asserts")
 
     # --- acts: the levers ----------------------------------------------------------
-    for act, body in (spec.get("acts") or {}).items():
+    for act, body in (spec.get("actions") or {}).items():
         body = body or {}
+        # can_undo: yes|costly|no  ->  reversible|costly|irreversible
+        undo = {True: "reversible", "yes": "reversible", False: "irreversible",
+                "no": "irreversible", "costly": "costly"}.get(body.get("can_undo"))
         g.node(act, "Intervention",
                target=body.get("moves"),
-               reversibility=body.get("reversibility"),
-               requires_approval_from=(slug(body["approval"])
-                                       if body.get("approval") else None))
-        if body.get("moves"):
-            g.edge(act, body["moves"], "targets")
-        if body.get("delay"):
-            did = g.node(f"{slug(act)}_delay", "Delay", duration=str(body["delay"]),
+               reversibility=undo,
+               requires_approval_from=(slug(body["needs_approval"])
+                                       if body.get("needs_approval") else None))
+        mv = body.get("moves")
+        for tgt in ([mv] if isinstance(mv, str) else (mv or [])):
+            g.edge(act, tgt, "targets")
+        if body.get("effect_after"):
+            did = g.node(f"{slug(act)}_delay", "Delay", duration=str(body["effect_after"]),
                          damping=body.get("damping"))
             g.edge(act, did, "delays")
-        if body.get("approval"):
-            g.edge(body["approval"], act, "authorizes")
+        if body.get("needs_approval"):
+            g.edge(body["needs_approval"], act, "authorizes")
         for r in body.get("consumes") or []:
             g.node(r, "Resource")
             g.edge(act, r, "consumes")
@@ -262,21 +341,24 @@ def expand_one(g, spec, path="<spec>", scope=None):
                                                         str(r.get("if", "")))
                                     if t not in ("and", "or", "not", "confidence")}),
                      escalates=next((slug(r["escalate"]) for r in rules
-                                     if r.get("escalate")), None))
+                                     if r.get("escalate")), None),
+                     asks_human_when=spec.get("asks_human_when") or None)
         for r in rules:
             if r.get("do"):
                 for a in ([r["do"]] if isinstance(r["do"], str) else r["do"]):
                     g.edge(pid, a, "authorizes")
 
     # --- parties: who is exposed ----------------------------------------------------
-    for p, body in (spec.get("parties") or {}).items():
+    for p, body in (spec.get("people") or {}).items():
         body = body or {}
         kind = ("human" if body.get("human") else
                 "agent" if body.get("agent") else body.get("kind", "system"))
-        g.node(p, "Party", party_kind=kind, authority=body.get("authority"))
-        if body.get("bears") and body["bears"] != "nothing":
+        g.node(p, "Party", party_kind=kind, authority=body.get("may_decide"))
+        lose = body.get("loses_if_wrong")
+        lose = "; ".join(lose) if isinstance(lose, list) else lose
+        if lose and str(lose).strip().lower() not in ("nothing", "none"):
             cid = g.node(f"{slug(p)}_consequence", "Consequence",
-                         statement=str(body["bears"]),
+                         statement=str(lose),
                          asymmetry=body.get("asymmetry"))
             g.edge(p, cid, "bears")
         for e in body.get("sees") or []:
@@ -287,11 +369,11 @@ def expand_one(g, spec, path="<spec>", scope=None):
         cid = g.node(f"{lid}_never_{i}", "Constraint", statement=str(c))
         g.edge(cid, lid + "_system", "constrains")
 
-    g.excluded += [str(x) for x in (spec.get("ignoring") or [])]
+    g.excluded += [str(x) for x in (spec.get("not_modelling") or [])]
 
     # --- the loop record itself -------------------------------------------------------
     sigs = list((spec.get("observes") or {}).keys())
-    acts = list((spec.get("acts") or {}).keys())
+    acts = list((spec.get("actions") or {}).keys())
     g.loops.append({"id": lid,
                     "timescale": cadence,
                     "signal": slug(sigs[0]) if sigs else None,
@@ -302,10 +384,10 @@ def expand_one(g, spec, path="<spec>", scope=None):
 
 
 def expand(path):
-    docs = [d for d in yaml.safe_load_all(open(path)) if d]
+    docs = [normalize(d) for d in yaml.safe_load_all(open(path)) if d]
     # the file is the scope: build the union of every declared name across the group first
     scope = {}
-    for section in ("acts", "parties", "observes", "regulates", "estimates"):
+    for section in ("actions", "people", "observes", "goal", "beliefs"):
         scope[section] = {k: v for d in docs for k, v in (d.get(section) or {}).items()}
     g = Graph()
     names = [expand_one(g, d, path, scope) for d in docs]
