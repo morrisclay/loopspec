@@ -1,0 +1,58 @@
+uras_version: 0
+encodes: ralph_loop
+set: field
+domain: agent_loop
+encoded_by: claude-opus-5
+encoded_from: ghuntley.com/ralph + the ralph-loop plugin (stop-hook implementation)
+shape: canonical-graph
+
+# The Ralph Wiggum loop: a bash while-true that feeds the same prompt back until the agent
+# emits a completion promise. Encoded as written, gaps left as gaps.
+
+nodes:
+  - {id: ralph, kind: System, name: ralph_wiggum_loop}
+  - {id: engineer, kind: Party}
+
+  - {id: task_done, kind: Estimand, determination: latent, criticality: existential,
+     resolution_condition: 'the agent emits the completion promise'}
+
+  # the loop reads its own prior output
+  - {id: files_and_git, kind: Signal, frequency: per-iteration,
+     note: 'modified files and git history — the agent reads its own past work'}
+  # the ONLY signal not produced by the loop itself
+  - {id: test_results, kind: Signal, frequency: per-iteration,
+     note: 'exogenous: tests can fail in ways the agent did not intend'}
+
+  - {id: self_assessment, kind: Estimator, form: judgement,
+     idempotency_basis: none_declared}
+  - {id: doneness_belief, kind: Estimate, held_by: engineer, uncertainty: unquantified}
+
+  - {id: completion_promise, kind: DesiredCondition, held_by: engineer,
+     target_type: token, value: DONE,
+     note: 'the agent decides it has met this — self-assessed'}
+
+  - {id: implement_one_task, kind: Intervention, target: world}
+  - {id: pick_one_task, kind: Policy, guard: 'fresh context', based_on: [task_done]}
+
+  - {id: max_iterations, kind: Constraint, tradeable: false,
+     rule: 'hard iteration ceiling — a stop, not a correction'}
+
+  - {id: iteration, kind: TimeScale, period: per_iteration}
+  - {id: tokens, kind: Resource, depletable: true}
+
+edges:
+  - {from: ralph, to: task_done, rel: contains}
+  - {from: test_results, to: task_done, rel: measures}
+  - {from: self_assessment, to: doneness_belief, rel: estimates}
+  - {from: engineer, to: doneness_belief, rel: holds}
+  - {from: engineer, to: completion_promise, rel: holds}
+  - {from: completion_promise, to: task_done, rel: targets}
+  - {from: engineer, to: implement_one_task, rel: authorizes}
+  - {from: pick_one_task, to: implement_one_task, rel: closes}
+  - {from: max_iterations, to: implement_one_task, rel: constrains}
+  - {from: implement_one_task, to: files_and_git, rel: produces}
+  - {from: implement_one_task, to: tokens, rel: consumes}
+
+loops:
+  - {id: ralph_iteration, timescale: iteration, signal: files_and_git,
+     intervention: implement_one_task}
