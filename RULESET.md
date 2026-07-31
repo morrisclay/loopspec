@@ -138,3 +138,56 @@ which is what the budget is for.
 **Priority order:** loop polarity first (computable from existing edges, and it formalises the
 best finding so far), then Good Regulator (strongest claim), then controllability (fundamental
 and cheap), then `Disturbance` and requisite variety.
+
+---
+
+## Tier 1b — human-in-the-loop, specifiable as you go
+
+Added because "human in the loop" is claimed far more often than it is wired, and because
+nothing in any agent framework represents the question every deployment actually turns on:
+**what may this thing do without approval, and irreversibly?**
+
+Three attributes, no new primitives, no budget cost:
+
+```yaml
+- {id: partner, kind: Party, party_kind: human}
+
+- {id: propose_stage_move, kind: Intervention,
+   reversibility: reversible,
+   requires_approval_from: partner}      # the gate, stated structurally
+
+- {id: readiness_policy, kind: Policy,
+   escalates: partner}                   # where the loop stops and asks
+```
+
+`reversibility: reversible | costly | irreversible` is the load-bearing one. Approval is cheap
+to demand everywhere and nobody does it; approval demanded *where the act cannot be undone* is
+a rule people will actually follow.
+
+### The three checks
+
+| check | felt symptom |
+|---|---|
+| `irreversible_without_approval` | *"my agent did something I can't undo"* |
+| `accountable_but_blind` | *"I'm accountable for it and I find out afterwards"* |
+| `no_escalation_path` | *"it never asks me anything"* |
+
+**`accountable_but_blind` is the sharp one.** A party that bears a consequence and holds no
+estimate has the cost of being wrong and nothing with which to be right. That is human
+oversight as compliance theatre, and it is structurally detectable — a `bears` edge with no
+`holds` edge.
+
+### It already found something
+
+Run against the Deal Steward, which is unusually careful about human authority — it *proposes*
+stage moves and never writes Attio, with ADR-0021/0022 governing ungameability:
+
+> `enrich_attio` is marked **costly** and declares no `requires_approval_from`.
+
+The spec is scrupulous about the stage field and says nothing about the enrichment path, which
+also writes to Attio. Whether that matters is the author's call — but the asymmetry was
+invisible until the two acts were given the same attribute and compared.
+
+Ralph, being fully autonomous, trips `no_escalation_path`: one party, one policy, no approval
+gate, no escalation. *It either succeeds or fails silently* — which is exactly what Ralph is,
+stated structurally rather than as folklore.

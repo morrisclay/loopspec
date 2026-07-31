@@ -43,12 +43,47 @@ Four things the pivot fixes that the project has been unable to fix by effort:
 
 ---
 
-## The failure mode, and it is the important part of this note
+## CORRECTION (same day): "agent loops have no politics" is wrong
 
-An agent loop **has no politics.** It has no standing, no legitimacy, no parties bearing
-asymmetric consequences, no informal influence, no contested boundary. So the primitives that
-represent those things will look like dead weight against every agent benchmark, and the
-twenty-primitive budget creates constant pressure to delete them.
+The first draft of this note claimed agent loops have no standing, legitimacy, asymmetric
+consequences, informal influence or contested boundary, and therefore that the institutional
+primitives needed protecting from budget pressure. **That is too coarse, and it undersells the
+pivot.** Tested against real cases, most of them are load-bearing in the agent domain — and
+under different names they may be the most *commercially* valuable part of the catalog, since
+the incumbent has none of them.
+
+| Primitive | In an agent loop | Verdict |
+|---|---|---|
+| `authority` | What may this agent do without approval? Irreversibly? This is **the** deployment question in agent engineering, and no framework represents it | **Core. Possibly the single most valuable primitive for this user** |
+| `Consequence` | Asymmetric error cost, and asymmetric exposure between agent and operator — the human is fired, the agent is not. This is why humans override agents in ways that look irrational against the agent's objective | **Core** |
+| `Party` | A planner and a worker holding different beliefs; a human and an agent estimating the same quantity. The cause of inconsistent multi-agent output | **Core** |
+| `Constraint` | What it must never do regardless of how the reward reads — the guardrail problem, stated structurally rather than as imperative code | **Core** |
+| `informal_influence` | **Not the water cooler — belief formed through channels outside the declared evidence path:** injected content, retrieved documents, history carried forward. Structurally the same primitive, and a live security problem. Gives a way to say *"this estimate was shaped by something outside its evidence chain"*, which nothing in the stack can currently express | **Retain and re-derive. Reframing is a genuine finding** |
+| legitimacy (political) | No analogue. Who is permitted to set the goal at all is not an agent-loop question | Institution-only |
+| standing (whose interests count) | No analogue | Institution-only |
+| métis | No analogue | Not a primitive; stays in prose |
+
+**Consequence for the rule below: withdraw the protection framing.** These do not need
+defending as institutional heritage — they should be **re-derived from the agent corpus on its
+own terms** under the existing three-benchmarks-across-two-domains rule. If `authority` is
+demanded by agent deployment, it earns its place without special pleading. Protection applies
+only to the genuinely unexercised residue, which is smaller than first thought: legitimacy and
+standing.
+
+**And this strengthens the pivot's commercial case.** The incumbent — TypeScript plus a prose
+prompt — has no authority model, no consequence model, no multi-observer model, and no way to
+name an out-of-band influence on belief. That gap is precisely where the institutional
+primitives sit. Calibration and uncertainty are the intellectually interesting part and the
+harder sell; *what is this thing allowed to do, and who is accountable when it is wrong* is
+what someone pays for on Monday.
+
+---
+
+## The failure mode (as originally stated, now narrowed)
+
+For the genuinely institution-only residue — legitimacy and standing — the concern stands:
+they will look like dead weight against every agent benchmark, and the twenty-primitive budget
+creates pressure to delete them.
 
 Those primitives are precisely the defensible residue the prior-art gate identified:
 **observer plurality, negotiable boundary, legitimacy, recursive viability.** They are what

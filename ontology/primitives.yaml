@@ -85,6 +85,10 @@ primitives:
     four names.
 
     '
+  attributes:
+  - kind: human | agent | system. Who this party actually is. An agent loop with no human party is
+      fully autonomous; one with a human party has an oversight surface, and the checks differ. Declared
+      rather than inferred, because 'human in the loop' is claimed far more often than it is wired.
 - name: Estimand
   tier: core
   depth: 1
@@ -318,6 +322,11 @@ primitives:
       Recording the change without the motive loses why the system is shaped as it is.
 
       '
+  - reversibility: 'reversible | costly | irreversible. Can this act be undone, and at what price?
+      The central deployment question in agent engineering and absent from every framework: what
+      may this agent do without approval, and irreversibly?'
+  - requires_approval_from: Party id whose approval gates this intervention. The human-in-the-loop
+      gate, stated structurally rather than as an if-statement buried in a tool handler.
   note_structural: 'Derived from SpaceX, and the reason it matters is that structural interventions
     are INVISIBLE when scored against present-world outcomes. Reusability judged on the launch it
     occurs in is pure overhead; its payoff is that a flown component can be inspected later. This
@@ -596,6 +605,11 @@ fields:
     a thing in its own right.
 
     '
+- name: escalates
+  applies_to: Policy
+  definition: Party the loop escalates to when its guard cannot be satisfied — the point at which
+    the agent stops and asks. A loop with a human party and no escalation path has oversight in name
+    only.
 retired:
 - name: Evidence
   retired_in: round3

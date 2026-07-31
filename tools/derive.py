@@ -617,7 +617,91 @@ def q_uncontrollable_target(d, nodes, edges):
     return out
 
 
+def q_irreversible_without_approval(d, nodes, edges):
+    """
+    An irreversible intervention no human gates.
+
+    The central agent-deployment question — what may this thing do without approval, and
+    irreversibly — and no framework represents it. Felt symptom: "my agent did something I
+    cannot undo."
+    """
+    humans = {i for i, n in nodes.items()
+              if n.get("kind") == "Party" and n.get("kind_of") != "agent"
+              and (n.get("party_kind") or n.get("human") or "") != "agent"}
+    out = []
+    for i, n in nodes.items():
+        if n.get("kind") != "Intervention":
+            continue
+        if n.get("reversibility") not in ("irreversible", "costly"):
+            continue
+        if n.get("requires_approval_from"):
+            continue
+        out.append({
+            "pattern": "irreversible_without_approval",
+            "claim": (f"Intervention `{i}` is marked `{n.get('reversibility')}` and declares no "
+                      f"`requires_approval_from`. The loop may take an act it cannot undo with "
+                      f"no human gate. This is the question every agent deployment turns on and "
+                      f"no framework represents it."),
+            "evidence": {"intervention": i, "reversibility": n.get("reversibility")},
+        })
+    return out
+
+
+def q_human_without_signal(d, nodes, edges):
+    """
+    A human party who bears consequence but receives no signal — oversight in name only.
+
+    Felt symptom: "I am accountable for what it does and I find out afterwards."
+    """
+    bears = {a for a, _ in rel(edges, "bears")}
+    holds = {a for a, _ in rel(edges, "holds")}
+    out = []
+    for i, n in nodes.items():
+        if n.get("kind") != "Party":
+            continue
+        pk = n.get("party_kind") or n.get("kind_of")
+        if pk not in ("human", None):
+            continue
+        if i not in bears:
+            continue
+        if i in holds:
+            continue                      # holds an estimate, so information reaches them
+        out.append({
+            "pattern": "accountable_but_blind",
+            "claim": (f"Party `{i}` bears a consequence and holds no estimate — nothing in the "
+                      f"loop routes information to them. They carry the cost of being wrong and "
+                      f"receive nothing with which to be right. Human-in-the-loop in name only."),
+            "evidence": {"party": i},
+        })
+    return out
+
+
+def q_no_escalation_path(d, nodes, edges):
+    """A loop with a human party and no policy that escalates to them."""
+    parties = [i for i, n in nodes.items() if n.get("kind") == "Party"]
+    pols = [n for i, n in nodes.items() if n.get("kind") == "Policy"]
+    if not parties or not pols:
+        return []
+    if any(p.get("escalates") for p in pols):
+        return []
+    gated = any(n.get("requires_approval_from")
+                for n in nodes.values() if n.get("kind") == "Intervention")
+    if gated:
+        return []
+    return [{
+        "pattern": "no_escalation_path",
+        "claim": (f"The loop declares {len(parties)} part(ies) and {len(pols)} polic(ies), and "
+                  f"no policy escalates and no intervention requires approval. There is no "
+                  f"point at which this loop stops and asks. It either succeeds or fails "
+                  f"silently."),
+        "evidence": {"parties": parties},
+    }]
+
+
 QUERIES = [
+    q_irreversible_without_approval,
+    q_human_without_signal,
+    q_no_escalation_path,
     q_loop_polarity,
     q_regulator_without_model,
     q_uncontrollable_target,
