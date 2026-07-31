@@ -8,6 +8,38 @@ Underlying work: `research/published_study/` (two pre-registered studies),
 
 ---
 
+## Part 0 — The frame: a notation is an attention device
+
+The contribution is **a simple YAML for describing and arguing about loops**. The linter is a
+consumer of that notation, not the point — a distinction that matters more than it sounds,
+because it changes what a wrong check costs.
+
+Everything in this document is easier to read once the frame is named. It operates at three
+levels, worked out in `ATTENTION.md`:
+
+| level | the claim | where the evidence is |
+|---|---|---|
+| **L1 — the author's attention** | *a field is a place you have to look.* "You do not check for a defect you have no word for" is an **attention** claim, not a knowledge claim | §1.2, §1.4, §2.1 |
+| **L2 — the loop's attention** | what it observes, at what cost, from where. **Every `Calibration` here scored an estimator; nothing ever scored a signal** — the apparatus asks *was my conclusion right* and never *was my looking right* | §1.6, §2.4 |
+| **L3 — the humans' attention** | who must look at what, and who pays when it is wrong. O'Reilly names the gap and leaves it: **the human oversight loop at the top of its taxonomy has no exit condition** | §1.8 |
+
+Nobody building agent loops is *ignorant* of calibration. Three careful authors of three real
+systems each shipped an estimator nothing scores, and the framework authors' own reference
+examples do it 10 out of 10. **These are not people who lack the concept.** They are people
+whose tooling never pointed at it.
+
+**Why the frame changes the pitch.** *A linter that finds defects* invites the fair reply —
+my evals already tell me when it fails. *A notation for arguing about loops, which happens to
+make some defects visible by construction* does not, and it survives its own limitations:
+
+> **A linter that is wrong is a bad product. A notation that is wrong is still useful, because
+> you can say precisely what you disagree with.**
+
+That is the right posture given Part 3: only two of these checks survived independent
+encoding.
+
+---
+
 ## Part 1 — What the field looks like, measured
 
 ### 1.1 It converged on taxonomy, not quality
@@ -28,7 +60,7 @@ gates, or what quantity the loop is regulating.
 The field settled *what a loop is* before settling *whether a given one works*. That ordering
 is normal for a young field and it leaves a specific hole.
 
-### 1.2 Verification is built. Calibration has no name.
+### 1.2 Verification is built. Calibration has no name. *(L1)*
 
 > **Verification** asks *is this output good?* — grade the artifact in front of you.
 > **Calibration** asks *has this thing's confidence historically tracked reality?* — score past
@@ -70,7 +102,7 @@ ground truth, and I had omitted it — making a finding land in my own favour. C
 shows `single_point_of_grounding` instead, which *sharpens* the claim: **grounding the input is
 not calibrating the judge.**
 
-### 1.4 Every reference example has the two core defects
+### 1.4 Every reference example has the two core defects *(L1)*
 
 **Measured:** 10 loops from LangGraph tutorials, the OpenAI Agents SDK, and CrewAI flows —
 written by framework authors to demonstrate best practice, which makes this the least
@@ -95,7 +127,7 @@ OpenAI SDK's canonical `agent_patterns` directory. `routing`, `parallelization`,
 
 Consistent with §1.1: the field's vocabulary is about **composition**, not regulation.
 
-### 1.6 Budgets exist. Regulation against them does not.
+### 1.6 Budgets exist. Regulation against them does not. *(L2)*
 
 **Measured**, after correcting an encoding artifact that had produced a meaningless 14/14:
 
@@ -122,11 +154,29 @@ independent real systems — different authors, one a widely-copied public techn
 an estimator nothing scores. None of those authors is careless. **That is what a vocabulary
 problem looks like from the inside.**
 
+### 1.8 No published example names a human at all *(L3)*
+
+**Measured:** `no_human_at_all` fires on **10/10** published reference examples. Not one names
+a person who approves anything, is escalated to, or is recorded as bearing the cost when the
+loop is wrong.
+
+Two caveats keep this honest. First, these are tutorials, and a tutorial demonstrating
+reflection is not obliged to wire an approval flow — so this is weak evidence about production
+systems and strong evidence about what the *reference material* teaches. Second, and more
+seriously, **this check is encoder-dependent**: my encodings said `people: {}` where an
+independent encoder inferred an implied user, and the two disagreed 3 of 5 times. It is
+reported here as a *pattern*, not as a rate that would survive the bar §1.4 clears.
+
+What survives regardless is the structural point. Both encoders then flagged missing
+oversight — they simply disagreed about which check should say so. **Attention is assumed by
+this material and never allocated**, and that is the level at which swyx stacks six loops with
+a human at the top of all of them and nobody says what that costs.
+
 ---
 
 ## Part 2 — What this project can contribute
 
-### 2.1 The vocabulary. This is the whole thesis.
+### 2.1 The vocabulary. This is the whole thesis. *(L1)*
 
 *You do not check for a defect you have no word for.* Three words the field lacks:
 
@@ -159,7 +209,33 @@ Where a check follows from a proved result it is not a style opinion:
 The pitch changes with it: not *"here are things I noticed"* but *"your loop violates the Good
 Regulator theorem, and here is the line."*
 
-### 2.4 One idea that goes beyond its source
+### 2.4 Scoring the looking, not just the conclusion *(L2 — the newest, and least proven)*
+
+The asymmetry that was invisible until it was named: **every `Calibration` in this project
+scored an `Estimator`. Nothing scored a `Signal`.**
+
+Three instances were already in the corpus from three authors — this project's own bar — and
+one of them had been flagged as *"unusual"* and *"the shape to copy"* before it had a name:
+
+- `meeseeks_sourcing` — `viability_review` **retires a channel that finds nothing**. It scores
+  the source, not the candidate.
+- `conviction_termination` — the stop rule reads `expected_info_gain`, *is more looking worth
+  it?*, and nothing computes it.
+- `customer_acquisition` — a `cost: high` source nothing reviews.
+
+`observes.*.checked_by` makes it first-class, and `informs_no_decision` is the sharp check:
+sharper than `orphan_signal`, which catches a signal informing *nothing*, this catches a signal
+informing a belief **no rule reads**. The loop is not wrong about anything. It is spending
+attention it will not get back.
+
+**This is value-of-information, which decision theory has had for decades and agent frameworks
+have not.** Calibrating the estimator tells you how much to trust the answer; calibrating the
+signal tells you whether the question was worth asking.
+
+**Honest rate: 1 of 10 published examples.** Motivated by three real instances and **not yet
+evidenced at rate.** Included here as a contribution *claim*, not a finding.
+
+### 2.5 One idea that goes beyond its source
 
 The field has budgets, step ceilings and stall detection. The question after it:
 
@@ -173,7 +249,7 @@ halt is indistinguishable from failure and arrives without warning.
 distinguish **reading-to-halt** from **reading-to-adapt**. A clear result means *something
 watches the budget* — necessary, not sufficient.
 
-### 2.5 A format any LLM compiles
+### 2.6 A format any LLM compiles
 
 **Measured:** 8 models × 3 targets, each given only the spec file and a target name.
 
@@ -225,19 +301,25 @@ Stated plainly, because the value of the above depends on it.
 
 ---
 
-## The reframe that came last and should have come first
+## The artifact that makes the frame concrete
 
-See `ATTENTION.md`. The linter is a consumer of the format, not the point. The contribution is
-**a simple YAML for describing and arguing about loops** — and a notation is an attention
-device operating at three levels: it directs the *author's* attention (a field is a place you
-have to look), it describes the *loop's* attention (`observes` with cost and provenance, and
-the finding that nothing ever scored a signal), and it allocates *human* attention across a
-group (`sees` and `bears`, where O'Reilly's unresolved point about the oversight loop having no
-exit condition lives).
+`tools/compare.py` — ten published loops from three frameworks, side by side, generated from
+their specs:
 
-This changes what a wrong check costs. **A linter that is wrong is a bad product. A notation
-that is wrong is still useful, because you can say precisely what you disagree with** — which
-is the right posture given that only two of these checks survived independent encoding.
+| loop | scored | exogenous input | ceiling | humans |
+|---|---|---|---|---|
+| `langgraph_reflection` | 0/1 ✗ | none (1 own) | messages | none ✗ |
+| `langgraph_reflexion` | 0/1 ✗ | 1 of 2 | none ✗ | none ✗ |
+| `langgraph_self_rag` | 0/3 ✗ | 1 of 2 | none ✗ | none ✗ |
+| `openai_llm_as_a_judge` | 0/1 ✗ | none (1 own) | rounds | none ✗ |
+| `crewai_self_evaluation` | 0/1 ✗ | none (1 own) | retries | none ✗ |
+
+Nobody could previously put LangGraph's reflection tutorial next to CrewAI's self-evaluation
+flow and say precisely what differs — not because it is hard, but because there was no shared
+form to say it in. **Reflection and reflexion differ in exactly one column, and that column is
+the whole argument between them.**
+
+You cannot diff two blog posts. You can diff two specs.
 
 ## In one sentence
 

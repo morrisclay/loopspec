@@ -1,8 +1,84 @@
 # Universal Representation for Adaptive Systems (URAS)
 
-> **Start here:** [`SYNTHESIS.md`](SYNTHESIS.md) — where the field is, what this can
-> contribute, and what it cannot claim. [`REFERENCES.md`](REFERENCES.md) tracks every
-> external source and the decision it shaped.
+**A simple YAML for describing and arguing about agent loops.**
+
+A notation is an attention device. What a format has a field for is what people look at; what
+it has no field for is what they never think to check. That is the whole thesis, and it is an
+attention claim rather than a knowledge one — nobody building agent loops is *ignorant* of
+calibration, they are just not looking at it, because nothing in their tooling points there.
+
+```yaml
+loop: customer_acquisition
+runs: weekly
+
+goal:
+  cost_per_customer: { keep: below 400 }
+
+beliefs:
+  product_market_fit:
+    question: "If we keep buying customers like this month's, will they stay?"
+    from: [customer_interviews, stripe]
+    how: bayesian
+    checked_by: quarterly_cohort_review      # ← leave this out and you can SEE the hole
+
+observes:
+  stripe:              { informs: cost_per_customer, origin: outside, how: measured }
+  customer_interviews: { informs: product_market_fit, origin: outside, how: reported, cost: high }
+
+actions:
+  increase_budget: { moves: cost_per_customer, can_undo: yes }
+  exit_channel:    { moves: cost_per_customer, can_undo: no, needs_approval: founder }
+
+asks_human_when:
+  - "product_market_fit falls below 0.4"
+
+people:
+  founder: { human: yes, loses_if_wrong: "the company", sees: [cost_per_customer] }
+```
+
+Three levels of attention, worked out in **[`ATTENTION.md`](ATTENTION.md)**:
+
+| level | what it means | where it lives |
+|---|---|---|
+| **the author's** | a field is a place you have to look | the format itself |
+| **the loop's** | what it observes, at what cost, from where — and *nothing ever scored a signal* | `observes`, `checked_by` |
+| **the humans'** | who must look at what, and who pays when it is wrong | `sees`, `loses_if_wrong` |
+
+**What was found by looking:** across 10 reference examples written by framework authors to
+demonstrate best practice, **10/10 form a belief nothing scores** and **10/10 steer toward a
+condition with no model of what produces it** — both robust to independent encoding. The eval
+harnesses built to catch this **trip the same check, 4 of 4.** Half the published loops have a
+ceiling nothing reads.
+
+**You cannot diff two blog posts. You can diff two specs** — `tools/compare.py` puts ten
+published loops side by side, generated from their specs. Reflection and reflexion differ in
+exactly one column, and that column is the whole argument between them.
+
+### Where to start
+
+| | |
+|---|---|
+| **[`SYNTHESIS.md`](SYNTHESIS.md)** | where the field is, what this contributes, **and what it cannot claim** |
+| **[`ATTENTION.md`](ATTENTION.md)** | the frame: a notation is an attention device |
+| [`REFERENCE.md`](REFERENCE.md) | every key — generated from `schema/loop.keys.yaml` |
+| [`NOTATION.md`](NOTATION.md) | the diagram language, independent of any renderer |
+| [`REFERENCES.md`](REFERENCES.md) | every external source and the decision it shaped |
+| [`RULESET.md`](RULESET.md) | the checks, and which follow from theorems |
+| `examples/field/` | four real systems; `research/published_study/` two pre-registered studies |
+
+```bash
+python3 tools/loop.py    spec.loop.yaml --lint    # the checks
+python3 tools/diagram.py spec.loop.yaml --md      # mermaid, defects drawn
+python3 tools/compare.py specs/*.loop.yaml        # argue about them side by side
+python3 tools/verify.py  spec.loop.yaml build/    # did compilation drop the gate?
+```
+
+---
+
+*Everything below is the original charter, kept as written. The project has since forked to
+agent loops specifically — see [`FORK.md`](FORK.md) — on the argument that agent loops are the
+first domain where cybernetic claims can actually be checked. Universality stops being a
+premise and becomes a hypothesis to test afterwards.*
 
 ## Rethinking how we specify intelligent systems
 
