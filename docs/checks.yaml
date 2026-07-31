@@ -1,0 +1,198 @@
+# Per-check documentation. The single source for docs/CHECKS.md.
+#
+# `tools/gen_checks.py --check` FAILS if tools/derive.py emits a pattern missing from here,
+# so a new check cannot ship undocumented. Same discipline as schema/loop.keys.yaml.
+#
+# Fields:
+#   symptom   what it feels like when this is wrong, in the user's words, not the model's.
+#             If a check has no felt symptom it is probably not worth shipping.
+#   means     what the checker actually looked at.
+#   fix       what to write in the spec.
+#   half      attention | calibration | neither — which of the two second-order loops.
+#   grounded  the theorem or measurement it follows from, if any.
+#   evidence  robust | corpus | motivated | legacy. See the header of CHECKS.md.
+
+belief_never_checked:
+  symptom: "my agent's confidence doesn't track reality"
+  means: A belief formed by judgement, with no `checked_by` naming what scores it against outcomes.
+  fix: "Add `checked_by:` to the belief, naming what compares past calls to what happened. If nothing does, that is the finding."
+  half: calibration
+  grounded: "10/10 published reference examples, 4/4 eval harnesses. Survived independent encoding 5/5."
+  evidence: robust
+
+regulator_without_model:
+  symptom: "it reacts but never anticipates"
+  means: The loop steers toward a condition and contains no model — no `explains` — of what produces that quantity.
+  fix: "Add `explains:` to the belief that accounts for the goal, or accept that this is a reflex against a setpoint."
+  half: neither
+  grounded: "Conant & Ashby 1970 — every good regulator of a system must be a model of that system. 10/10 published examples. Survived independent encoding 5/5."
+  evidence: robust
+
+irreversible_without_approval:
+  symptom: "my agent did something I can't undo"
+  means: "An action marked `can_undo: no` or `costly` with no `needs_approval`."
+  fix: "Add `needs_approval:` naming the person who must say yes. Approval demanded everywhere is ignored; approval where the act cannot be undone is a rule people follow."
+  half: neither
+  evidence: corpus
+
+accountable_but_blind:
+  symptom: "I'm accountable for it and I find out afterwards"
+  means: A person with `loses_if_wrong` and nothing in `sees` — bears the cost, receives no information.
+  fix: "Add estimands to that person's `sees:`, or move the exposure to whoever actually watches."
+  half: attention
+  evidence: corpus
+
+no_human_at_all:
+  symptom: "it never asks me anything"
+  means: The loop has decision rules and names no person — nobody approves, nobody is escalated to, nobody bears the cost.
+  fix: "Declare the person under `people:` with `loses_if_wrong`, and add `asks_human_when:`."
+  half: attention
+  grounded: "14/21 of the corpus. Encoder-dependent — reported as a pattern, not a rate."
+  evidence: corpus
+
+no_escalation_path:
+  symptom: "there is no point at which it stops and asks"
+  means: A human is declared, and no rule escalates and no action needs approval.
+  fix: "Add `asks_human_when:` with the conditions that should stop the loop."
+  half: attention
+  evidence: corpus
+
+unmeasured_estimand:
+  symptom: "it claims to track things it doesn't"
+  means: A quantity with no observation informing it.
+  fix: "Add an entry to `observes:` with `informs:` pointing at it, or stop claiming to track it."
+  half: attention
+  grounded: Kalman observability — a state is observable if it can be inferred from outputs.
+  evidence: corpus
+
+uncontrollable_target:
+  symptom: "it has a goal it can't actually move"
+  means: A goal with a target, and no action declaring it `moves` that quantity.
+  fix: "Add `moves:` to whichever action drives it. A target nothing can drive is a wish."
+  half: neither
+  grounded: Kalman controllability — a state is controllable if it can be driven to a target.
+  evidence: corpus
+
+open_loop:
+  symptom: "it observes, and it acts, and the two are unrelated"
+  means: The quantity is measured AND moved, and no loop closes between them.
+  fix: Make sure the loop reading that signal is the one taking that action.
+  half: neither
+  evidence: corpus
+
+orphan_signal:
+  symptom: "it collects data nobody uses"
+  means: An observation with no `informs:`.
+  fix: "Add `informs:` naming what it tells you, or stop collecting it."
+  half: attention
+  evidence: corpus
+
+informs_no_decision:
+  symptom: "I'm paying for information that changes nothing"
+  means: An observation informs a belief, and no decision rule reads that belief. Sharper than `orphan_signal`, which catches informing *nothing*.
+  fix: "Either have a rule in `when:` read it, or stop observing it. The loop is not wrong about anything here — it is spending attention it will not get back."
+  half: attention
+  grounded: "Value of information, from decision theory. Fires 1/10 on published examples — motivated, not yet evidenced at rate."
+  evidence: motivated
+
+expensive_signal_unreviewed:
+  symptom: "we keep paying for a source nobody asks about"
+  means: "An observation with `cost: high` or `medium` and no `checked_by` reviewing whether it earns that."
+  fix: "Add `checked_by:` to the observation — the way a sourcing channel that finds nothing gets retired."
+  half: attention
+  grounded: "Three independent instances in the corpus. Fires 3/21 — motivated, not evidenced at rate."
+  evidence: motivated
+
+no_exogenous_grounding:
+  symptom: "it confirms its own beliefs"
+  means: "Every observation the loop reads is `origin: ourselves` — produced inside the system."
+  fix: "Add at least one observation with `origin: outside`. Without one it converges on agreement rather than truth."
+  half: attention
+  evidence: corpus
+
+single_point_of_grounding:
+  symptom: "everything rests on one input and nobody says so"
+  means: The loop reads several observations and exactly one comes from outside itself.
+  fix: "Nothing to fix necessarily — but the loop is exactly as trustworthy as that one input. Ralph is the canonical case: weaken the tests and it is sealed."
+  half: attention
+  evidence: corpus
+
+reinforcing_loop_no_balancer:
+  symptom: "it runs away"
+  means: A loop whose links are all positive — nothing corrects it downward.
+  fix: Add a balancing path, typically an exogenous measurement that can contradict the loop.
+  half: neither
+  grounded: System dynamics loop polarity — Forrester, Sterman.
+  evidence: corpus
+
+unbounded_loop:
+  symptom: "it ran all weekend"
+  means: The loop declares nothing it can run out of — no ceiling, no budget.
+  fix: "Declare it under `spends:` even if the limit is generous. An undeclared budget is still a budget, just one nobody chose."
+  half: attention
+  grounded: "Harness engineering — budgets and step ceilings are standard practice. Fires 11/21."
+  evidence: corpus
+
+ceiling_without_correction:
+  symptom: "it hit the wall and stopped, with no warning"
+  means: A limit exists and no decision rule reads how much is left.
+  fix: "Have a rule in `when:` read the resource and do something different when it runs low. A ceiling is a stop, not a correction — it truncates the loop rather than regulating it."
+  half: attention
+  grounded: "Ashby — a stop absorbs no disturbance. Known limit: this clears as soon as anything reads the resource, and does not distinguish reading-to-halt from reading-to-adapt."
+  evidence: corpus
+
+spends_without_limit:
+  symptom: "it quietly runs out"
+  means: Something consumed with no ceiling and nothing replenishing it.
+  fix: "Give it a `limit:`, or declare what `replenished:` it. Exhaustion is certain; only the date is unstated."
+  half: attention
+  evidence: corpus
+
+shared_estimand_no_arbiter:
+  symptom: "my agents disagree and whichever finishes last wins"
+  means: Two loops in a group estimate the same quantity and no policy reconciles them.
+  fix: Have a rule read the quantity and decide, or make one loop's estimate authoritative.
+  half: calibration
+  evidence: corpus
+
+unowned_act:
+  symptom: "two agents can do the same thing under different rules"
+  means: One action selected by policies belonging to different loops.
+  fix: "Give the action one owner. Authority decided by scheduling is not authority."
+  half: neither
+  evidence: corpus
+
+policy_reads_undeclared:
+  symptom: "it branches on something that doesn't exist"
+  means: A decision rule tests an identifier declared nowhere — not a goal, not a belief, not a resource.
+  fix: "Declare it, or fix the condition. Nothing observes it and nothing computes it, so whatever happens at that branch is not what the spec says."
+  half: calibration
+  evidence: corpus
+
+consequence_without_authority:
+  symptom: "I carry the risk and control none of it"
+  means: A person bears a consequence and authorises no action.
+  fix: "Give them authority over something via `needs_approval:`, or record that the exposure is genuinely one-sided."
+  half: neither
+  evidence: corpus
+
+# --- legacy: inherited from the general programme, never fires on the agent corpus ---
+uncalibrated_estimator:
+  symptom: "nothing scores the estimator"
+  means: "Superseded by `belief_never_checked`. Required `criticality: existential`, a field the authoring format has no key for, which gated the project's headline finding behind something nobody could write."
+  fix: Use `belief_never_checked`.
+  half: calibration
+  evidence: legacy
+estimand_never_estimated: {symptom: "it tracks nothing", means: Subsumed by `unmeasured_estimand` and `uncontrollable_target` on the authoring path; unreachable because every belief gets an estimator by construction. Still live for hand-written graph encodings., fix: "See `unmeasured_estimand`.", half: neither, evidence: legacy}
+estimate_without_authority: {symptom: "they hold a view and can act on nothing", means: A party holding an estimate that authorises no intervention., fix: "Grant authority or record the asymmetry.", half: neither, evidence: legacy}
+estimate_without_estimator: {symptom: "a belief with no way of forming it", means: An Estimate node with nothing estimating it., fix: "Declare `how:`.", half: calibration, evidence: legacy}
+hinge_without_sensor: {symptom: "an existential bet nothing watches", means: A critical quantity with no signal., fix: "Add an observation.", half: attention, evidence: legacy}
+hinge_without_resolution: {symptom: "a bet that can never settle", means: A critical quantity with no resolution condition., fix: "Add `settled_by:`.", half: calibration, evidence: legacy}
+interventions_without_policy: {symptom: "levers with no rule for pulling them", means: Actions with no policy selecting them., fix: "Add a `when:` rule.", half: neither, evidence: legacy}
+invariant_on_unmeasured: {symptom: "a rule nothing can check", means: A constraint over a quantity nothing measures., fix: "Measure it or drop the constraint.", half: attention, evidence: legacy}
+measurement_authority_inversion: {symptom: "the one who sees most decides least", means: The richest signal feeds a party that does not authorise the decisive act., fix: "Route the information or the authority.", half: attention, evidence: legacy}
+no_loop_closed: {symptom: "it doesn't respond to what it observes", means: Parts declared and nothing closing., fix: "Close a loop.", half: neither, evidence: legacy}
+open_question_delay_exposure: {symptom: "the lag is on someone in particular", means: A delay whose exposure falls on a party who cannot act., fix: "Name who owns the lag.", half: neither, evidence: legacy}
+policy_entirely_blind: {symptom: "it decides on nothing it can see", means: A policy none of whose inputs are measured., fix: "Measure the inputs.", half: attention, evidence: legacy}
+policy_on_unmeasured_inputs: {symptom: "it decides on things it can't actually see", means: A rule reading a declared quantity nothing measures., fix: "Add an observation informing it.", half: attention, evidence: legacy}
+unowned_cross_timescale_coupling: {symptom: "two rhythms fight and nobody owns it", means: Loops at different timescales touching one object with no owner., fix: "Name the owner.", half: neither, evidence: legacy}

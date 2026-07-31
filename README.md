@@ -66,6 +66,8 @@ exactly one column, and that column is the whole argument between them.
 
 | | |
 |---|---|
+| **[`docs/GETTING-STARTED.md`](docs/GETTING-STARTED.md)** | **write your first spec — ten minutes, no framework to install** |
+| [`docs/CHECKS.md`](docs/CHECKS.md) | every check: felt symptom, what it looked at, how to fix, with a real example |
 | **[`SYNTHESIS.md`](SYNTHESIS.md)** | where the field is, what this contributes, **and what it cannot claim** |
 | **[`ATTENTION.md`](ATTENTION.md)** | half one — a notation is an attention device |
 | **[`CALIBRATION.md`](CALIBRATION.md)** | half two — and why it is hard rather than neglected |
