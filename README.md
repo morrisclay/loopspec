@@ -1,11 +1,18 @@
 # Universal Representation for Adaptive Systems (URAS)
 
-**A simple YAML for describing and arguing about agent loops.**
+**A simple YAML for describing and arguing about agent loops. Applied cybernetics, and two
+things every framework is missing: attention and calibration.**
 
-A notation is an attention device. What a format has a field for is what people look at; what
-it has no field for is what they never think to check. That is the whole thesis, and it is an
-attention claim rather than a knowledge one — nobody building agent loops is *ignorant* of
-calibration, they are just not looking at it, because nothing in their tooling points there.
+Every agent framework builds the **first-order** loop — observe, believe, decide, act. None
+builds the two loops *about* that loop:
+
+- **Attention** — *am I looking at the right things, at what cost?* The input side.
+- **Calibration** — *does what I believe turn out to be true?* The output side.
+
+They are duals. Calibration is how you find out whether your attention was well spent;
+attention determines what you can calibrate against at all. **Neither exists in any agent
+framework**, and a notation is how they become sayable — what a format has a field for is what
+people look at, and what it has no field for is what they never think to check.
 
 ```yaml
 loop: customer_acquisition
@@ -36,13 +43,14 @@ people:
   founder: { human: yes, loses_if_wrong: "the company", sees: [cost_per_customer] }
 ```
 
-Three levels of attention, worked out in **[`ATTENTION.md`](ATTENTION.md)**:
+**[`ATTENTION.md`](ATTENTION.md)** works out the three levels attention operates at — the
+author's (a field is a place you have to look), the loop's (what it observes, at what cost —
+and the finding that *nothing had ever scored a signal*), and the humans' (who must look, and
+who pays when it is wrong).
 
-| level | what it means | where it lives |
-|---|---|---|
-| **the author's** | a field is a place you have to look | the format itself |
-| **the loop's** | what it observes, at what cost, from where — and *nothing ever scored a signal* | `observes`, `checked_by` |
-| **the humans'** | who must look at what, and who pays when it is wrong | `sees`, `loses_if_wrong` |
+**[`CALIBRATION.md`](CALIBRATION.md)** is the other half: verification asks *is this output
+good?*; calibration asks *has this thing's confidence historically tracked reality?* The field
+has built the first thoroughly and **the second has no name in it**.
 
 **What was found by looking:** across 10 reference examples written by framework authors to
 demonstrate best practice, **10/10 form a belief nothing scores** and **10/10 steer toward a
@@ -59,19 +67,31 @@ exactly one column, and that column is the whole argument between them.
 | | |
 |---|---|
 | **[`SYNTHESIS.md`](SYNTHESIS.md)** | where the field is, what this contributes, **and what it cannot claim** |
-| **[`ATTENTION.md`](ATTENTION.md)** | the frame: a notation is an attention device |
+| **[`ATTENTION.md`](ATTENTION.md)** | half one — a notation is an attention device |
+| **[`CALIBRATION.md`](CALIBRATION.md)** | half two — and why it is hard rather than neglected |
 | [`REFERENCE.md`](REFERENCE.md) | every key — generated from `schema/loop.keys.yaml` |
 | [`NOTATION.md`](NOTATION.md) | the diagram language, independent of any renderer |
 | [`REFERENCES.md`](REFERENCES.md) | every external source and the decision it shaped |
 | [`RULESET.md`](RULESET.md) | the checks, and which follow from theorems |
 | `examples/field/` | four real systems; `research/published_study/` two pre-registered studies |
 
+### The toolset
+
+Six tools, one notation. Nothing here is a framework — the spec is the artifact and everything
+else reads it.
+
 ```bash
-python3 tools/loop.py    spec.loop.yaml --lint    # the checks
-python3 tools/diagram.py spec.loop.yaml --md      # mermaid, defects drawn
-python3 tools/compare.py specs/*.loop.yaml        # argue about them side by side
-python3 tools/verify.py  spec.loop.yaml build/    # did compilation drop the gate?
+python3 tools/loop.py     spec.loop.yaml --lint   # expand + validate + the checks
+python3 tools/diagram.py  spec.loop.yaml --md     # mermaid; defects are DRAWN, not appended
+python3 tools/compare.py  specs/*.loop.yaml       # argue about loops side by side
+python3 tools/verify.py   spec.loop.yaml build/   # did compilation drop the approval gate?
+python3 tools/gen_spec.py --check                 # reference + JSON Schema, generated
 ```
+
+**Compiling has no tool, deliberately.** Hand the spec and a target name to any LLM — fidelity
+is flat from 8B to frontier (0.898 → 0.993). `tools/compile_flue.py` remains as a reference
+implementation of the mapping, not as the mechanism. If the target is newer than the model,
+send one page of its API alongside: Flue went from **18% → 100%** on that alone.
 
 ---
 

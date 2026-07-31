@@ -8,14 +8,32 @@ Underlying work: `research/published_study/` (two pre-registered studies),
 
 ---
 
-## Part 0 — The frame: a notation is an attention device
+## Part 0 — The frame: attention and calibration, as second-order loops
 
-The contribution is **a simple YAML for describing and arguing about loops**. The linter is a
-consumer of that notation, not the point — a distinction that matters more than it sounds,
-because it changes what a wrong check costs.
+The contribution is **a simple YAML for describing and arguing about loops** — applied
+cybernetics, aimed at two things no agent framework has. The linter is a consumer of that
+notation, not the point, and that distinction changes what a wrong check costs.
 
-Everything in this document is easier to read once the frame is named. It operates at three
-levels, worked out in `ATTENTION.md`:
+Every framework builds the **first-order** loop: observe, believe, decide, act. Neither of the
+loops *about* that loop exists anywhere:
+
+| | **attention** (`ATTENTION.md`) | **calibration** (`CALIBRATION.md`) |
+|---|---|---|
+| side | the input — what enters | the output — what came out |
+| asks | *am I looking at the right things?* | *is what I concluded true?* |
+| scores | a **signal** | an **estimator** |
+| absent → | paying for information that changes nothing | confidently wrong forever |
+| measured | nothing had ever scored a signal (§2.4) | **10/10**, and **4/4** in the eval layer (§1.3, §1.4) |
+
+They are duals. **Calibration is how you find out whether your attention was well spent**; and
+attention determines what you can calibrate against, since a belief about something you never
+observe has no outcome to be scored on.
+
+Second-order cybernetics puts the observer inside the system. These are the two places the
+observer's own performance becomes checkable — which is why *applied cybernetics* is the
+accurate description rather than a flourish.
+
+Attention itself operates at three levels, worked out in `ATTENTION.md`:
 
 | level | the claim | where the evidence is |
 |---|---|---|
