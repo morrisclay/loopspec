@@ -515,7 +515,112 @@ def edges_from(edges, node):
     return [(e.get("from"), e.get("to")) for e in edges if e.get("from") == node]
 
 
+def q_loop_polarity(d, nodes, edges):
+    """
+    Reinforcing loop with no balancing path.
+
+    System dynamics: a loop with an EVEN number of negative links is reinforcing (runaway);
+    odd is balancing (self-correcting). An agent loop whose signal is produced by its own
+    intervention, with no corrective link, is reinforcing by construction.
+
+    This formalises the Ralph finding. The agent -> files -> agent path carries no negative
+    link, so it is reinforcing. Tests are the only negative link — the only thing making the
+    loop balancing. Remove them and it provably diverges.
+    """
+    produced = {b for _, b in rel(edges, "produces")}
+    measured_by = {}
+    for a, b in rel(edges, "measures"):
+        measured_by.setdefault(b, set()).add(a)
+    out = []
+    for lp in d.get("loops") or []:
+        sig = lp.get("signal")
+        if sig not in produced:
+            continue                     # signal is exogenous — fine
+        # the loop's own signal is produced by the loop. Is there ANY exogenous signal
+        # measuring the same estimand?
+        ests = {b for a, b in rel(edges, "measures") if a == sig}
+        exogenous = []
+        for e in ests:
+            for other in measured_by.get(e, set()):
+                if other != sig and other not in produced:
+                    exogenous.append(other)
+        if exogenous:
+            continue                     # a balancing path exists
+        out.append({
+            "pattern": "reinforcing_loop_no_balancer",
+            "claim": (f"Loop `{lp.get('id')}` is REINFORCING: its signal `{sig}` is produced by "
+                      f"its own intervention, and no exogenous signal measures what it "
+                      f"measures. System dynamics: a loop with no negative link diverges rather "
+                      f"than self-corrects. Nothing outside the loop can contradict it."),
+            "evidence": {"loop": lp.get("id"), "endogenous_signal": sig,
+                         "exogenous_signals": []},
+        })
+    return out
+
+
+def q_regulator_without_model(d, nodes, edges):
+    """
+    Conant & Ashby 1970: every good regulator of a system must be a model of that system.
+
+    A loop with a Policy and a DesiredCondition but no model of the regulated quantity — no
+    Explanation, no Estimator over it — is a reflex, not a regulator. This is a proved
+    necessary condition rather than a style preference.
+    """
+    targets = {b for _, b in rel(edges, "targets")}
+    if not targets or not [i for i, n in nodes.items() if n.get("kind") == "Policy"]:
+        return []
+    modelled = set()
+    for a, b in rel(edges, "explains"):
+        modelled.add(b)
+    for a, b in rel(edges, "estimates"):
+        modelled.add(b)
+        holder = nodes.get(b, {})
+        for x, y in rel(edges, "measures"):
+            modelled.add(y)
+    out = []
+    for t in targets:
+        explained = any(b == t for _, b in rel(edges, "explains"))
+        if explained:
+            continue
+        out.append({
+            "pattern": "regulator_without_model",
+            "claim": (f"The loop regulates `{t}` but contains no MODEL of it — no Explanation "
+                      f"of what generates it. Conant & Ashby (1970): every good regulator of a "
+                      f"system must be a model of that system. Without one this is a reflex "
+                      f"against a setpoint, not a regulator, and it cannot anticipate."),
+            "evidence": {"target": t, "explanations": []},
+        })
+    return out
+
+
+def q_uncontrollable_target(d, nodes, edges):
+    """A DesiredCondition targeting an estimand no intervention can move."""
+    out = []
+    for a, b in rel(edges, "targets"):
+        ivs = [i for i, n in nodes.items() if n.get("kind") == "Intervention"]
+        if not ivs:
+            continue
+        # does any loop close on this estimand's measuring signal?
+        sigs = {x for x, y in rel(edges, "measures") if y == b}
+        closing = {lp.get("intervention") for lp in (d.get("loops") or [])
+                   if lp.get("signal") in sigs}
+        if closing:
+            continue
+        out.append({
+            "pattern": "uncontrollable_target",
+            "claim": (f"`{a}` targets `{b}`, and no loop closes an intervention against any "
+                      f"signal measuring it. Controllability: a target you cannot drive toward "
+                      f"is a wish. Available interventions are {ivs} and none of them is wired "
+                      f"to this target."),
+            "evidence": {"target": b, "desired_condition": a, "interventions": ivs},
+        })
+    return out
+
+
 QUERIES = [
+    q_loop_polarity,
+    q_regulator_without_model,
+    q_uncontrollable_target,
     q_estimand_never_estimated,
     q_orphan_signal,
     q_no_loop_closed,
