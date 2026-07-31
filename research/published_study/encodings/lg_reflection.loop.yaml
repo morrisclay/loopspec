@@ -24,6 +24,11 @@ when:
   - if: "fewer than N messages so far"
     do: generate
 people: {}                  # the tutorial declares no human
+spends:
+  messages:
+    limit: "N messages"       # `len(state["messages"]) > N` in should_continue
+    spent_by: [generate, reflect]
+
 never:
   - "exceed the message-count ceiling"   # a stop, not a correction
 not_modelling:

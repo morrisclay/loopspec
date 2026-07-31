@@ -47,8 +47,15 @@ people:
     loses_if_wrong: "the code, and the hours the loop ran unattended"
     # sees nothing while it runs. That is the design.
 
+spends:
+  iterations:
+    limit: "the hard iteration ceiling"   # a stop, not a correction
+    spent_by: [implement_one_task]
+  tokens:
+    spent_by: [implement_one_task]        # no limit, nothing replenishes
+
 never:
-  - "exceed the hard iteration ceiling"   # a stop, not a correction
+  - "exceed the hard iteration ceiling"
 
 not_modelling:
   - whether the task was the right task

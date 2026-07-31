@@ -79,6 +79,14 @@ top_level:
     of: people_entry
     doc: Who is involved — human or agent — and what each stands to lose.
     aliases: [parties]
+  spends:
+    type: map
+    of: spends_entry
+    doc: >
+      What the loop burns as it runs — iterations, tokens, money, someone's attention — and
+      what stops it. Harness engineering treats budgets, step ceilings and stall detection as
+      standard, and this format could not express any of them: ceilings were prose inside
+      `never`, where nothing could check them.
   never:
     type: list
     of: str
@@ -215,6 +223,21 @@ when_entry:
   if:       {type: str, doc: The condition.}
   do:       {type: [str, list], doc: Action(s) to take. Must name entries in `actions`.}
   escalate: {type: str, doc: Person to ask instead. Must name someone in `people`.}
+
+spends_entry:
+  limit:
+    type: str
+    doc: >
+      The ceiling — `25 iterations`, `100k tokens`, `5 hours a week`. A limit is a STOP, not a
+      correction: it truncates the loop rather than regulating it. Declaring one is necessary
+      and is not the same as being able to slow down before reaching it.
+  replenished:
+    type: str
+    doc: What refills this, if anything. Omit and it only ever depletes.
+  spent_by:
+    type: [str, list]
+    doc: Which actions draw it down. Each must name an entry in `actions`.
+
 
 people_entry:
   human: {type: bool, doc: A person. Mutually exclusive with `agent`.}

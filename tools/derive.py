@@ -667,6 +667,103 @@ def _loop_of(d, nid, edges):
 
 
 
+
+# ---------------------------------------------------------------------------------------
+# RESOURCE CHECKS.
+#
+# Harness engineering — budgets, step ceilings, stall detection, quotas — is standard practice
+# in 2026 and this linter was silent on all of it. `Resource` sat in the catalog unused.
+#
+# The obvious check is "does it have a ceiling", and the field already knows to ask that. The
+# one worth adding is the next question, which the field does NOT ask:
+#
+#     A CEILING IS A STOP, NOT A CORRECTION.
+#
+# A loop that runs at full rate into a wall and halts has not regulated anything; it has been
+# truncated. Ashby's point about variety is exactly this — a stop absorbs no disturbance. The
+# regulating version notices it is running low and does something different, which is what a
+# deadband is for. Almost nothing does this.
+# ---------------------------------------------------------------------------------------
+
+def q_unbounded_loop(d, nodes, edges):
+    """A loop that declares nothing it can run out of."""
+    if not (d.get("loops") or []):
+        return []
+    res = [i for i, n in nodes.items() if n.get("kind") == "Resource"]
+    if res:
+        return []
+    consumed = {b for _, b in rel(edges, "consumes")}
+    if consumed:
+        return []
+    return [{
+        "pattern": "unbounded_loop",
+        "claim": ("The loop declares nothing it can run out of — no iteration ceiling, no "
+                  "token or time budget, no attention it spends. Nothing in the encoding says "
+                  "what stops it, so it runs until something outside reaches in and halts it. "
+                  "Declare it under `spends:` even if the limit is generous; an undeclared "
+                  "budget is still a budget, just one nobody chose."),
+        "evidence": {"resources": []},
+    }]
+
+
+def q_ceiling_without_correction(d, nodes, edges):
+    """
+    A limit exists and no decision rule reads how much is left.
+
+    KNOWN LIMIT OF THIS CHECK: it clears as soon as some rule reads the resource, and does not
+    distinguish READING-TO-HALT from READING-TO-ADAPT. LangGraph's reflection example reads its
+    own message count and stops — which clears this check and is still a stop, not a
+    correction. Separating the two needs the format to express "stop" as an action, which it
+    does not yet. So a clear result here means "something watches the budget", which is
+    necessary and not sufficient.
+
+    The check the field does not run. A ceiling truncates a loop; it does not regulate one.
+    The loop proceeds at full rate until it hits the wall and stops, which is indistinguishable
+    from failure and arrives without warning. Regulation means noticing you are running low and
+    doing something different — searching narrower, sampling less, escalating, stopping early
+    and saying so.
+    """
+    pol_inputs = {t for i, n in nodes.items() if n.get("kind") == "Policy"
+                  for t in (n.get("inputs") or [])}
+    out = []
+    for i, n in nodes.items():
+        if n.get("kind") != "Resource" or not n.get("limit"):
+            continue
+        if i in pol_inputs:
+            continue
+        out.append({
+            "pattern": "ceiling_without_correction",
+            "claim": (f"`{i}` has a limit of `{n['limit']}` and no decision rule reads how "
+                      f"much is left. The loop runs at full rate until it hits the wall and "
+                      f"stops. A ceiling is a stop, not a correction: it truncates the loop "
+                      f"rather than regulating it, and the halt is indistinguishable from "
+                      f"failure and arrives without warning. To regulate, some rule in `when:` "
+                      f"has to read `{i}` and do something different when it runs low."),
+            "evidence": {"resource": i, "limit": n.get("limit"), "read_by_policy": False},
+        })
+    return out
+
+
+def q_spends_without_limit(d, nodes, edges):
+    """Something consumed that has no ceiling and nothing refills."""
+    replenished = {b for _, b in rel(edges, "replenishes")}
+    out = []
+    for a, b in rel(edges, "consumes"):
+        n = nodes.get(b, {})
+        if n.get("kind") != "Resource" or n.get("limit") or b in replenished \
+                or n.get("replenished"):
+            continue
+        out.append({
+            "pattern": "spends_without_limit",
+            "claim": (f"`{a}` consumes `{b}`, and `{b}` has no declared limit and nothing "
+                      f"replenishes it. It only ever goes down, and the encoding does not say "
+                      f"how far down it can go before this stops working. Exhaustion is "
+                      f"certain; only the date is unstated."),
+            "evidence": {"action": a, "resource": b},
+        })
+    return out
+
+
 def q_belief_never_checked(d, nodes, edges):
     """
     A belief formed by judgement that nothing ever scores against what happened.
@@ -973,6 +1070,9 @@ def q_no_escalation_path(d, nodes, edges):
 
 QUERIES = [
     q_belief_never_checked,
+    q_unbounded_loop,
+    q_ceiling_without_correction,
+    q_spends_without_limit,
     q_single_point_of_grounding,
     q_policy_reads_undeclared,
     q_shared_estimand_no_arbiter,

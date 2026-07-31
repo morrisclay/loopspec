@@ -191,3 +191,56 @@ invisible until the two acts were given the same attribute and compared.
 Ralph, being fully autonomous, trips `no_escalation_path`: one party, one policy, no approval
 gate, no escalation. *It either succeeds or fails silently* — which is exactly what Ralph is,
 stated structurally rather than as folklore.
+
+---
+
+## Tier 1c — resources, and the question the field does not ask
+
+Harness engineering — budgets, step ceilings, stall detection, quotas — is standard practice
+by 2026 and this linter was silent on all of it. `Resource` sat in the catalog with no check
+using it. That was a real gap, named by the conference material rather than found here.
+
+Three checks, and only the second is a contribution rather than a catch-up.
+
+### `unbounded_loop` — the field's question
+
+The loop declares nothing it can run out of. It runs until something outside reaches in and
+halts it. O'Reilly's piece names this in prose: *"a loop without its signal doesn't converge.
+It just runs until something external stops it."*
+
+### `ceiling_without_correction` — the question after it
+
+> **A ceiling is a stop, not a correction.**
+
+A loop that runs at full rate into a wall and halts has not regulated anything; it has been
+truncated. Ashby's point about variety is exactly this — **a stop absorbs no disturbance.**
+The halt is indistinguishable from failure and arrives without warning.
+
+Regulating means noticing you are running low and doing something *different*: searching
+narrower, sampling less, escalating, stopping early and saying why. Almost nothing does this.
+
+**Known limit, stated because it matters:** the check clears as soon as any rule reads the
+resource, and does not distinguish *reading-to-halt* from *reading-to-adapt*. LangGraph's
+reflection example reads its own message count and stops — which clears the check and is still
+a stop. Separating them needs the format to express "stop" as an action. A clear result means
+*something watches the budget*, which is necessary and not sufficient.
+
+### `spends_without_limit` — the slow one
+
+Consumed, no ceiling, nothing replenishes. It only ever goes down and the encoding does not say
+how far down it can go. Exhaustion is certain; only the date is unstated.
+
+### Measured
+
+| corpus | n | result |
+|---|---|---|
+| published agent loops | 10 | `ceiling_without_correction` 5, `unbounded_loop` 4, clean 1 |
+| eval harnesses | 4 | `unbounded_loop` **4/4** |
+| field loops | 4 | `unbounded_loop` 3, `spends_without_limit` 1 |
+
+**Half the published loops have a ceiling that nothing reads.** Four have no ceiling at all,
+including `lats` — an unbounded *tree search*. Every eval harness examined is unbounded.
+
+One nuance worth keeping: four of the LangGraph examples are bounded only by
+`recursion_limit`, LangGraph's **default of 25**. That is a platform backstop, not a choice the
+example made — an undeclared budget is still a budget, just one nobody chose.

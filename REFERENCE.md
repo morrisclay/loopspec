@@ -24,6 +24,7 @@ One document per loop. `---` separates loops in a group; **names resolve across 
 | `when` | list of entries |  | The rule choosing among actions, evaluated in order. Structured rather than prose: prose reads better and cannot be checked, and the checking is the point. |
 | `asks_human_when` | list[str] |  | The conditions under which the loop stops and asks a person. Top-level and on its own, because burying escalation inside the decision rule is how it goes missing — this is the list a reader scans first to find out whether the thing can run away. |
 | `people` *(alias: `parties`)* | map of entries |  | Who is involved — human or agent — and what each stands to lose. |
+| `spends` | map of entries |  | What the loop burns as it runs — iterations, tokens, money, someone's attention — and what stops it. Harness engineering treats budgets, step ceilings and stall detection as standard, and this format could not express any of them: ceilings were prose inside `never`, where nothing could check them. |
 | `never` | list[str] |  | Hard limits that hold regardless of the goal. |
 | `not_modelling` *(alias: `ignoring`)* | list[str] |  | Knowingly out of scope. Not decoration: this is the first list to revisit when the loop misbehaves for reasons it cannot see. |
 
@@ -80,6 +81,16 @@ The levers.
 | `effect_after` *(alias: `delay`, `effect_shows_after`, `effect_shows_in`)* | str |  | How long until the effect is visible. Lag with no damping is what makes loops thrash. |
 | `damping` | str |  | Deadband |
 | `consumes` | list[str] |  | Finite things this draws down. |
+
+## `spends.<name>`
+
+What the loop burns, and what stops it.
+
+| key | type | required | meaning |
+|---|---|---|---|
+| `limit` | str |  | The ceiling — `25 iterations`, `100k tokens`, `5 hours a week`. A limit is a STOP, not a correction: it truncates the loop rather than regulating it. Declaring one is necessary and is not the same as being able to slow down before reaching it. |
+| `replenished` | str |  | What refills this, if anything. Omit and it only ever depletes. |
+| `spent_by` | str|list |  | Which actions draw it down. Each must name an entry in `actions`. |
 
 ## `when[]`
 

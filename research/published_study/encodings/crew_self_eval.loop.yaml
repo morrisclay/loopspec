@@ -25,6 +25,11 @@ when:
   - if: "not valid and retry_count is at or below 3"
     do: generate_post
 people: {}
+spends:
+  retries:
+    limit: "retry_count > 3"
+    spent_by: [generate_post]
+
 never:
   - "retry more than 3 times"
 not_modelling:

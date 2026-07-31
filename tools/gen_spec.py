@@ -26,6 +26,7 @@ SECTIONS = [("top_level", "Top level", "One document per loop. `---` separates l
              "What it holds a view on but cannot read off directly."),
             ("observes_entry", "`observes.<name>`", "What data actually arrives."),
             ("actions_entry", "`actions.<name>`", "The levers."),
+            ("spends_entry", "`spends.<name>`", "What the loop burns, and what stops it."),
             ("when_entry", "`when[]`", "The rule choosing among actions, in order."),
             ("people_entry", "`people.<name>`", "Who is involved and what they stand to lose.")]
 
@@ -110,7 +111,7 @@ def schema():
     top = props("top_level")
     for k, entry in [("goal", "goal_entry"), ("beliefs", "beliefs_entry"),
                      ("observes", "observes_entry"), ("actions", "actions_entry"),
-                     ("people", "people_entry")]:
+                     ("people", "people_entry"), ("spends", "spends_entry")]:
         top[k] = {"type": "object",
                   "additionalProperties": {"$ref": f"#/$defs/{entry}"},
                   "description": top[k].get("description", "")}

@@ -33,6 +33,11 @@ when:
   - if: "the error count is below the ceiling"
     do: generate
 people: {}
+spends:
+  iterations:
+    limit: max_iterations     # explicit, chosen by the example
+    spent_by: [generate]
+
 never:
   - "exceed max_iterations"
 not_modelling:

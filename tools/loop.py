@@ -344,9 +344,21 @@ def expand_one(g, spec, path="<spec>", scope=None):
             g.node(r, "Resource")
             g.edge(act, r, "consumes")
 
+    # --- spends: what the loop burns, and what stops it -----------------------------
+    for res, body in (spec.get("spends") or {}).items():
+        body = body or {}
+        g.node(res, "Resource", depletable=True, limit=body.get("limit"),
+               replenished=body.get("replenished"))
+        sb = body.get("spent_by")
+        for a in ([sb] if isinstance(sb, str) else (sb or [])):
+            g.edge(a, res, "consumes")
+        if body.get("replenished"):
+            g.edge(lid + "_system", res, "replenishes")
+
     # --- when: the decision rule ---------------------------------------------------
     rules = spec.get("when") or []
-    declared = set((spec.get("goal") or {})) | set((spec.get("beliefs") or {}))
+    declared = (set((spec.get("goal") or {})) | set((spec.get("beliefs") or {}))
+                | set((spec.get("spends") or {})))
     if rules:
         pid = g.node(f"{lid}_policy", "Policy",
                      rule="; ".join(str(r.get("if", "always")) for r in rules),

@@ -20,6 +20,11 @@ actions:
 when:
   - if: "no agent has said FINAL ANSWER"
     do: research
+spends:
+  graph_steps:
+    limit: "recursion_limit — LangGraph's default of 25"
+    spent_by: [research]
+
 people:
   shared_state: { agent: yes }
 ---

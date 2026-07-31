@@ -26,6 +26,11 @@ when:
   - if: "the evaluator has not returned pass"
     do: generate_outline
 people: {}
+spends:
+  rounds:
+    limit: "max_rounds = 3, in auto mode only"
+    spent_by: [generate_outline]
+
 never:
   - "run past max_rounds in auto mode"
 not_modelling:

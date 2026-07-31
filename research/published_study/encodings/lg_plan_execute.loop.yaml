@@ -23,6 +23,11 @@ when:
   - if: "the plan still has steps"
     do: execute_step
 people: {}
+spends:
+  graph_steps:
+    limit: "recursion_limit — LangGraph's DEFAULT of 25, not a choice this example made"
+    spent_by: [execute_step]
+
 not_modelling:
   - the cost of executing a step
   - whether the plan was a good plan

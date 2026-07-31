@@ -65,6 +65,13 @@
       },
       "description": "Who is involved \u2014 human or agent \u2014 and what each stands to lose."
     },
+    "spends": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/spends_entry"
+      },
+      "description": "What the loop burns as it runs \u2014 iterations, tokens, money, someone's attention \u2014 and what stops it. Harness engineering treats budgets, step ceilings and stall detection as standard, and this format could not express any of them: ceilings were prose inside `never`, where nothing could check them."
+    },
     "never": {
       "type": "array",
       "items": {
@@ -279,6 +286,27 @@
             "type": "string"
           },
           "description": "Finite things this draws down."
+        }
+      }
+    },
+    "spends_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "limit": {
+          "type": "string",
+          "description": "The ceiling \u2014 `25 iterations`, `100k tokens`, `5 hours a week`. A limit is a STOP, not a correction: it truncates the loop rather than regulating it. Declaring one is necessary and is not the same as being able to slow down before reaching it."
+        },
+        "replenished": {
+          "type": "string",
+          "description": "What refills this, if anything. Omit and it only ever depletes."
+        },
+        "spent_by": {
+          "type": [
+            "string",
+            "array"
+          ],
+          "description": "Which actions draw it down. Each must name an entry in `actions`."
         }
       }
     },
