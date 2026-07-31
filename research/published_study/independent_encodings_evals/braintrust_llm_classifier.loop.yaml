@@ -1,0 +1,89 @@
+loop: llm_output_evaluation
+runs: per evaluation
+
+goal:
+  evaluation_score:
+    keep: mapped from the model-selected choice using the configured choice_scores
+    from:
+      - classifier_configuration
+      - parsed_evaluation
+
+beliefs:
+  classification:
+    question: Which configured choice best assesses the supplied model output?
+    from:
+      - evaluation_arguments
+      - classifier_configuration
+      - trace_thread
+      - model_tool_response
+    how: Render the configured prompt and optional thread variables, require the selected LLM to call select_choice, and read its choice and optional reasoning.
+    explains: the assessment of the supplied model output
+    settled_by: model_tool_response
+
+observes:
+  evaluation_arguments:
+    informs: classification
+    every: per evaluation
+    origin: outside
+    how: reported
+    reported_by: caller
+
+  classifier_configuration:
+    informs:
+      - classification
+      - evaluation_score
+    every: when the classifier is constructed
+    origin: outside
+    how: reported
+    reported_by: constructor arguments or YAML specification
+
+  trace_thread:
+    informs: classification
+    every: per evaluation when a trace is supplied and the prompt uses thread variables
+    origin: outside
+    how: reported
+    reported_by: trace object
+
+  model_tool_response:
+    informs: classification
+    every: per model request
+    origin: ourselves
+    how: reported
+    reported_by: configured language model
+    produced_by: classify_with_llm
+
+  parsed_evaluation:
+    informs: evaluation_score
+    every: per successful model response
+    origin: ourselves
+    how: calculated
+    produced_by: parse_and_score_response
+
+actions:
+  classify_with_llm:
+    moves: classification
+    can_undo: "no"
+    effect_after: when the model request completes
+    consumes:
+      - model API tokens
+
+  parse_and_score_response:
+    moves: evaluation_score
+    can_undo: "yes"
+    effect_after: immediately after a valid model response
+
+when:
+  - if: an evaluation is requested
+    do:
+      - classify_with_llm
+      - parse_and_score_response
+
+asks_human_when: []
+
+people: {}
+
+never:
+  - accept a model response with no tool call
+  - accept a tool call whose function name is not select_choice
+  - select a choice outside the configured choice strings
+  - return a score when the model response contains no choices

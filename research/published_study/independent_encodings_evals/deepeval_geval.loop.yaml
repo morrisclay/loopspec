@@ -1,0 +1,122 @@
+loop: geval_single_turn_evaluation
+runs: per test case
+
+goal:
+  evaluation_score:
+    keep: at or above the configured threshold
+    from:
+      - normalized_score
+      - evaluation_configuration
+    unit: normalized score
+  evaluation_success:
+    keep: true
+    from:
+      - normalized_score
+      - evaluation_configuration
+
+beliefs:
+  criteria_satisfaction:
+    question: How well does the test case satisfy the configured criteria, evaluation steps, and rubric?
+    from:
+      - test_case_input
+      - supplied_evaluation_configuration
+      - pulled_evaluation_configuration
+      - generated_evaluation_steps
+      - raw_model_evaluation
+      - schema_model_evaluation
+    how: An LLM generates a score and reason; when available, token log probabilities are used to calculate a weighted score.
+
+observes:
+  test_case_input:
+    informs: criteria_satisfaction
+    every: per test case
+    origin: outside
+    how: reported
+  supplied_evaluation_configuration:
+    informs:
+      - criteria_satisfaction
+      - evaluation_score
+      - evaluation_success
+    origin: outside
+    how: reported
+  pulled_evaluation_configuration:
+    informs:
+      - criteria_satisfaction
+      - evaluation_score
+      - evaluation_success
+    origin: ourselves
+    how: calculated
+    produced_by: pull_metric_definition
+  generated_evaluation_steps:
+    informs: criteria_satisfaction
+    origin: ourselves
+    how: calculated
+    produced_by: generate_evaluation_steps
+  raw_model_evaluation:
+    informs: criteria_satisfaction
+    every: per test case
+    origin: ourselves
+    how: calculated
+    produced_by: evaluate_with_raw_response
+  schema_model_evaluation:
+    informs: criteria_satisfaction
+    every: per test case
+    origin: ourselves
+    how: calculated
+    produced_by: evaluate_with_schema
+  normalized_score:
+    informs:
+      - evaluation_score
+      - evaluation_success
+    every: per test case
+    origin: ourselves
+    how: calculated
+    produced_by: normalize_score
+  success_result:
+    informs: evaluation_success
+    every: per test case
+    origin: ourselves
+    how: calculated
+    produced_by: determine_success
+
+actions:
+  generate_evaluation_steps:
+    moves: criteria_satisfaction
+  evaluate_with_raw_response:
+    moves: criteria_satisfaction
+  evaluate_with_schema:
+    moves: criteria_satisfaction
+  normalize_score:
+    moves: evaluation_score
+  determine_success:
+    moves: evaluation_success
+  upload_metric_definition: {}
+  pull_metric_definition: {}
+
+when:
+  - if: evaluation steps were supplied
+    do: evaluate_with_raw_response
+  - if: evaluation steps were not supplied
+    do: generate_evaluation_steps
+  - if: the model supports raw responses and log probabilities
+    do: evaluate_with_raw_response
+  - if: raw responses or log probabilities are unsupported
+    do: evaluate_with_schema
+  - if: strict mode is disabled
+    do: normalize_score
+  - if: an evaluation score has been produced
+    do: determine_success
+  - if: upload is explicitly requested
+    do: upload_metric_definition
+  - if: pull is explicitly requested
+    do: pull_metric_definition
+
+people: {}
+
+never:
+  - accept an explicitly empty evaluation_params list
+  - evaluate or upload without the required evaluation parameters and either criteria or evaluation steps
+  - use log probabilities when the selected model does not support them
+
+not_modelling:
+  - multi-turn evaluation

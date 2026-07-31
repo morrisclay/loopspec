@@ -1,0 +1,33 @@
+# DeepEval — deepeval/metrics/agent_loop_detection/agent_loop_detection.py
+# Detects whether an agent is stuck in a loop. Included because it is the closest thing in
+# the eval ecosystem to a structural check on loops, which makes it the fairest test.
+loop: deepeval_agent_loop_detection
+runs: per_trace
+
+goal:
+  agent_looping: { keep: "no unproductive loop detected" }
+
+beliefs:
+  agent_looping:
+    question: "Is this agent repeating itself without progress?"
+    from: [agent_trace]
+    how: judgement            # an LLM reading the trace
+    # NO checked_by — nothing scores whether its loop calls were right
+
+observes:
+  agent_trace:
+    informs: agent_looping
+    every: per_trace
+    origin: ourselves
+    how: reported
+
+actions:
+  detect: { moves: agent_looping, can_undo: yes }
+
+when:
+  - if: "a trace is present"
+    do: detect
+
+people: {}
+not_modelling:
+  - whether a detected loop was actually unproductive

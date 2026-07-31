@@ -1,0 +1,106 @@
+loop: aspect_critic
+runs: per sample
+
+beliefs:
+  submission_meets_criterion:
+    question: Does the submission satisfy the configured aspect definition?
+    from:
+      - criterion_definition
+      - single_turn_user_input
+      - single_turn_response
+      - retrieved_contexts
+      - reference
+      - reference_contexts
+      - multi_turn_interaction
+      - single_turn_llm_verdict
+      - multi_turn_llm_verdict
+    how: An LLM is prompted to return an integer verdict; _compute_score returns that verdict directly, or uses the most common verdict when strictness is greater than one.
+    explains: The binary aspect score assigned to the submission.
+
+observes:
+  criterion_definition:
+    informs: submission_meets_criterion
+    every: when the metric is configured or its definition is updated
+    origin: outside
+    how: reported
+
+  single_turn_user_input:
+    informs: submission_meets_criterion
+    every: per single-turn sample when present
+    origin: outside
+    how: reported
+
+  single_turn_response:
+    informs: submission_meets_criterion
+    every: per single-turn sample when present
+    origin: outside
+    how: reported
+
+  retrieved_contexts:
+    informs: submission_meets_criterion
+    every: per single-turn sample when present
+    origin: outside
+    how: reported
+
+  reference:
+    informs: submission_meets_criterion
+    every: per single-turn sample when present
+    origin: outside
+    how: reported
+
+  reference_contexts:
+    informs: submission_meets_criterion
+    every: per single-turn sample when present
+    origin: outside
+    how: reported
+
+  multi_turn_interaction:
+    informs: submission_meets_criterion
+    every: per multi-turn sample
+    origin: ourselves
+    how: calculated
+    produced_by: evaluate_multi_turn_sample
+
+  single_turn_llm_verdict:
+    informs: submission_meets_criterion
+    every: per single-turn evaluation
+    origin: ourselves
+    how: reported
+    reported_by: llm
+    produced_by: evaluate_single_turn_sample
+
+  multi_turn_llm_verdict:
+    informs: submission_meets_criterion
+    every: per multi-turn evaluation
+    origin: ourselves
+    how: reported
+    reported_by: llm
+    produced_by: evaluate_multi_turn_sample
+
+actions:
+  evaluate_single_turn_sample:
+    moves: submission_meets_criterion
+    can_undo: "yes"
+    effect_after: after the single-turn LLM prompt completes
+    damping: Strictness is forced to an odd number; when multiple responses are supplied and strictness is greater than one, the most common verdict is selected.
+
+  evaluate_multi_turn_sample:
+    moves: submission_meets_criterion
+    can_undo: "yes"
+    effect_after: after the multi-turn interaction is rendered and the LLM prompt completes
+    damping: Strictness is forced to an odd number; when multiple responses are supplied and strictness is greater than one, the most common verdict is selected.
+
+when:
+  - if: the sample is a SingleTurnSample
+    do: evaluate_single_turn_sample
+  - if: the sample is a MultiTurnSample
+    do: evaluate_multi_turn_sample
+
+people:
+  llm:
+    agent: true
+    may_decide: The reason and integer verdict for whether the submission satisfies the configured criterion.
+
+never:
+  - Run single-turn or multi-turn scoring without an LLM configured.
+  - Instruct the LLM to use verdicts other than Yes (1) and No (0).

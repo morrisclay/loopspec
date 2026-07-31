@@ -1,0 +1,41 @@
+# Braintrust autoevals — py/autoevals/llm.py, LLMClassifier
+# "the main class for building custom classifiers": a template prompt plus a user-supplied
+# choice_scores mapping from the model's chosen letter to a number.
+loop: braintrust_llm_classifier
+runs: per_case
+
+goal:
+  output_score:
+    keep: "above the user's bar"
+
+beliefs:
+  output_score:
+    question: "Which choice does the grading model pick for this output?"
+    from: [model_output, expected_answer]
+    how: judgement
+    # NO checked_by. The judge COMPARES to `expected`, which is real grounding — but
+    # nothing scores whether the judge's verdict agrees with a human's verdict. Grounding
+    # the input is not the same as calibrating the judge.
+
+observes:
+  model_output:
+    informs: output_score
+    every: per_case
+    origin: ourselves
+    how: reported
+  expected_answer:
+    informs: output_score
+    every: per_case
+    origin: outside          # _run_eval(output, expected): a human wrote `expected`
+    how: reported
+
+actions:
+  classify: { moves: output_score, can_undo: yes }
+
+when:
+  - if: "a case is present"
+    do: classify
+
+people: {}
+not_modelling:
+  - whether the choice_scores mapping is the right mapping

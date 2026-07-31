@@ -1,0 +1,32 @@
+# Ragas — src/ragas/metrics/_aspect_critic.py
+# A binary LLM verdict on a free-text "definition" of the aspect being judged.
+loop: ragas_aspect_critic
+runs: per_sample
+
+goal:
+  aspect_satisfied: { keep: "the critic returns 1" }
+
+beliefs:
+  aspect_satisfied:
+    question: "Does this response satisfy the aspect, as the user defined it?"
+    from: [response]
+    how: judgement
+    # NO checked_by
+
+observes:
+  response:
+    informs: aspect_satisfied
+    every: per_sample
+    origin: ourselves
+    how: reported
+
+actions:
+  critique: { moves: aspect_satisfied, can_undo: yes }
+
+when:
+  - if: "a sample is present"
+    do: critique
+
+people: {}
+not_modelling:
+  - whether the aspect definition is understood the same way each run

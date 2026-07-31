@@ -1,0 +1,93 @@
+loop: agent_loop_detection_metric
+runs: per test case
+
+goal:
+  execution_loop_score:
+    keep: at or above the configured threshold, default 0.5 or 1.0 in strict mode
+    from:
+      - tool_repetition
+      - reasoning_stagnation
+      - call_graph_cycles
+    unit: score from 0.0 for severe looping to 1.0 for clean execution
+
+beliefs:
+  tool_repetition:
+    question: How strongly does the trace indicate repeated identical tool calls?
+    from:
+      - execution_trace
+    how: Count tool spans with identical name and normalized arguments; score 0.5 at the repetition threshold, 0.0 at twice the threshold, and 1.0 below it.
+    explains: execution_loop_score
+    settled_by: execution_trace
+    safe_to_repeat: The score is recomputed deterministically from the complete trace without accumulating state.
+
+  reasoning_stagnation:
+    question: How strongly do consecutive LLM outputs indicate stagnating reasoning?
+    from:
+      - execution_trace
+    how: Remove stop words and short tokens, skip pairs with fewer than 20 meaningful words, then take the maximum of bigram Jaccard similarity and SequenceMatcher ratio; score 0.5 at the similarity threshold and 0.0 above 0.95.
+    explains: execution_loop_score
+    settled_by: execution_trace
+    known_bias: It misses semantically identical outputs worded very differently and skips short outputs.
+    safe_to_repeat: The score is recomputed deterministically from the complete trace without accumulating state.
+
+  call_graph_cycles:
+    question: Does a type, name, and truncated-input label recur on one root-to-leaf ancestry path?
+    from:
+      - execution_trace
+    how: Traverse the nested children tree with depth-first search and return 0.0 when the same type:name:first-64-input-characters label appears twice on the active ancestry path, otherwise 1.0.
+    explains: execution_loop_score
+    settled_by: execution_trace
+    known_bias: Different spans sharing the same type, name, and truncated input can be false positives because span UUIDs are unavailable.
+    safe_to_repeat: The depth-first search is deterministic and does not mutate the trace.
+
+observes:
+  test_case_input:
+    every: per evaluation
+    origin: outside
+    how: measured
+
+  actual_output:
+    every: per evaluation
+    origin: outside
+    how: measured
+
+  execution_trace:
+    informs:
+      - tool_repetition
+      - reasoning_stagnation
+      - call_graph_cycles
+      - execution_loop_score
+    every: per evaluation
+    origin: outside
+    how: measured
+
+actions:
+  calculate_metric:
+    moves: execution_loop_score
+    can_undo: "yes"
+    effect_after: immediately
+    damping: Combine enabled checks with weights 0.40 for tool repetition, 0.35 for reasoning stagnation, and 0.25 for call graph cycles; normalize by enabled weight and force a below-threshold strict-mode result to 0.0.
+
+  fail_without_trace:
+    moves: execution_loop_score
+    can_undo: "yes"
+    effect_after: immediately
+    damping: Set the score to 0.0, mark the evaluation unsuccessful, and report that trace data from @observe is required.
+
+when:
+  - if: execution_trace is absent
+    do: fail_without_trace
+  - if: execution_trace is present
+    do: calculate_metric
+
+people: {}
+
+never:
+  - Call an LLM or require an API key or model to calculate the metric.
+  - Charge evaluation cost; evaluation_cost is always set to zero.
+  - Treat repeated sibling spans as call graph cycles.
+
+not_modelling:
+  - Semantic equivalence between outputs that use substantially different wording.
+  - Exact span identity because the trace dictionary does not expose span UUIDs.
+  - Reasoning stagnation for output pairs with fewer than 20 meaningful words after filtering.

@@ -1,0 +1,47 @@
+# DeepEval G-Eval — deepeval/metrics/g_eval/g_eval.py
+# The flagship LLM-as-judge metric. Takes `criteria` (free text) or `evaluation_steps`,
+# asks a model to score against them, normalises to 0-1, compares to `threshold` (0.5).
+loop: deepeval_g_eval
+runs: per_test_case
+
+goal:
+  system_quality:
+    keep: "score at or above threshold"
+
+beliefs:
+  system_quality:
+    question: "Is this output good, by the criteria the user wrote?"
+    from: [model_output, judge_verdict]
+    how: judgement            # an LLM scoring against user-supplied criteria
+    # NO checked_by. Nothing compares the judge's scores to human labels.
+    known_bias: >
+      G-Eval's published human correlation was measured for specific tasks with specific
+      rubrics. `criteria` here is arbitrary free text supplied by the user, and
+      validate_criteria_and_evaluation_steps checks only that one of them is present.
+      The paper's validation does not transfer to a rubric it never saw.
+
+observes:
+  model_output:
+    informs: system_quality
+    every: per_test_case
+    origin: ourselves         # the thing under test produced it
+    how: reported
+  judge_verdict:
+    informs: system_quality
+    every: per_test_case
+    origin: ourselves         # the judge is part of the harness
+    how: reported
+
+actions:
+  score_case:
+    moves: system_quality
+    can_undo: yes
+
+when:
+  - if: "system_quality at or above threshold"
+    do: score_case
+
+people: {}
+not_modelling:
+  - whether the criteria the user wrote measure what they care about
+  - whether this judge agrees with a human
