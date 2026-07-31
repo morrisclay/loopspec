@@ -188,6 +188,8 @@ them. A compiler that silently drops the dangerous act is worse than no compiler
 |---|---|
 | [`../REFERENCE.md`](../REFERENCE.md) | every key, generated from the grammar |
 | [`CHECKS.md`](CHECKS.md) | every check: felt symptom, what it looked at, how to fix |
+| [`COOKBOOK.md`](COOKBOOK.md) | the shape you are probably reaching for, and what it costs |
+| [`LINTING-EXISTING.md`](LINTING-EXISTING.md) | you already have a running agent and no spec |
 | [`../NOTATION.md`](../NOTATION.md) | the diagram language, independent of any renderer |
 | [`../ATTENTION.md`](../ATTENTION.md) · [`../CALIBRATION.md`](../CALIBRATION.md) | the two ideas the whole thing is for |
 | `../examples/field/` | four real systems, including the Ralph loop |

@@ -67,6 +67,8 @@ exactly one column, and that column is the whole argument between them.
 | | |
 |---|---|
 | **[`docs/GETTING-STARTED.md`](docs/GETTING-STARTED.md)** | **write your first spec — ten minutes, no framework to install** |
+| [`docs/COOKBOOK.md`](docs/COOKBOOK.md) | the common loop shapes — reflection, judge, RAG, tree search, verifier — and **what each one structurally costs** |
+| [`docs/LINTING-EXISTING.md`](docs/LINTING-EXISTING.md) | the brownfield path: lint a system you did not spec, including the three times it gave me a wrong answer |
 | [`docs/CHECKS.md`](docs/CHECKS.md) | every check: felt symptom, what it looked at, how to fix, with a real example |
 | **[`SYNTHESIS.md`](SYNTHESIS.md)** | where the field is, what this contributes, **and what it cannot claim** |
 | **[`ATTENTION.md`](ATTENTION.md)** | half one — a notation is an attention device |
