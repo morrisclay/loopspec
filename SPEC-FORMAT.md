@@ -40,9 +40,9 @@ estimates:
 
 # WHAT IT ACTUALLY OBSERVES
 observes:
-  stripe:              { measures: cac, every: daily }
-  crm:                 { measures: pipeline_velocity, every: daily }
-  customer_interviews: { measures: product_market_fit, every: weekly, cost: high }
+  billing_events:      { informs: cac, every: daily, source: Stripe }
+  pipeline_state:      { informs: pipeline_velocity, every: daily, source: the CRM }
+  customer_interviews: { informs: product_market_fit, every: weekly, cost: high }
 
 # WHAT IT CAN DO ABOUT IT
 acts:
@@ -122,6 +122,19 @@ The reader never needs this table; the linter and the compiler do.
 | `parties.*.sees` | `holds` edges | absent → `accountable_but_blind` |
 | `never` | `Constraint` | `invariant_on_unmeasured` |
 | `ignoring` | `excluded_variables` | the revision frontier |
+
+## Naming observations
+
+**Name an observation for what it tells you, not where you get it.** `billing_events`, not
+`stripe`. The vendor goes in `source:`, which is optional and implementation-facing.
+
+Three reasons, in increasing order of importance:
+
+1. Vendors churn and the loop does not. A spec named after today's tools has to be rewritten
+   when they change, and nothing about the regulation changed.
+2. A diagram of `stripe → attio → slack` is a plumbing diagram. Nobody reasons about it.
+3. **Two companies observing the same thing through different vendors cannot be compared at
+   all** — which defeats the point of having a shared notation.
 
 ## Agentic groups
 

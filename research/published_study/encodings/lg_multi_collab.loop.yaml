@@ -7,7 +7,6 @@ goal:
 beliefs:
   task_complete:
     question: "Is the task finished?"
-    from: [search_results]
     how: judgement
 observes:
   search_results:
@@ -33,7 +32,6 @@ runs: per_turn
 beliefs:
   task_complete:              # THE SAME quantity the researcher judges
     question: "Is the task finished?"
-    from: [chart_output]
     how: judgement
 observes:
   chart_output:

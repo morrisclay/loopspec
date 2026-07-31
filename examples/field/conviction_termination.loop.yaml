@@ -7,12 +7,10 @@ runs: per_cycle
 goal:
   conviction:
     keep: "at or above 0.75"
-    from: [hypothesis_score, avg_confidence, convergence]
 
 beliefs:
   conviction:
     question: "How convinced are we, and is that conviction earned?"
-    from: [resolved_hypotheses, scenario_probabilities]
     how: expression      # 0.4*hypothesis_score + 0.35*min(1,avg_confidence) + 0.25*convergence
     safe_to_repeat: per_cycle_id
     # no checked_by — nothing scores whether high-conviction calls turned out right

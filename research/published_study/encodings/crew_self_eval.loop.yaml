@@ -8,7 +8,6 @@ goal:
 beliefs:
   post_valid:
     question: "Is this X post good enough to publish?"
-    from: [review_feedback]
     how: judgement
     # no checked_by
 observes:

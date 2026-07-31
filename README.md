@@ -24,12 +24,11 @@ goal:
 beliefs:
   product_market_fit:
     question: "If we keep buying customers like this month's, will they stay?"
-    from: [customer_interviews, stripe]
     how: bayesian
     checked_by: quarterly_cohort_review      # ← leave this out and you can SEE the hole
 
 observes:
-  stripe:              { informs: cost_per_customer, origin: outside, how: measured }
+  billing_events:      { informs: cost_per_customer, origin: outside, how: measured, source: Stripe }
   customer_interviews: { informs: product_market_fit, origin: outside, how: reported, cost: high }
 
 actions:

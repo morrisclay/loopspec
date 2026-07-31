@@ -7,7 +7,6 @@ goal:
 beliefs:
   candidate_score:
     question: "How promising is this branch?"
-    from: [tool_results, reflection]
     how: judgement          # a reflection LLM emitting a numeric score
     explains: solution_found
     # no checked_by — the scorer that steers the whole search is never scored

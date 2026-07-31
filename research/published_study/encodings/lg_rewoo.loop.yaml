@@ -7,7 +7,6 @@ goal:
 beliefs:
   question_answered:
     question: "Do the accumulated tool results answer the question?"
-    from: [tool_results]
     how: judgement
     # no checked_by
 observes:

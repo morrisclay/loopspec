@@ -13,7 +13,6 @@ goal:
 beliefs:
   task_actually_done:
     question: "Is the work finished, as opposed to declared finished?"
-    from: [files_and_git, test_results]
     how: judgement
     explains: agent_says_done
     # no checked_by. Nothing ever asks whether it was right to stop.

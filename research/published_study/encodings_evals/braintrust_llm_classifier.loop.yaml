@@ -11,7 +11,6 @@ goal:
 beliefs:
   output_score:
     question: "Which choice does the grading model pick for this output?"
-    from: [model_output, expected_answer]
     how: judgement
     # NO checked_by. The judge COMPARES to `expected`, which is real grounding — but
     # nothing scores whether the judge's verdict agrees with a human's verdict. Grounding

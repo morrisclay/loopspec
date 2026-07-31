@@ -7,7 +7,6 @@ goal:
 beliefs:
   outline_quality:
     question: "Is this story outline good enough?"
-    from: [evaluator_feedback]
     how: judgement
     # no checked_by — nothing scores the evaluator. Its instructions say
     # "Never give it a pass on the first try", which is a prompt-level hack,

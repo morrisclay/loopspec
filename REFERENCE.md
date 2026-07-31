@@ -46,7 +46,7 @@ What it holds a view on but cannot read off directly.
 | key | type | required | meaning |
 |---|---|---|---|
 | `question` *(alias: `means`, `description`)* | str |  | The belief in plain language, as the question it answers — "will the customers we buy this month stay?". Optional and worth writing: it is the line a reader understands first, and the one that exposes a belief nobody can actually state. |
-| `from` *(alias: `formed_from`)* | list[str] |  | Which observations feed this. Each must appear in `observes`. |
+| `from` *(alias: `formed_from`)* | list[str] |  | DEPRECATED — declare the edge once, on the observation, with `informs:`. This said the same thing from the other end and the two could disagree silently: one spec had `beliefs.product_market_fit.from: [stripe]` and `observes.stripe.informs: cost_per_customer`, and BOTH edges were created. Still accepted so old specs parse; it is now an error for the two to contradict each other. |
 | `how` *(alias: `method`, `how_formed`)* | str |  | How the view is formed: bayesian, judgement, a formula, an LLM call. |
 | `checked_by` *(alias: `calibrated_by`, `how_checked`)* | str |  | What scores this belief's PAST calls against what actually happened. Its absence is the most common defect in real loops — found in three independent systems by three careful authors. A belief nothing checks cannot be shown to track anything. |
 | `every` | str |  | How often the check runs. |
@@ -68,6 +68,7 @@ What data actually arrives.
 | `how` *(alias: `obtained_as`)* | `measured` \| `reported` \| `calculated` |  | The other half, and orthogonal to `origin` — measured by a mechanism, reported by someone with interests, or derived from other numbers. The two axes must stay separate: `origin: ourselves` + `how: reported` is an agent's own self-assessment, which is a claim and not a measurement, and collapsing provenance to one axis cannot say it. |
 | `reported_by` *(alias: `asserted_by`)* | str |  | Who reports it, when `how: reported`. A reported number is a claim by someone. |
 | `produced_by` | str |  | Which of our own actions creates this, when `origin: ourselves`. |
+| `source` | str |  | Where it physically comes from — Stripe, Attio, a webhook, a cron. OPTIONAL, and it belongs here rather than in the name. NAME AN OBSERVATION FOR WHAT IT TELLS YOU, NOT WHERE YOU GET IT: `billing_events`, not `stripe`. Vendors churn and the loop does not; a spec named after today's tools has to be rewritten when they change, and two companies observing the same thing through different vendors cannot be compared at all. |
 | `checked_by` | str |  | What reviews whether this observation is worth what it costs — whether looking here earned the attention. Distinct from calibrating a belief. Every Calibration in this project scored an ESTIMATOR: was my conclusion right. Nothing scored a SIGNAL: was my LOOKING right. A loop that keeps paying for a source that never changed a decision is not wrong about anything; it is spending attention it will not get back. |
 
 ## `actions.<name>`
@@ -101,7 +102,7 @@ The rule choosing among actions, in order.
 |---|---|---|---|
 | `if` | str |  | The condition. |
 | `do` | str|list |  | Action(s) to take. Must name entries in `actions`. |
-| `escalate` | str |  | Person to ask instead. Must name someone in `people`. |
+| `escalate` | str |  | DEPRECATED — use the top-level `asks_human_when:`. Escalation buried inside a decision rule is how it goes missing, and having both meant four different ways to say a human is involved. Still accepted. |
 
 ## `people.<name>`
 
@@ -114,7 +115,7 @@ Who is involved and what they stand to lose.
 | `kind` | `human` \| `agent` \| `group` \| `system` |  | Explicit alternative. |
 | `loses_if_wrong` *(alias: `bears`)* | str|list |  | What this one actually loses when the loop is wrong. `nothing` is a legitimate and revealing answer — an agent that loses nothing beside a human who loses everything is the asymmetry that explains overrides looking irrational against the agent's objective. |
 | `sees` | list[str] |  | What information actually reaches them. Someone who loses something and sees nothing is accountable and blind, which is oversight in name only. |
-| `may_decide` | str |  | What this person has authority over. |
+| `may_decide` | str |  | DEPRECATED — prose that nothing reads. What a person may decide is already stated, and checkably, by `needs_approval:` on the actions they gate. |
 
 ## Referential rules
 

@@ -6,7 +6,6 @@ goal:
 beliefs:
   objective_met:
     question: "Have the remaining steps become unnecessary?"
-    from: [step_results]
     how: judgement          # the replanner, an LLM reading past step output
     # no checked_by
 observes:

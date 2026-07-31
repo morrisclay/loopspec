@@ -11,7 +11,6 @@ goal:
 beliefs:
   system_quality:
     question: "Is this output good, by the criteria the user wrote?"
-    from: [model_output, judge_verdict]
     how: judgement            # an LLM scoring against user-supplied criteria
     # NO checked_by. Nothing compares the judge's scores to human labels.
     known_bias: >

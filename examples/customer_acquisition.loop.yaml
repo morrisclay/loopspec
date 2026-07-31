@@ -13,14 +13,12 @@ regulates:
 
 estimates:
   product_market_fit:
-    from: [customer_interviews, stripe]
     method: bayesian
     explains: cac
     settled_by: "a cohort retains above 80% at month 6"
     # no calibrated_by — the linter should say so, and it does
 
   channel_saturation:
-    from: [ad_platform]
     method: judgement
 
 observes:

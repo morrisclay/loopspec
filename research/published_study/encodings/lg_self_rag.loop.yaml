@@ -8,16 +8,13 @@ goal:
 beliefs:
   document_relevance:
     question: "Is this retrieved document relevant to the question?"
-    from: [retrieved_docs]
     how: judgement           # retrieval_grader, an LLM
   answer_grounded:
     question: "Is the generation supported by the documents, or hallucinated?"
-    from: [generation]
     how: judgement           # hallucination_grader
     explains: answer_useful
   answer_useful:
     question: "Does the answer actually address the question?"
-    from: [generation]
     how: judgement           # answer_grader
   # none of the three graders has a checked_by
 observes:

@@ -13,7 +13,6 @@ goal:
 beliefs:
   candidate_quality:
     question: "Is this person worth the GP's attention?"
-    from: [github_channel, research_connector]
     how: rubric
     safe_to_repeat: per_candidate_id
     checked_by: viability_review     # retires a channel that finds nothing
@@ -21,14 +20,15 @@ beliefs:
     explains: channel_viability
 
 observes:
-  github_channel:
+  code_activity:
     informs: candidate_quality
     every: per_tick
     origin: ourselves               # we chose to search here
     how: measured
     produced_by: search_channel
+    source: GitHub
 
-  research_connector:
+  published_research:
     informs: candidate_quality
     every: per_tick
     origin: outside

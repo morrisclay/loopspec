@@ -14,14 +14,12 @@ goal:
 beliefs:
   named_risk_status:
     question: "Which of this deal's named risks are still open?"
-    from: [call_debrief]
     how: rule
     safe_to_repeat: per_deal_per_tick
     # no checked_by — nothing asks whether proposed deals actually advanced
 
   blocking_unknowns:
     question: "What is still unknown that would block a stage move?"
-    from: [linear_state]
     how: rule
 
 observes:
@@ -32,16 +30,18 @@ observes:
     how: reported            # a partner's account of the call, not a recording
     reported_by: partner
 
-  linear_state:
+  project_state:
     informs: blocking_unknowns
     every: per_tick
     origin: outside
     how: measured
+    source: Linear
 
-  attio_stage:
+  crm_stage:
     every: per_tick
     origin: outside
     how: measured
+    source: Attio
     # informs nothing. Read every tick and connected to no belief.
 
 actions:
@@ -50,10 +50,10 @@ actions:
     can_undo: yes
     needs_approval: partner
 
-  enrich_attio:
+  enrich_deal_record:
     can_undo: costly
     # and gated on nobody. The spec is scrupulous about the stage field and silent here,
-    # though this path also writes to Attio.
+    # though this path writes to the same CRM.
 
   sync_drive:
     can_undo: yes

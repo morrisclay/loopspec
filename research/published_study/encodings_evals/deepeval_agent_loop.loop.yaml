@@ -10,7 +10,6 @@ goal:
 beliefs:
   agent_looping:
     question: "Is this agent repeating itself without progress?"
-    from: [agent_trace]
     how: judgement            # an LLM reading the trace
     # NO checked_by — nothing scores whether its loop calls were right
 

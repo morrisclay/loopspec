@@ -14,7 +14,6 @@ regulates:
 
 estimates:
   task_complete:
-    from: [worker_report, verifier_report]
     method: judgement
     # nothing calibrates this — the orchestrator never learns whether it stopped too early
 
@@ -44,7 +43,6 @@ every: per_subtask
 
 estimates:
   claim_truth:
-    from: [web_search]
     method: judgement
 
 observes:
@@ -66,8 +64,7 @@ loop: verifier
 every: per_claim
 
 estimates:
-  claim_truth:                       # THE SAME ESTIMAND the worker produces
-    from: [worker_report]            # and its only input is the worker's own output
+  claim_truth:                       # THE SAME ESTIMAND the worker produces            # and its only input is the worker's own output
     method: judgement
 
 observes:

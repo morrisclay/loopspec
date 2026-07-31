@@ -23,8 +23,8 @@ linter — not written by hand.
 | [`no_human_at_all`](#no-human-at-all) | 14/21 | attention | *"it never asks me anything"* |
 | [`unbounded_loop`](#unbounded-loop) | 11/21 | attention | *"it ran all weekend"* |
 | [`no_exogenous_grounding`](#no-exogenous-grounding) | 9/21 | attention | *"it confirms its own beliefs"* |
+| [`unmeasured_estimand`](#unmeasured-estimand) | 9/21 | attention | *"it claims to track things it doesn't"* |
 | [`reinforcing_loop_no_balancer`](#reinforcing-loop-no-balancer) | 7/21 | — | *"it runs away"* |
-| [`unmeasured_estimand`](#unmeasured-estimand) | 7/21 | attention | *"it claims to track things it doesn't"* |
 | [`ceiling_without_correction`](#ceiling-without-correction) | 6/21 | attention | *"it hit the wall and stopped, with no warning"* |
 | [`consequence_without_authority`](#consequence-without-authority) | 6/21 | — | *"I carry the risk and control none of it"* |
 | [`irreversible_without_approval`](#irreversible-without-approval) | 6/21 | — | *"my agent did something I can't undo"* |
@@ -38,8 +38,8 @@ linter — not written by hand.
 | [`policy_reads_undeclared`](#policy-reads-undeclared) | 2/21 | calibration | *"it branches on something that doesn't exist"* |
 | [`shared_estimand_no_arbiter`](#shared-estimand-no-arbiter) | 2/21 | calibration | *"my agents disagree and whichever finishes last wins"* |
 | [`uncontrollable_target`](#uncontrollable-target) | 2/21 | — | *"it has a goal it can't actually move"* |
-| [`open_loop`](#open-loop) | 1/21 | — | *"it observes, and it acts, and the two are unrelated"* |
 | [`unowned_act`](#unowned-act) | 1/21 | — | *"two agents can do the same thing under different rules"* |
+| [`open_loop`](#open-loop) | 0/21 | — | *"it observes, and it acts, and the two are unrelated"* |
 
 ---
 
@@ -123,6 +123,22 @@ linter — not written by hand.
 
 ---
 
+## `unmeasured_estimand`
+
+> *"it claims to track things it doesn't"*
+
+**What it looked at.** A quantity with no observation informing it.
+
+**How to fix it.** Add an entry to `observes:` with `informs:` pointing at it, or stop claiming to track it.
+
+**Status.** fires on **9 of 21** specs here · measured · the *attention* half. Kalman observability — a state is observable if it can be inferred from outputs.
+
+**Real finding**, from `examples/customer_acquisition.loop.yaml`:
+
+> Estimand `payback_months` has no signal measuring it. Any estimate of it is formed from something the encoding does not record.
+
+---
+
 ## `reinforcing_loop_no_balancer`
 
 > *"it runs away"*
@@ -136,22 +152,6 @@ linter — not written by hand.
 **Real finding**, from `examples/field/conviction_termination.loop.yaml`:
 
 > Loop `conviction_termination` is REINFORCING: its signal `resolved_hypotheses` is produced by its own intervention, and no exogenous signal measures what it measures. System dynamics: a loop with no negative link diverges rather than self-corrects. Nothing outside the loop can contradict it.
-
----
-
-## `unmeasured_estimand`
-
-> *"it claims to track things it doesn't"*
-
-**What it looked at.** A quantity with no observation informing it.
-
-**How to fix it.** Add an entry to `observes:` with `informs:` pointing at it, or stop claiming to track it.
-
-**Status.** fires on **7 of 21** specs here · measured · the *attention* half. Kalman observability — a state is observable if it can be inferred from outputs.
-
-**Real finding**, from `examples/customer_acquisition.loop.yaml`:
-
-> Estimand `payback_months` has no signal measuring it. Any estimate of it is formed from something the encoding does not record.
 
 ---
 
@@ -215,7 +215,7 @@ linter — not written by hand.
 
 **Real finding**, from `examples/field/meeseeks_sourcing.loop.yaml`:
 
-> Loop `meeseeks_sourcing` reads 2 observations and exactly one of them — `research_connector` — comes from outside itself. Everything else it looks at, it produced. `research_connector` is therefore the only thing that can fail in a way this loop did not intend, and the loop is exactly as trustworthy as that one input. Weaken it and the loop is sealed.
+> Loop `meeseeks_sourcing` reads 2 observations and exactly one of them — `published_research` — comes from outside itself. Everything else it looks at, it produced. `published_research` is therefore the only thing that can fail in a way this loop did not intend, and the loop is exactly as trustworthy as that one input. Weaken it and the loop is sealed.
 
 ---
 
@@ -363,22 +363,6 @@ linter — not written by hand.
 
 ---
 
-## `open_loop`
-
-> *"it observes, and it acts, and the two are unrelated"*
-
-**What it looked at.** The quantity is measured AND moved, and no loop closes between them.
-
-**How to fix it.** Make sure the loop reading that signal is the one taking that action.
-
-**Status.** fires on **1 of 21** specs here · measured.
-
-**Real finding**, from `research/published_study/encodings/lg_self_rag.loop.yaml`:
-
-> `answer_useful` is measured by ['generation'] and moved by ['generate'], but no loop closes between them. Every part of a regulator is present and nothing joins them, so the measurement never reaches the lever. Felt symptom: it observes, and it acts, and the two are unrelated.
-
----
-
 ## `unowned_act`
 
 > *"two agents can do the same thing under different rules"*
@@ -392,6 +376,18 @@ linter — not written by hand.
 **Real finding**, from `examples/research_group.loop.yaml`:
 
 > Intervention `emit_report` is selected by 2 policies — ['verifier_policy', 'worker_policy'] — belonging to different loops. Nothing says which one owns it, so its approval rule is whichever loop reaches it first. Authority decided by scheduling is not authority.
+
+---
+
+## `open_loop`
+
+> *"it observes, and it acts, and the two are unrelated"*
+
+**What it looked at.** The quantity is measured AND moved, and no loop closes between them.
+
+**How to fix it.** Make sure the loop reading that signal is the one taking that action.
+
+**Status.** fires on **0 of 21** specs here · measured.
 
 ---
 

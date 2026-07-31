@@ -6,7 +6,6 @@ goal:
 beliefs:
   answer_quality:
     question: "Is this answer right, and what is missing from it?"
-    from: [search_results, self_critique]
     how: judgement
     # no checked_by
 observes:

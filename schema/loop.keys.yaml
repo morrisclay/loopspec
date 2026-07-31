@@ -129,7 +129,13 @@ beliefs_entry:
   from:
     type: list
     of: str
-    doc: Which observations feed this. Each must appear in `observes`.
+    deprecated: true
+    doc: >
+      DEPRECATED — declare the edge once, on the observation, with `informs:`. This said the
+      same thing from the other end and the two could disagree silently: one spec had
+      `beliefs.product_market_fit.from: [stripe]` and `observes.stripe.informs:
+      cost_per_customer`, and BOTH edges were created. Still accepted so old specs parse; it is
+      now an error for the two to contradict each other.
     aliases: [formed_from]
   how:
     type: str
@@ -191,6 +197,14 @@ observes_entry:
   produced_by:
     type: str
     doc: "Which of our own actions creates this, when `origin: ourselves`."
+  source:
+    type: str
+    doc: >
+      Where it physically comes from — Stripe, Attio, a webhook, a cron. OPTIONAL, and it
+      belongs here rather than in the name. NAME AN OBSERVATION FOR WHAT IT TELLS YOU, NOT
+      WHERE YOU GET IT: `billing_events`, not `stripe`. Vendors churn and the loop does not;
+      a spec named after today's tools has to be rewritten when they change, and two companies
+      observing the same thing through different vendors cannot be compared at all.
   checked_by:
     type: str
     doc: >
@@ -230,7 +244,13 @@ actions_entry:
 when_entry:
   if:       {type: str, doc: The condition.}
   do:       {type: [str, list], doc: Action(s) to take. Must name entries in `actions`.}
-  escalate: {type: str, doc: Person to ask instead. Must name someone in `people`.}
+  escalate:
+    type: str
+    deprecated: true
+    doc: >
+      DEPRECATED — use the top-level `asks_human_when:`. Escalation buried inside a decision
+      rule is how it goes missing, and having both meant four different ways to say a human is
+      involved. Still accepted.
 
 spends_entry:
   limit:
@@ -264,4 +284,9 @@ people_entry:
     doc: >
       What information actually reaches them. Someone who loses something and sees nothing is
       accountable and blind, which is oversight in name only.
-  may_decide: {type: str, doc: What this person has authority over.}
+  may_decide:
+    type: str
+    deprecated: true
+    doc: >
+      DEPRECATED — prose that nothing reads. What a person may decide is already stated, and
+      checkably, by `needs_approval:` on the actions they gate.

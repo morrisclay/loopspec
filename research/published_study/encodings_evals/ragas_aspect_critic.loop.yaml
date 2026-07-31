@@ -9,7 +9,6 @@ goal:
 beliefs:
   aspect_satisfied:
     question: "Does this response satisfy the aspect, as the user defined it?"
-    from: [response]
     how: judgement
     # NO checked_by
 

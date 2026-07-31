@@ -104,11 +104,17 @@ class SpecError(Exception):
     pass
 
 
+DEPRECATIONS = []
+
+
 def _check_entry(spec_name, entry, section, errs, where):
     rules = GRAMMAR.get(section) or {}
     if not isinstance(entry, dict):
         return
     for k, v in entry.items():
+        if k in rules and rules[k].get("deprecated"):
+            DEPRECATIONS.append(f"{where}: `{k}` is deprecated — "
+                                + " ".join(str(rules[k].get("doc", "")).split())[:150])
         if k not in rules:
             errs.append(f"{where}: unknown key `{k}`.{_near(k, rules)}")
             continue
@@ -164,8 +170,20 @@ def validate(spec, path="<spec>", scope=None):
         if esc and esc not in parties:
             errs.append(f"when[{i}]: `escalate: {esc}` names nobody in `people`."
                         f"{_near(esc, parties)}")
+    # The same edge was declarable from both ends and the two could disagree silently.
+    # `informs` is canonical; `from` is deprecated and must now AGREE with it.
     for nm, body in (spec.get("beliefs") or {}).items():
         for src in ((body or {}).get("from") or []):
+            o = (scope.get("observes") or {}).get(src)
+            if isinstance(o, dict) and o.get("informs"):
+                inf = o["informs"]
+                inf = [inf] if isinstance(inf, str) else inf
+                if nm not in inf:
+                    errs.append(
+                        f"beliefs.{nm}: `from: {src}` says {src} feeds {nm}, but "
+                        f"observes.{src} says `informs: {inf[0] if len(inf)==1 else inf}`. "
+                        f"The same edge is declared twice and the two disagree. Declare it "
+                        f"once, on the observation, with `informs:`.")
             if src not in signals:
                 errs.append(f"beliefs.{nm}: `from: {src}` names no entry in `observes`."
                             f"{_near(src, signals)}")
@@ -440,6 +458,8 @@ if __name__ == "__main__":
         sys.exit(f"\n{e}\n")
     for w in warns:
         print(f"warning: {w}", file=sys.stderr)
+    for w in dict.fromkeys(DEPRECATIONS):
+        print(f"deprecated: {w}", file=sys.stderr)
     out = yaml.safe_dump(doc, sort_keys=False, width=100)
     if "--lint" in sys.argv:
         tmp = "/tmp/_uras_expanded.yaml"

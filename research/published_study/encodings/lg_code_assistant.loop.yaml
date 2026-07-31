@@ -6,7 +6,6 @@ goal:
 beliefs:
   code_correct:
     question: "Does this code actually run?"
-    from: [import_check, execution_check, reflection]
     how: judgement
     # no checked_by
 observes:

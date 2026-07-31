@@ -7,7 +7,6 @@ goal:
 beliefs:
   essay_quality:
     question: "Is this essay any good?"
-    from: [critique]
     how: judgement          # an LLM asked to critique the previous draft
     # no checked_by — nothing scores whether the critic's past judgements were right
 observes:

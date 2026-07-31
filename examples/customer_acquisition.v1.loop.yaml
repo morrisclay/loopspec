@@ -8,14 +8,12 @@ goal:
   cost_per_customer:
     keep: below 400
     unit: USD
-    from: [ad_spend, new_customers]
   payback_months:
     keep: below 12
 
 beliefs:
   product_market_fit:
     question: "If we keep buying customers like this month's, will they stay?"
-    from: [customer_interviews, stripe]
     how: bayesian
     explains: cost_per_customer
     settled_by: "a cohort retains above 80% at month 6"
@@ -24,22 +22,23 @@ beliefs:
 
   channel_saturation:
     question: "Can this channel absorb more money before cost climbs?"
-    from: [ad_platform]
     how: judgement
     checked_by: monthly_spend_vs_cost_review
 
 observes:
-  stripe:
-    informs: cost_per_customer
+  billing_events:
+    informs: [cost_per_customer, product_market_fit]
     every: daily
     origin: outside
     how: measured
+    source: Stripe           # the vendor lives here, not in the name
 
-  ad_platform:
+  ad_delivery:
     informs: channel_saturation
     every: daily
     origin: ourselves        # we caused this spend to exist
     how: measured
+    source: the ad platform
 
   customer_interviews:
     informs: product_market_fit
