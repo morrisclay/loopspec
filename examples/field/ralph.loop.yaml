@@ -1,0 +1,55 @@
+# The Ralph Wiggum loop — a bash while-true feeding the same prompt back until the agent
+# emits a completion promise. Encoded from ghuntley.com/ralph and the ralph-loop plugin.
+#
+# Encoded as written. The gaps are Ralph's, not the encoding's.
+
+loop: ralph
+runs: per_iteration
+
+goal:
+  agent_says_done:
+    keep: "the agent emits the completion promise"
+
+beliefs:
+  task_actually_done:
+    question: "Is the work finished, as opposed to declared finished?"
+    from: [files_and_git, test_results]
+    how: judgement
+    explains: agent_says_done
+    # no checked_by. Nothing ever asks whether it was right to stop.
+
+observes:
+  files_and_git:
+    informs: task_actually_done
+    every: per_iteration
+    origin: ourselves          # the agent reads its own past work
+    how: reported              # and this is its own account of that work
+    produced_by: implement_one_task
+
+  test_results:
+    informs: task_actually_done
+    every: per_iteration
+    origin: outside            # THE ONLY thing that can fail in a way the agent did not intend
+    how: measured
+
+actions:
+  implement_one_task:
+    moves: task_actually_done
+    can_undo: yes              # it is version-controlled
+
+when:
+  - if: "fresh context and the agent has not said done"
+    do: implement_one_task
+
+people:
+  engineer:
+    human: yes
+    loses_if_wrong: "the code, and the hours the loop ran unattended"
+    # sees nothing while it runs. That is the design.
+
+never:
+  - "exceed the hard iteration ceiling"   # a stop, not a correction
+
+not_modelling:
+  - whether the task was the right task
+  - token cost

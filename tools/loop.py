@@ -195,6 +195,12 @@ def validate(spec, path="<spec>", scope=None):
                         "\n".join(f"  ✗ {e}" for e in errs))
 
 
+STOPWORDS = {"and", "or", "not", "the", "has", "have", "for", "with", "within", "above",
+             "below", "over", "under", "still", "high", "low", "zero", "all", "any", "least",
+             "most", "than", "that", "this", "been", "are", "was", "were", "its", "not",
+             "said", "done", "open", "same", "each", "from", "into", "out", "off"}
+
+
 def slug(s):
     return re.sub(r"[^a-z0-9_]+", "_", str(s).lower()).strip("_")
 
@@ -333,13 +339,19 @@ def expand_one(g, spec, path="<spec>", scope=None):
 
     # --- when: the decision rule ---------------------------------------------------
     rules = spec.get("when") or []
+    declared = set((spec.get("goal") or {})) | set((spec.get("beliefs") or {}))
     if rules:
         pid = g.node(f"{lid}_policy", "Policy",
                      rule="; ".join(str(r.get("if", "always")) for r in rules),
                      inputs=sorted({t for r in rules
                                     for t in re.findall(r"[a-z_][a-z0-9_]{2,}",
                                                         str(r.get("if", "")))
-                                    if t not in ("and", "or", "not", "confidence")}),
+                                    if t in declared}),
+                     reads_undeclared=sorted({t for r in rules
+                                              for t in re.findall(r"[a-z_][a-z0-9_]{3,}",
+                                                                  str(r.get("if", "")))
+                                              if t not in declared
+                                              and t not in STOPWORDS}) or None,
                      escalates=next((slug(r["escalate"]) for r in rules
                                      if r.get("escalate")), None),
                      asks_human_when=spec.get("asks_human_when") or None)

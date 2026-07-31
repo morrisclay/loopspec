@@ -1,0 +1,81 @@
+# The Deal Steward — an agent that watches deals in Linear and proposes stage moves.
+# Encoded from t-minus spec/DEAL-STEWARD-MEESEEKS.md and features/steward/*.feature.
+#
+# Unusually careful about human authority: it PROPOSES stage changes as a Linear task and
+# never writes the Attio stage field, with ratified rules on ungameability.
+
+loop: deal_steward
+runs: per_tick
+
+goal:
+  deal_readiness:
+    keep: "every completed call debriefed AND no blocking unknown open"
+
+beliefs:
+  named_risk_status:
+    question: "Which of this deal's named risks are still open?"
+    from: [call_debrief]
+    how: rule
+    safe_to_repeat: per_deal_per_tick
+    # no checked_by — nothing asks whether proposed deals actually advanced
+
+  blocking_unknowns:
+    question: "What is still unknown that would block a stage move?"
+    from: [linear_state]
+    how: rule
+
+observes:
+  call_debrief:
+    informs: deal_readiness
+    every: per_call
+    origin: outside
+    how: reported            # a partner's account of the call, not a recording
+    reported_by: partner
+
+  linear_state:
+    informs: blocking_unknowns
+    every: per_tick
+    origin: outside
+    how: measured
+
+  attio_stage:
+    every: per_tick
+    origin: outside
+    how: measured
+    # informs nothing. Read every tick and connected to no belief.
+
+actions:
+  propose_stage_move:
+    moves: deal_readiness
+    can_undo: yes
+    needs_approval: partner
+
+  enrich_attio:
+    can_undo: costly
+    # and gated on nobody. The spec is scrupulous about the stage field and silent here,
+    # though this path also writes to Attio.
+
+  sync_drive:
+    can_undo: yes
+
+when:
+  - if: "all calls debriefed and no blocking unknown open"
+    do: propose_stage_move
+
+asks_human_when:
+  - "a stage move is proposed"
+
+people:
+  partner:
+    human: yes
+    loses_if_wrong: "the deal, and the relationship with the founder"
+    sees: [deal_readiness, named_risk_status]
+    may_decide: every stage change
+
+never:
+  - "the steward writes the Attio stage field — it proposes a Linear task instead"
+  - "ticking again proposes the same move twice"
+  - "a human edit to a milestone is resurrected after being cancelled"
+
+not_modelling:
+  - whether the deal is a good deal

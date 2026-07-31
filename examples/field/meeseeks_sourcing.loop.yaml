@@ -1,0 +1,64 @@
+# The Meeseeks sourcing loop — searches channels for candidates, retires channels that
+# find nothing. Encoded from the t-minus sourcing spec.
+#
+# The only loop in this corpus that scores its own SOURCE rather than only its output.
+
+loop: meeseeks_sourcing
+runs: per_tick
+
+goal:
+  channel_viability:
+    keep: "candidates above threshold found within the trial window"
+
+beliefs:
+  candidate_quality:
+    question: "Is this person worth the GP's attention?"
+    from: [github_channel, research_connector]
+    how: rubric
+    safe_to_repeat: per_candidate_id
+    checked_by: viability_review     # retires a channel that finds nothing
+    every: trial_window_7d
+    explains: channel_viability
+
+observes:
+  github_channel:
+    informs: candidate_quality
+    every: per_tick
+    origin: ourselves               # we chose to search here
+    how: measured
+    produced_by: search_channel
+
+  research_connector:
+    informs: candidate_quality
+    every: per_tick
+    origin: outside
+    how: measured
+
+actions:
+  search_channel:
+    moves: candidate_quality
+    can_undo: yes
+    consumes: [gp_attention]
+
+  retire_channel:
+    moves: channel_viability
+    can_undo: costly                # the channel stops being searched
+
+  discover_channel:
+    moves: channel_viability
+    can_undo: yes
+
+when:
+  - if: "zero above-threshold candidates within the trial window"
+    do: retire_channel
+  - if: "existing channels exhausted"
+    do: discover_channel
+
+people:
+  gp:
+    human: yes
+    loses_if_wrong: "attention spent on people who were never worth meeting"
+    sees: [candidate_quality]
+
+not_modelling:
+  - whether a retired channel would have produced later

@@ -1,0 +1,63 @@
+# The termination rule of the /complicate conviction engine — when does the loop stop?
+# Encoded from the t-minus complication-agent spec.
+
+loop: conviction_termination
+runs: per_cycle
+
+goal:
+  conviction:
+    keep: "at or above 0.75"
+    from: [hypothesis_score, avg_confidence, convergence]
+
+beliefs:
+  conviction:
+    question: "How convinced are we, and is that conviction earned?"
+    from: [resolved_hypotheses, scenario_probabilities]
+    how: expression      # 0.4*hypothesis_score + 0.35*min(1,avg_confidence) + 0.25*convergence
+    safe_to_repeat: per_cycle_id
+    # no checked_by — nothing scores whether high-conviction calls turned out right
+
+  expected_info_gain:
+    question: "Would another cycle actually tell us anything new?"
+    how: judgement
+    # THE FINDING: the stop rule reads this and nothing computes it.
+
+observes:
+  resolved_hypotheses:
+    informs: conviction
+    every: per_cycle
+    origin: ourselves        # the loop resolves its own hypotheses
+    how: reported
+    produced_by: continue_loop
+
+  scenario_probabilities:
+    informs: conviction
+    every: per_cycle
+    origin: ourselves
+    how: reported
+    produced_by: continue_loop
+
+actions:
+  continue_loop:
+    moves: conviction
+    can_undo: yes
+  route_to_compile:
+    can_undo: costly         # the run ends and produces its output
+
+when:
+  - if: "conviction at or above 0.75 and avg_confidence at or above 0.75"
+    do: route_to_compile
+  - if: "expected_info_gain still high"
+    do: continue_loop
+
+people:
+  analyst:
+    human: yes
+    loses_if_wrong: "acts on a conviction that was never earned"
+    sees: [conviction]
+
+never:
+  - "conversation length is a termination condition"
+
+not_modelling:
+  - the cost of another cycle

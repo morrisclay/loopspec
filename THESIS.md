@@ -72,7 +72,12 @@ until the agent emits a completion promise. Encoded and linted cold, it produces
 - The completion promise is a **self-assessed** DesiredCondition, and `max-iterations` is a
   hard ceiling rather than a correction.
 
-Which yields a structural claim that is checkable rather than rhetorical:
+**Correction, from re-encoding Ralph in the authoring format** (`examples/field/`): the
+`orphan_signal` above was an encoding gap, and the claim below was nearly stated wrongly. An
+earlier graph encoding had Ralph tripping `no_exogenous_grounding` — *nothing outside reaches
+it* — which is false. Ralph reads test results, which are exogenous. The firing was an
+artifact of the graph naming only one of Ralph's two signals. The property is real but
+narrower, and is now a derived check (`single_point_of_grounding`) rather than a description:
 
 > **Ralph is grounded only through the test signal.** Tests are the sole exogenous input — the
 > one thing that can fail in a way the agent did not intend. Everything else in the loop is
@@ -80,8 +85,9 @@ Which yields a structural claim that is checkable rather than rhetorical:
 > is epistemically closed and can iterate indefinitely on its own output before declaring
 > victory.
 
-That matches what practitioners report, and it is **derivable from the loop's shape** rather
-than from experience. That is precisely what this layer is supposed to do.
+That matches what practitioners report, and it is now **literally derived from the loop's
+shape** — the linter emits it from `examples/field/ralph.loop.yaml` without being told. That
+is precisely what this layer is supposed to do, and it took a wrong version first.
 
 It is not a criticism of Ralph. Ralph is excellent *operational* loop engineering. It is a poor
 *cybernetic* loop, and knowing which parts are which tells you when to trust it.

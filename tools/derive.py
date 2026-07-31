@@ -707,6 +707,78 @@ def q_belief_never_checked(d, nodes, edges):
     return out
 
 
+
+
+def q_policy_reads_undeclared(d, nodes, edges):
+    """
+    A decision rule that tests something the spec never declares.
+
+    Distinct from `policy_on_unmeasured_inputs`, which catches a DECLARED quantity nothing
+    measures. This catches a quantity that appears only inside the condition — never in
+    `goal`, never in `beliefs`, so nothing observes it, nothing computes it, and nothing can.
+    It is the sharper version because there is no place in the spec where it could be wrong;
+    it simply does not exist.
+
+    The original instance: a termination rule guarding on `avg_confidence`, which is named
+    nowhere else in the system.
+    """
+    out = []
+    for i, n in nodes.items():
+        if n.get("kind") != "Policy":
+            continue
+        for name in (n.get("reads_undeclared") or []):
+            out.append({
+                "pattern": "policy_reads_undeclared",
+                "claim": (f"The decision rule tests `{name}`, and `{name}` is declared nowhere "
+                          f"in this loop — not as a goal, not as a belief. Nothing observes it "
+                          f"and nothing computes it. The rule reads a quantity that does not "
+                          f"exist, so whatever it does at that branch is not what the spec "
+                          f"says it does."),
+                "evidence": {"policy": i, "undeclared": name, "rule": n.get("rule")},
+            })
+    return out
+
+
+def q_single_point_of_grounding(d, nodes, edges):
+    """
+    A loop with exactly ONE exogenous input.
+
+    This is the Ralph finding stated correctly, and the previous version was wrong. Encoded in
+    the old graph shape Ralph tripped `no_exogenous_grounding` — but Ralph DOES have an
+    exogenous input: the tests. That firing was an artifact of the loop record naming only one
+    of its two signals, and the loop format, which records them all, correctly stopped it.
+
+    The real property is narrower and more useful: everything Ralph observes is produced by
+    Ralph except the tests, so the tests are the ONLY thing that can fail in a way the agent
+    did not intend. With a strong suite Ralph is a genuine regulator; without one it is sealed.
+    That is a single point of failure in the epistemics, not the absence of grounding — and it
+    is what practitioners actually report.
+    """
+    produced = {b for a, b in rel(edges, "produces")}
+    out = []
+    for lp in (d.get("loops") or []):
+        mine = set(lp.get("signals") or ([lp["signal"]] if lp.get("signal") else []))
+        mine = {s for s in mine if nodes.get(s, {}).get("kind") == "Signal"}
+        if len(mine) < 2:
+            continue
+        exo = {s for s in mine
+               if s not in produced and nodes.get(s, {}).get("origin") != "ourselves"}
+        if len(exo) != 1:
+            continue
+        only = next(iter(exo))
+        out.append({
+            "pattern": "single_point_of_grounding",
+            "claim": (f"Loop `{lp['id']}` reads {len(mine)} observations and exactly one of "
+                      f"them — `{only}` — comes from outside itself. Everything else it looks "
+                      f"at, it produced. `{only}` is therefore the only thing that can fail in "
+                      f"a way this loop did not intend, and the loop is exactly as trustworthy "
+                      f"as that one input. Weaken it and the loop is sealed."),
+            "evidence": {"loop": lp["id"], "sole_exogenous": only,
+                         "endogenous": sorted(mine - exo)},
+        })
+    return out
+
+
 def q_shared_estimand_no_arbiter(d, nodes, edges):
     """
     Two loops estimate the same quantity and nothing reconciles them.
@@ -883,6 +955,8 @@ def q_no_escalation_path(d, nodes, edges):
 
 QUERIES = [
     q_belief_never_checked,
+    q_single_point_of_grounding,
+    q_policy_reads_undeclared,
     q_shared_estimand_no_arbiter,
     q_no_exogenous_grounding,
     q_unowned_act,
