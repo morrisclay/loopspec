@@ -1,0 +1,63 @@
+uras_version: 0
+encodes: complicate_investigate_loop
+set: field
+domain: investment_process
+encoded_by: claude-opus-5
+shape: canonical-graph
+
+# ONE LOOP from a system the operator actually runs — the /complicate conviction engine.
+# Deliberately minimal: no attempt to encode the whole engine, no completeness requirement.
+# This is the smallest-adoptable-unit test.
+
+nodes:
+  - {id: engine, kind: System, name: complicate_conviction_loop}
+
+  - {id: analyst, kind: Party}
+  - {id: wrong_conviction, kind: Consequence, borne_by: analyst, measured: false,
+     note: 'a confident wrong call on a deal — felt much later, and rarely attributed back'}
+
+  # Hypotheses are the estimands. Each has a resolution condition by construction.
+  - {id: hypothesis, kind: Estimand, determination: latent, criticality: existential,
+     resolution_condition: declared per hypothesis; status moves draft -> queued ->
+       investigating -> resolved}
+  # Scenarios are competing explanations, not estimands.
+  - {id: scenario, kind: Explanation,
+     competing: true,
+     would_be_refuted_by: a hypothesis resolving in favour of a rival scenario}
+
+  - {id: evidence_item, kind: Signal, frequency: per-investigation, cost: analyst_time}
+  - {id: resolution, kind: Estimator, idempotency_basis: per_hypothesis_per_cycle}
+  - {id: belief, kind: Estimate, held_by: analyst, uncertainty: ordinal}
+
+  - {id: investigate, kind: Intervention, target: world,
+     motive: acquire evidence on the selected hypothesis}
+  - {id: prioritise, kind: Policy, guard: cycle boundary reached,
+     based_on: [hypothesis], form: elo_ranking_over_unresolved}
+
+  - {id: balance_rule, kind: Constraint, tradeable: false,
+     rule: every investigating or resolved hypothesis carries >=1 supporting AND
+       >=1 challenging evidence item}
+  - {id: cycle, kind: TimeScale, period: per_cycle}
+  - {id: analyst_time, kind: Resource, depletable: true}
+
+edges:
+  - {from: engine, to: hypothesis, rel: contains}
+  - {from: analyst, to: wrong_conviction, rel: bears}
+  - {from: analyst, to: belief, rel: holds}
+  - {from: analyst, to: investigate, rel: authorizes}
+  - {from: evidence_item, to: hypothesis, rel: measures}
+  - {from: resolution, to: belief, rel: estimates}
+  - {from: scenario, to: hypothesis, rel: explains}
+  - {from: prioritise, to: investigate, rel: closes}
+  - {from: investigate, to: evidence_item, rel: produces}
+  - {from: investigate, to: analyst_time, rel: consumes}
+  - {from: balance_rule, to: investigate, rel: constrains}
+
+loops:
+  - {id: investigate_cycle, timescale: cycle, signal: evidence_item,
+     intervention: investigate}
+
+excluded_variables:
+  - whether_a_hypothesis_was_dropped_because_it_was_resolved_or_because_it_was_tiring
+  - which_evidence_was_sought_versus_which_merely_arrived
+  - how_much_of_conviction_is_the_deadline
