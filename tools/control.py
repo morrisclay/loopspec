@@ -82,6 +82,7 @@ def render(path):
             L.append(f'  subgraph {g}["{esc(loop)} · regulating {esc(q)}"]')
             L.append("    direction LR")
 
+            sb = gb.get("set_by")
             L.append(f'    {g}_sp{{{{"setpoint<br/>{esc(gb.get("keep","—"))}"}}}}')
             L.append(f'    {g}_cmp(("Σ<br/>error"))')
             L.append(f'    {g}_pol{{"decide"}}')
@@ -108,6 +109,10 @@ def render(path):
             L.append("    end")
 
             # --- the ring ---------------------------------------------------------
+            if sb:
+                outer, _, oq = str(sb).partition(".")
+                # the cascade: the outer loop's quantity IS this setpoint
+                L.append(f'  {sid(outer, oq)}_est ==>|sets target| {g}_sp')
             L.append(f"  {g}_sp --> {g}_cmp")
             L.append(f"  {g}_cmp -->|error| {g}_pol")
             if movers:
@@ -150,6 +155,9 @@ def render(path):
                              f"destroys variety.")
             if not rules:
                 notes.append(f"`{q}` — no decision rule; the comparator drives nothing.")
+            if sb:
+                notes.append(f"`{q}` — cascade: its setpoint is `{sb}`. The inner loop must "
+                             f"settle before the outer one acts again, or both hunt.")
 
     L += ["",
           "  classDef gap fill:#fff0f0,stroke:#c00,stroke-width:1px,color:#900,"

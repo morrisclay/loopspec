@@ -176,6 +176,22 @@ consequence_without_authority:
   half: neither
   evidence: corpus
 
+cascade_timescale_inversion:
+  symptom: "the two loops fight each other"
+  means: "A goal `set_by` another loop, where the inner loop runs no faster than the outer one."
+  fix: "Make the inner loop faster, or slow the outer one. In cascade control the inner loop must settle before the outer acts again — otherwise the outer corrects against a response that has not arrived and both hunt. Silent when either cadence cannot be ranked."
+  half: neither
+  grounded: "Cascade control — a necessary condition, not a preference."
+  evidence: motivated
+
+frozen_setpoint:
+  symptom: "the target has not changed in a year and nobody owns it"
+  means: "A goal `set_by: <loop>.<quantity>` where no action anywhere moves that quantity."
+  fix: "Give the outer loop an action that moves it, or stop claiming the target is managed. The hierarchy is drawn and the target never changes — the inner loop regulates against a constant an outer loop is nominally responsible for and never revisits."
+  half: neither
+  grounded: "The failure `set_by` exists to make visible."
+  evidence: motivated
+
 insufficient_variety:
   symptom: "it can only do one thing and the world does many"
   means: More things named in `not_modelling` than there are distinguishable actions.

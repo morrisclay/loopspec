@@ -1,0 +1,33 @@
+# CASCADE — a slow outer loop setting a fast inner loop's target.
+# The standard shape of every control hierarchy, and the one agent systems reach for
+# without naming: a "strategy" loop deciding what the "execution" loop should aim at.
+#
+# The hard requirement: the INNER loop must run FASTER than the loop setting its target.
+# Invert it and the outer loop corrects against a response that has not arrived yet.
+# Try it: swap `monthly` and `daily` below and re-lint.
+
+loop: strategy
+runs: monthly
+goal:
+  target_cac: { keep: "whatever the model says is affordable" }
+observes:
+  runway_model: { informs: target_cac, origin: outside, how: calculated }
+actions:
+  reset_cac_target: { moves: target_cac, can_undo: yes }
+when:
+  - if: "runway changed"
+    do: reset_cac_target
+---
+loop: acquisition
+runs: daily
+goal:
+  cost_per_customer:
+    keep: below target_cac
+    set_by: strategy.target_cac
+observes:
+  billing_events: { informs: cost_per_customer, origin: outside, how: measured }
+actions:
+  adjust_spend: { moves: cost_per_customer, can_undo: yes }
+when:
+  - if: "cost_per_customer above target"
+    do: adjust_spend

@@ -157,6 +157,10 @@
           "type": "string",
           "description": "USD, days, percent \u2014 whatever makes the number meaningful."
         },
+        "set_by": {
+          "type": "string",
+          "description": "`<loop>.<quantity>` \u2014 the outer loop's quantity that IS this setpoint. Cascade control, the standard shape of every real control hierarchy: a slow outer loop decides what the fast inner loop should aim at. Naming the QUANTITY and not just the loop is what makes the link structural \u2014 otherwise \"set by the strategy loop\" is a comment, and nothing can check whether that loop is able to move the number it is nominally responsible for. Naming it is what stops an outer loop's target from quietly becoming an inner loop's unexamined constant, which is how layered agent systems actually fail. CASCADE HAS A HARD REQUIREMENT: the inner loop must run FASTER than the loop setting its target. If it does not, the outer loop's corrections arrive before the inner one has settled, and both oscillate. That is checkable and is checked."
+        },
         "confidence": {
           "type": "number",
           "description": "How firmly the goal ITSELF is held, 0\u20131 \u2014 uncertainty about what you want, as distinct from uncertainty about the world. Optional, and deliberately not a primitive: it enters on one book sketch and that is not enough evidence."

@@ -96,10 +96,42 @@ decisions you made and why.
    unimplemented.
 2. **No gain.** How hard does the action push per unit of error? Unrepresentable. Without it,
    stability is not analysable even in principle.
-3. **No cascade or hierarchy.** Real control systems nest — an inner fast loop inside an outer
-   slow one. Groups share nodes, but nothing expresses *this loop's setpoint is that loop's
-   output*, which is the standard cascade and very common in agent systems.
-4. **Variety is counted, not measured.**
+3. **Variety is counted, not measured.**
+
+### 3. Cascade — `goal.<q>.set_by: <loop>.<quantity>`
+
+Real control systems nest: a slow outer loop decides what a fast inner loop should aim at.
+Agent systems reach for this constantly — a "strategy" loop setting targets for an "execution"
+loop — and never name it, so nothing can check it.
+
+Naming the **quantity** and not just the loop is what makes the link structural. `set_by:
+strategy` is a comment; `set_by: strategy.target_cac` is a claim something can verify.
+
+Two checks follow, and the first is a genuine necessary condition rather than a preference:
+
+**`cascade_timescale_inversion`** — in cascade control the inner loop must settle *before* the
+outer one acts again. If it does not, the outer loop corrects against a response that has not
+arrived, and both hunt.
+
+> `cost_per_customer_target` is set by the `strategy` loop, and the loop that has to hit that
+> target runs every `weekly` while `strategy` runs every `daily`. The inner loop is not faster
+> than the loop setting its target.
+
+A daily strategy loop driving a weekly execution loop is inverted, and it is an easy mistake to
+make because each loop looks reasonable alone. The check is **silent when either cadence cannot
+be ranked** — cadences are free text on purpose, and a wrong claim about timing is worse than
+no claim.
+
+**`frozen_setpoint`** — the failure `set_by` exists to catch. An outer loop nominally owns a
+setpoint and has no action that moves it, so the target never changes:
+
+> `cost_per_customer_target` is declared `set_by: strategy.target_cac`, and no action anywhere
+> moves `target_cac`. The hierarchy is drawn and the target never changes: the inner loop is
+> regulating against a constant that an outer loop is nominally responsible for and never
+> revisits.
+
+`tools/control.py` draws the cascade as a `sets target` edge from the outer loop's estimate
+into the inner loop's setpoint, so the hierarchy is visible as a hierarchy.
 
 ## The honest summary
 
@@ -107,7 +139,6 @@ It is a **cybernetically-grounded notation with a control projection**, not a co
 analysis tool. It will tell you your loop is structurally not a regulator. It will not tell you
 whether your regulator is stable — and it should stop implying otherwise anywhere it does.
 
-The next thing that would move it furthest is **cascade**: `goal.<q>.set_by: <other_loop>`.
-That is one field, it is the standard shape of every real hierarchy of control, and it is how
-agent systems actually fail — an outer loop's target quietly becoming an inner loop's
-unexamined constant.
+**Cascade is now in.** What remains, in order of how much it would move things: **gain**,
+without which stability is not analysable even in principle; then **`delay_without_damping`**,
+which the format already carries the fields for and the linter still does not check.

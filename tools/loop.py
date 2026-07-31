@@ -156,6 +156,25 @@ def validate(spec, path="<spec>", scope=None):
     estimands = set((scope.get("goal") or {}).keys()) | \
                 set((scope.get("beliefs") or {}).keys())
 
+    loops_in_file = {str(d.get("loop") or d.get("name")) for d in [spec]} | set(
+        (scope.get("_loops") or []))
+    for nm, body in (spec.get("goal") or {}).items():
+        sb = (body or {}).get("set_by")
+        if not sb:
+            continue
+        if "." not in str(sb):
+            errs.append(f"goal.{nm}: `set_by: {sb}` needs the form `<loop>.<quantity>` — which "
+                        f"loop, and which of its quantities IS this setpoint. Naming only the "
+                        f"loop leaves the link unverifiable.")
+            continue
+        outer, _, q = str(sb).partition(".")
+        if outer not in loops_in_file:
+            errs.append(f"goal.{nm}: `set_by: {sb}` names no loop `{outer}` in this file."
+                        f"{_near(outer, loops_in_file)} Put both loops in one file, "
+                        f"separated by `---`.")
+        elif q not in (set(scope.get("goal") or {}) | set(scope.get("beliefs") or {})):
+            errs.append(f"goal.{nm}: `set_by: {sb}` — `{outer}` declares no quantity `{q}`."
+                        f"{_near(q, set(scope.get('goal') or {}))}")
     for nm, body in (spec.get("actions") or {}).items():
         ap = (body or {}).get("needs_approval")
         if ap and ap not in parties:
@@ -285,6 +304,8 @@ def expand_one(g, spec, path="<spec>", scope=None):
         if body.get("keep"):
             tid = g.node(f"{slug(est)}_target", "DesiredCondition",
                          statement=str(body["keep"]),
+                         set_by=body.get("set_by"),
+                         inner_period=spec.get("runs"),
                          confidence_in_target=body.get("confidence"))
             g.edge(tid, est, "targets")
 
@@ -442,6 +463,7 @@ def expand_one(g, spec, path="<spec>", scope=None):
     sigs = list((spec.get("observes") or {}).keys())
     acts = list((spec.get("actions") or {}).keys())
     g.loops.append({"id": lid,
+                    "period": spec.get("runs"),
                     "timescale": cadence,
                     "signal": slug(sigs[0]) if sigs else None,
                     "signals": [slug(s) for s in sigs],
@@ -456,6 +478,7 @@ def expand(path):
     scope = {}
     for section in ("actions", "people", "observes", "goal", "beliefs"):
         scope[section] = {k: v for d in docs for k, v in (d.get(section) or {}).items()}
+    scope["_loops"] = [str(d.get("loop") or d.get("name")) for d in docs]
     g = Graph()
     names = [expand_one(g, d, path, scope) for d in docs]
     name = names[0] if len(names) == 1 else os.path.basename(path).split(".")[0]

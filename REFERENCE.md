@@ -38,6 +38,7 @@ What the loop is steering, and toward what.
 | `keep` *(alias: `target`)* | str |  | The target, read as a sentence: `keep: below 400`, `keep: above 3 sources`. |
 | `from` *(alias: `computed_from`)* | list[str] |  | What this quantity is computed from. |
 | `unit` | str |  | USD, days, percent — whatever makes the number meaningful. |
+| `set_by` | str |  | `<loop>.<quantity>` — the outer loop's quantity that IS this setpoint. Cascade control, the standard shape of every real control hierarchy: a slow outer loop decides what the fast inner loop should aim at. Naming the QUANTITY and not just the loop is what makes the link structural — otherwise "set by the strategy loop" is a comment, and nothing can check whether that loop is able to move the number it is nominally responsible for. Naming it is what stops an outer loop's target from quietly becoming an inner loop's unexamined constant, which is how layered agent systems actually fail. CASCADE HAS A HARD REQUIREMENT: the inner loop must run FASTER than the loop setting its target. If it does not, the outer loop's corrections arrive before the inner one has settled, and both oscillate. That is checkable and is checked. |
 | `confidence` | number |  | How firmly the goal ITSELF is held, 0–1 — uncertainty about what you want, as distinct from uncertainty about the world. Optional, and deliberately not a primitive: it enters on one book sketch and that is not enough evidence. |
 
 ## `beliefs.<name>`

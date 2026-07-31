@@ -851,6 +851,116 @@ def q_expensive_signal_unreviewed(d, nodes, edges):
 
 
 
+
+# ---------------------------------------------------------------------------------------
+# CASCADE — a slow outer loop setting a fast inner loop's target.
+#
+# The standard shape of every real control hierarchy, and the one agent systems reach for
+# without naming: a "strategy" loop that decides what the "execution" loop should aim at.
+# Naming it is what stops the outer loop's target from becoming the inner loop's unexamined
+# constant.
+# ---------------------------------------------------------------------------------------
+
+_PERIOD_ORDER = [
+    (r"\bper[_ ]?(token|call|turn|step|tick|message|iteration|request|query|item|claim|"
+     r"subtask|expansion|retry|case|sample|trace|test_case|ticket|question|deal)\b", 1),
+    (r"\b(\d+)\s*(s|sec|second)s?\b", 2), (r"\b(\d+)\s*(m|min|minute)s?\b", 3),
+    (r"\bhourly\b|\b(\d+)\s*(h|hour)s?\b", 4),
+    (r"\bdaily\b|\b(\d+)\s*(d|day)s?\b", 5),
+    (r"\bweekly\b|\b(\d+)\s*(w|week)s?\b", 6),
+    (r"\bmonthly\b|\b(\d+)\s*(mo|month)s?\b", 7),
+    (r"\bquarterly\b|\bquarter\b", 8),
+    (r"\b(yearly|annually|annual)\b|\b(\d+)\s*(y|year)s?\b", 9),
+]
+
+
+def period_rank(text):
+    """Coarse ordering of cadences. Returns None when unsure — silence beats a wrong claim."""
+    if not text:
+        return None
+    t = str(text).lower()
+    import re as _re
+    for pat, rank in _PERIOD_ORDER:
+        if _re.search(pat, t):
+            return rank
+    return None
+
+
+def q_cascade_timescale_inversion(d, nodes, edges):
+    """
+    An inner loop running no faster than the loop setting its target.
+
+    A NECESSARY CONDITION, not a preference. In cascade control the inner loop must settle
+    before the outer loop acts again; if it does not, the outer loop corrects against a
+    response that has not arrived, and both oscillate. A daily strategy loop setting the target
+    for a weekly execution loop is inverted and will hunt.
+
+    Silent when either cadence cannot be ranked — a wrong claim about timing is worse than no
+    claim, and cadences here are free text on purpose.
+    """
+    loops = {lp["id"]: lp for lp in (d.get("loops") or [])}
+    out = []
+    for i, n in nodes.items():
+        outer_id = str(n.get("set_by") or "").split(".")[0]
+        if n.get("kind") != "DesiredCondition" or not outer_id:
+            continue
+        inner_r = period_rank(n.get("inner_period"))
+        outer_r = period_rank((loops.get(slugish(outer_id)) or {}).get("period"))
+        if inner_r is None or outer_r is None:
+            continue
+        if inner_r < outer_r:
+            continue                      # inner is faster: correct
+        out.append({
+            "pattern": "cascade_timescale_inversion",
+            "claim": (f"`{i}` is set by the `{outer_id}` loop, and the loop that has to hit "
+                      f"that target runs every `{n.get('inner_period')}` while `{outer_id}` "
+                      f"runs every `{(loops.get(slugish(outer_id)) or {}).get('period')}`. "
+                      f"The inner loop is not faster than the loop setting its target, so the "
+                      f"outer one corrects against a response that has not arrived yet. Both "
+                      f"will hunt. In cascade control the inner loop must settle before the "
+                      f"outer acts again."),
+            "evidence": {"target": i, "outer": outer_id,
+                         "inner_runs": n.get("inner_period"),
+                         "outer_runs": (loops.get(slugish(outer_id)) or {}).get("period")},
+        })
+    return out
+
+
+def slugish(s):
+    import re as _re
+    return _re.sub(r"[^a-z0-9_]+", "_", str(s).lower()).strip("_")
+
+
+def q_frozen_setpoint(d, nodes, edges):
+    """
+    A cascade whose outer loop cannot actually move the target it sets.
+
+    The failure the `set_by` field exists to catch: an outer loop nominally owns a setpoint and
+    has no action that drives it, so the target never changes. The hierarchy is drawn, the
+    outer loop runs, and the inner loop is regulating against a constant nobody revisits.
+    """
+    moved = {b for a, b in rel(edges, "targets")
+             if nodes.get(a, {}).get("kind") == "Intervention"}
+    out = []
+    for i, n in nodes.items():
+        if n.get("kind") != "DesiredCondition" or not n.get("set_by"):
+            continue
+        # the OUTER loop's quantity is the setpoint. Can anything move it?
+        q = str(n["set_by"]).partition(".")[2] or None
+        if q and q in moved:
+            continue
+        out.append({
+            "pattern": "frozen_setpoint",
+            "claim": (f"`{i}` is declared `set_by: {n['set_by']}`, and no action anywhere "
+                      f"moves `{q}`. The hierarchy is drawn and the "
+                      f"target never changes: the inner loop is regulating against a constant "
+                      f"that an outer loop is nominally responsible for and never revisits. "
+                      f"That is the failure `set_by` exists to make visible."),
+            "evidence": {"target": i, "outer": n.get("set_by"), "quantity": q},
+        })
+    return out
+
+
 def q_insufficient_variety(d, nodes, edges):
     """
     Ashby 1956: only variety can destroy variety.
@@ -1271,6 +1381,8 @@ QUERIES = [
     q_belief_never_checked,
     q_informs_no_decision,
     q_expensive_signal_unreviewed,
+    q_cascade_timescale_inversion,
+    q_frozen_setpoint,
     q_insufficient_variety,
     q_unbounded_loop,
     q_ceiling_without_correction,
