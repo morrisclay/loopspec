@@ -26,6 +26,107 @@ except ImportError:
     sys.exit("needs pyyaml")
 
 
+
+# ---------------------------------------------------------------------------------------
+# STRICT VALIDATION against schema/loop.keys.yaml
+#
+# Unknown keys are errors, not warnings. A spec misspelling `reversibility` on an act named
+# `wipe_production` used to parse clean and produce no finding — the most dangerous
+# declaration in the format is the easiest to lose, and in a format written mostly by LLMs
+# that is the defining failure mode.
+# ---------------------------------------------------------------------------------------
+
+GRAMMAR = yaml.safe_load(
+    open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                      "schema", "loop.keys.yaml")))
+
+
+def _near(word, options):
+    """Did-you-mean, so an error names the fix rather than only the fault."""
+    import difflib
+    m = difflib.get_close_matches(str(word), list(options), n=1, cutoff=0.6)
+    return f" Did you mean `{m[0]}`?" if m else ""
+
+
+class SpecError(Exception):
+    pass
+
+
+def _check_entry(spec_name, entry, section, errs, where):
+    rules = GRAMMAR.get(section) or {}
+    if not isinstance(entry, dict):
+        return
+    for k, v in entry.items():
+        if k not in rules:
+            errs.append(f"{where}: unknown key `{k}`.{_near(k, rules)}")
+            continue
+        r = rules[k]
+        if r.get("enum") and v is not None and v not in r["enum"]:
+            errs.append(f"{where}: `{k}` is `{v}`, which is not one of {r['enum']}."
+                        f"{_near(v, r['enum'])}")
+
+
+def validate(spec, path="<spec>", scope=None):
+    errs = []
+    scope = scope or spec
+    top = GRAMMAR["top_level"]
+    aliases = {a: k for k, r in top.items() for a in (r.get("aliases") or [])}
+    for k in spec:
+        if k not in top and k not in aliases:
+            errs.append(f"top level: unknown key `{k}`.{_near(k, top)}")
+    if not (spec.get("loop") or spec.get("name")):
+        errs.append("top level: every spec needs a `loop:` name.")
+
+    for section, entry_kind in [("regulates", "regulates_entry"),
+                                ("estimates", "estimates_entry"),
+                                ("observes", "observes_entry"),
+                                ("acts", "acts_entry"),
+                                ("parties", "parties_entry")]:
+        for nm, body in (spec.get(section) or {}).items():
+            _check_entry(nm, body or {}, entry_kind, errs, f"{section}.{nm}")
+    for i, r in enumerate(spec.get("when") or []):
+        _check_entry(i, r or {}, "when_entry", errs, f"when[{i}]")
+
+    # --- referential integrity: a name that points at nothing is a silent hole -------
+    acts = set((scope.get("acts") or {}).keys())
+    parties = set((scope.get("parties") or {}).keys())
+    signals = set((scope.get("observes") or {}).keys())
+    estimands = set((scope.get("regulates") or {}).keys()) | \
+                set((scope.get("estimates") or {}).keys())
+
+    for nm, body in (spec.get("acts") or {}).items():
+        ap = (body or {}).get("approval")
+        if ap and ap not in parties:
+            errs.append(f"acts.{nm}: `approval: {ap}` names no party in `parties`."
+                        f"{_near(ap, parties)} The gate is declared and does not exist.")
+    for i, r in enumerate(spec.get("when") or []):
+        for a in ([r.get("do")] if isinstance(r.get("do"), str) else (r.get("do") or [])):
+            if a and a not in acts:
+                errs.append(f"when[{i}]: `do: {a}` names no entry in `acts`.{_near(a, acts)}")
+        esc = (r or {}).get("escalate")
+        if esc and esc not in parties:
+            errs.append(f"when[{i}]: `escalate: {esc}` names no party."
+                        f"{_near(esc, parties)}")
+    for nm, body in (spec.get("estimates") or {}).items():
+        for src in ((body or {}).get("from") or []):
+            if src not in signals:
+                errs.append(f"estimates.{nm}: `from: {src}` names no entry in `observes`."
+                            f"{_near(src, signals)}")
+    for nm, body in (spec.get("parties") or {}).items():
+        for e in ((body or {}).get("sees") or []):
+            if e not in estimands:
+                errs.append(f"parties.{nm}: `sees: {e}` names no estimand."
+                            f"{_near(e, estimands)}")
+    for nm, body in (spec.get("observes") or {}).items():
+        p = (body or {}).get("produced_by")
+        if p and p not in acts:
+            errs.append(f"observes.{nm}: `produced_by: {p}` names no act.{_near(p, acts)}")
+
+    if errs:
+        raise SpecError(f"{path}: {len(errs)} error(s)\n" +
+                        "\n".join(f"  ✗ {e}" for e in errs))
+
+
 def slug(s):
     return re.sub(r"[^a-z0-9_]+", "_", str(s).lower()).strip("_")
 
@@ -71,10 +172,9 @@ def timescale(g, period, owner):
     return g.node(f"every_{slug(period)}", "TimeScale", period=str(period))
 
 
-def expand_one(g, spec):
+def expand_one(g, spec, path="<spec>", scope=None):
+    validate(spec, path, scope)
     name = spec.get("loop") or spec.get("name")
-    if not name:
-        raise SystemExit("every spec needs a `loop:` name")
     lid = slug(name)
 
     g.node(lid + "_system", "System", label=str(name).replace("_", " "))
@@ -203,8 +303,12 @@ def expand_one(g, spec):
 
 def expand(path):
     docs = [d for d in yaml.safe_load_all(open(path)) if d]
+    # the file is the scope: build the union of every declared name across the group first
+    scope = {}
+    for section in ("acts", "parties", "observes", "regulates", "estimates"):
+        scope[section] = {k: v for d in docs for k, v in (d.get(section) or {}).items()}
     g = Graph()
-    names = [expand_one(g, d) for d in docs]
+    names = [expand_one(g, d, path, scope) for d in docs]
     name = names[0] if len(names) == 1 else os.path.basename(path).split(".")[0]
     doc = g.doc(name)
     if len(names) > 1:
@@ -214,7 +318,10 @@ def expand(path):
 
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    doc, warns = expand(args[0])
+    try:
+        doc, warns = expand(args[0])
+    except SpecError as e:
+        sys.exit(f"\n{e}\n")
     for w in warns:
         print(f"warning: {w}", file=sys.stderr)
     out = yaml.safe_dump(doc, sort_keys=False, width=100)

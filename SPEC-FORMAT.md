@@ -75,6 +75,28 @@ ignoring:
 Every key is a plain English word doing one job. `regulates`, `estimates`, `observes`, `acts`,
 `when`, `parties`, `never`, `ignoring`. Nothing is named after a primitive.
 
+## The specification
+
+This document is the **rationale and the tour**. The normative parts are elsewhere, and are
+generated rather than written, so they cannot drift from the parser:
+
+| artifact | what it is |
+|---|---|
+| `schema/loop.keys.yaml` | **the grammar** — the single place a key is defined |
+| `REFERENCE.md` | every key, type, enum and referential rule — *generated* |
+| `schema/loop.schema.json` | JSON Schema for editors and CI — *generated* |
+| `NOTATION.md` | the diagram language: bands, shapes, arrows, how a defect is drawn |
+| `tools/gen_spec.py --check` | fails when the generated artifacts go stale |
+
+**Unknown keys are errors and enums are checked.** A spec misspelling `reversibility` on an
+act named `wipe_production` previously parsed clean and produced no finding — in a format
+written mostly by LLMs, silent key loss is the defining failure mode, and it is the same
+failure the compile study found one layer down. Errors carry a did-you-mean.
+
+**Names resolve across the file, not the document.** A group whose loops cannot reference each
+other's acts and signals is not a group. This rule was forced by the validator rejecting the
+project's own group example, which is the right way to settle a scoping question.
+
 ## How it maps to the checked model
 
 The reader never needs this table; the linter and the compiler do.
