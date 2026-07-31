@@ -88,7 +88,6 @@ people:
     human: yes
     loses_if_wrong: "the company — runway, and 18-month survival odds"
     sees: [cost_per_customer, product_market_fit]
-    may_decide: pricing, and anything that cannot be undone
   growth_agent:
     agent: yes
     loses_if_wrong: nothing
