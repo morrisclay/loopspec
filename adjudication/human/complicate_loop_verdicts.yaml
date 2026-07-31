@@ -1,0 +1,29 @@
+encodes: complicate_investigate_loop
+adjudicator: human_operator
+adjudicator_role: builds and runs the system encoded
+surfaced:
+- id: H1
+  source: automated_query
+  pattern: uncalibrated_estimator
+  claim: The resolution estimator is never checked — nothing asks whether a hypothesis resolved the right
+    way.
+  verdict: genuine
+  impact: changes_a_decision
+- id: H2
+  source: encoding_forced_choice
+  pattern: aggregate_not_estimand
+  claim: Conviction is a decision wearing the clothes of a measurement — no observation settles it.
+  verdict: restatement
+  impact: none
+- id: H3
+  source: encoding_forced_choice
+  pattern: endogenous_signal
+  claim: The loop produces its own evidence; balance_rule is the only structural guard against self-confirmation.
+  verdict: genuine
+  impact: changes_a_decision
+- id: H4
+  source: encoding_forced_choice
+  pattern: excluded_variables
+  claim: The three variables most likely to distort conviction are the three not recorded.
+  verdict: conversation
+  impact: a_conversation
