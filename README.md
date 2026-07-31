@@ -72,6 +72,7 @@ exactly one column, and that column is the whole argument between them.
 | **[`SYNTHESIS.md`](SYNTHESIS.md)** | where the field is, what this contributes, **and what it cannot claim** |
 | **[`ATTENTION.md`](ATTENTION.md)** | half one — a notation is an attention device |
 | **[`CALIBRATION.md`](CALIBRATION.md)** | half two — and why it is hard rather than neglected |
+| [`CYBERNETICS.md`](CYBERNETICS.md) | how cybernetic this actually is — including what is still missing |
 | [`REFERENCE.md`](REFERENCE.md) | every key — generated from `schema/loop.keys.yaml` |
 | [`NOTATION.md`](NOTATION.md) | the diagram language, independent of any renderer |
 | [`REFERENCES.md`](REFERENCES.md) | every external source and the decision it shaped |
@@ -86,6 +87,7 @@ else reads it.
 ```bash
 python3 tools/loop.py     spec.loop.yaml --lint   # expand + validate + the checks
 python3 tools/diagram.py  spec.loop.yaml --md     # mermaid; defects are DRAWN, not appended
+python3 tools/control.py  spec.loop.yaml --md     # the CONTROL diagram: setpoint, error, feedback
 python3 tools/compare.py  specs/*.loop.yaml       # argue about loops side by side
 python3 tools/verify.py   spec.loop.yaml build/   # did compilation drop the approval gate?
 python3 tools/gen_spec.py --check                 # reference + JSON Schema, generated

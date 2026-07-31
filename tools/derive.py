@@ -850,6 +850,40 @@ def q_expensive_signal_unreviewed(d, nodes, edges):
     return out
 
 
+
+def q_insufficient_variety(d, nodes, edges):
+    """
+    Ashby 1956: only variety can destroy variety.
+
+    A regulator can absorb a disturbance only if its variety is at least as great as the
+    disturbance's. Two levers against ten failure modes cannot regulate, and no amount of
+    prompt quality fixes it.
+
+    This was listed as blocked for most of the project's life, waiting on a `Disturbance`
+    primitive the budget had no room for. It was never blocked: `not_modelling:` is the
+    disturbance list. The things you have declared you are not modelling are precisely the
+    disturbances you are not regulating against.
+
+    HONEST ABOUT THE PROXY: counting named disturbances against distinguishable actions is a
+    crude reading of variety — Ashby's is a measure over states, not a headcount, and a spec
+    that names no disturbances scores well by saying nothing. It fires only when the gap is
+    stark, and it is a prompt to think rather than a proof.
+    """
+    dz = [n.get("statement") or i for i, n in nodes.items() if n.get("kind") == "Disturbance"]
+    ivs = [i for i, n in nodes.items() if n.get("kind") == "Intervention"]
+    if not dz or not ivs or len(dz) <= len(ivs):
+        return []
+    return [{
+        "pattern": "insufficient_variety",
+        "claim": (f"The loop declares {len(ivs)} distinct action(s) — {sorted(ivs)} — and "
+                  f"{len(dz)} thing(s) it is knowingly not modelling: {sorted(dz)}. Only "
+                  f"variety can destroy variety: a regulator needs at least as many "
+                  f"distinguishable responses as the disturbance has modes. Either name more "
+                  f"levers, or accept that the loop cannot absorb what it has already listed."),
+        "evidence": {"actions": sorted(ivs), "disturbances": sorted(dz)},
+    }]
+
+
 def q_unbounded_loop(d, nodes, edges):
     """A loop that declares nothing it can run out of."""
     if not (d.get("loops") or []):
@@ -1237,6 +1271,7 @@ QUERIES = [
     q_belief_never_checked,
     q_informs_no_decision,
     q_expensive_signal_unreviewed,
+    q_insufficient_variety,
     q_unbounded_loop,
     q_ceiling_without_correction,
     q_spends_without_limit,

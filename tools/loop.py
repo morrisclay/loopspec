@@ -425,6 +425,12 @@ def expand_one(g, spec, path="<spec>", scope=None):
         cid = g.node(f"{lid}_never_{i}", "Constraint", statement=str(c))
         g.edge(cid, lid + "_system", "constrains")
 
+    # `not_modelling:` IS the disturbance list. The things you have declared you are not
+    # modelling are precisely the disturbances you are not regulating against, which is what
+    # Ashby's Law needs and what a `Disturbance` primitive would otherwise have to add.
+    for dz in (spec.get("not_modelling") or []):
+        did = g.node(f"unmodelled_{slug(dz)}", "Disturbance", statement=str(dz))
+        g.edge(did, lid + "_system", "constrains")
     g.excluded += [str(x) for x in (spec.get("not_modelling") or [])]
 
     # `consider:` rides along on the graph so the linter can pair decisions with findings.

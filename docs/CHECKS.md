@@ -35,6 +35,7 @@ linter — not written by hand.
 | [`spends_without_limit`](#spends-without-limit) | 4/21 | attention | *"it quietly runs out"* |
 | [`expensive_signal_unreviewed`](#expensive-signal-unreviewed) | 3/21 | attention | *"we keep paying for a source nobody asks about"* |
 | [`orphan_signal`](#orphan-signal) | 3/21 | attention | *"it collects data nobody uses"* |
+| [`insufficient_variety`](#insufficient-variety) | 2/21 | — | *"it can only do one thing and the world does many"* |
 | [`policy_reads_undeclared`](#policy-reads-undeclared) | 2/21 | calibration | *"it branches on something that doesn't exist"* |
 | [`shared_estimand_no_arbiter`](#shared-estimand-no-arbiter) | 2/21 | calibration | *"my agents disagree and whichever finishes last wins"* |
 | [`uncontrollable_target`](#uncontrollable-target) | 2/21 | — | *"it has a goal it can't actually move"* |
@@ -312,6 +313,22 @@ linter — not written by hand.
 **Real finding**, from `examples/customer_acquisition.loop.yaml`:
 
 > Signal `board_sentiment` is observed but is not connected to any estimand. You are collecting it without having said what it tells you.
+
+---
+
+## `insufficient_variety`
+
+> *"it can only do one thing and the world does many"*
+
+**What it looked at.** More things named in `not_modelling` than there are distinguishable actions.
+
+**How to fix it.** Name more levers, or accept that the loop cannot absorb what it has already listed. A crude proxy — Ashby's variety is a measure over states, not a headcount — so treat it as a prompt to think, not a proof.
+
+**Status.** fires on **2 of 21** specs here · motivated. Ashby 1956, Law of Requisite Variety. Listed as blocked on a missing `Disturbance` primitive for most of the project; it was never blocked, because `not_modelling:` IS the disturbance list.
+
+**Real finding**, from `examples/field/ralph.loop.yaml`:
+
+> The loop declares 1 distinct action(s) — ['implement_one_task'] — and 2 thing(s) it is knowingly not modelling: ['token cost', 'whether the task was the right task']. Only variety can destroy variety: a regulator needs at least as many distinguishable responses as the disturbance has modes. Either name more levers, or accept that the loop cannot absorb what it has already listed.
 
 ---
 

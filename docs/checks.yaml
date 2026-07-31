@@ -176,6 +176,14 @@ consequence_without_authority:
   half: neither
   evidence: corpus
 
+insufficient_variety:
+  symptom: "it can only do one thing and the world does many"
+  means: More things named in `not_modelling` than there are distinguishable actions.
+  fix: "Name more levers, or accept that the loop cannot absorb what it has already listed. A crude proxy — Ashby's variety is a measure over states, not a headcount — so treat it as a prompt to think, not a proof."
+  half: neither
+  grounded: "Ashby 1956, Law of Requisite Variety. Listed as blocked on a missing `Disturbance` primitive for most of the project; it was never blocked, because `not_modelling:` IS the disturbance list."
+  evidence: motivated
+
 # --- legacy: inherited from the general programme, never fires on the agent corpus ---
 uncalibrated_estimator:
   symptom: "nothing scores the estimator"
