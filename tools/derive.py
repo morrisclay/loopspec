@@ -594,25 +594,167 @@ def q_regulator_without_model(d, nodes, edges):
 
 
 def q_uncontrollable_target(d, nodes, edges):
-    """A DesiredCondition targeting an estimand no intervention can move."""
+    """
+    Kalman controllability: a target no intervention can drive.
+
+    Two failures live here and they are NOT the same diagnosis, so they are reported
+    separately. Conflating them produced a message claiming an intervention was unwired when
+    the spec had wired it:
+
+      uncontrollable_target — no lever points at the estimand at all. A wish.
+      open_loop             — a lever and a measurement both exist, but no Loop record joins
+                              them. The parts of a regulator, not assembled into one.
+
+    Only DesiredCondition sources count. Interventions also carry `targets` edges, and
+    iterating the relation blindly reported every lever as its own broken target.
+    """
     out = []
+    ivs = [i for i, n in nodes.items() if n.get("kind") == "Intervention"]
+    movable = {b for a, b in rel(edges, "targets")
+               if nodes.get(a, {}).get("kind") == "Intervention"}
+    measures = rel(edges, "measures")
+
     for a, b in rel(edges, "targets"):
-        ivs = [i for i, n in nodes.items() if n.get("kind") == "Intervention"]
-        if not ivs:
+        if nodes.get(a, {}).get("kind") != "DesiredCondition":
             continue
-        # does any loop close on this estimand's measuring signal?
-        sigs = {x for x, y in rel(edges, "measures") if y == b}
+        if b not in movable:
+            out.append({
+                "pattern": "uncontrollable_target",
+                "claim": (f"`{a}` sets a target on `{b}`, and no intervention declares that it "
+                          f"moves `{b}`. Controllability: a target nothing can drive toward is "
+                          f"a wish, not a setpoint. The loop declares {len(ivs)} "
+                          f"intervention(s) — {ivs} — and none of them acts on this quantity."),
+                "evidence": {"target": b, "desired_condition": a, "interventions": ivs},
+            })
+            continue
+
+        sigs = {x for x, y in measures if y == b}
+        if not sigs:
+            continue          # unmeasured_estimand already says this, and says it better
         closing = {lp.get("intervention") for lp in (d.get("loops") or [])
                    if lp.get("signal") in sigs}
-        if closing:
+        if not closing:
+            movers = sorted(x for x, y in rel(edges, "targets")
+                            if y == b and nodes.get(x, {}).get("kind") == "Intervention")
+            out.append({
+                "pattern": "open_loop",
+                "claim": (f"`{b}` is measured by {sorted(sigs)} and moved by {movers}, but no "
+                          f"loop closes between them. Every part of a regulator is present and "
+                          f"nothing joins them, so the measurement never reaches the lever. "
+                          f"Felt symptom: it observes, and it acts, and the two are unrelated."),
+                "evidence": {"target": b, "signals": sorted(sigs), "interventions": movers},
+            })
+    return out
+
+
+
+# ---------------------------------------------------------------------------------------
+# GROUP CHECKS — several loops in one file, sharing nodes.
+#
+# A group is not a bigger loop. Its failures are relational: two agents estimating the same
+# quantity with nothing to reconcile them, an act two loops can reach under different rules,
+# a verifier whose only input is the thing it verifies. None is visible when each loop is
+# read alone, which is why multi-agent systems fail in ways their components do not.
+# ---------------------------------------------------------------------------------------
+
+def _loop_of(d, nid, edges):
+    """Which declared loops touch this node."""
+    ls = []
+    for lp in (d.get("loops") or []):
+        if nid in (lp.get("signal"), lp.get("intervention")):
+            ls.append(lp["id"])
+    return ls
+
+
+def q_shared_estimand_no_arbiter(d, nodes, edges):
+    """
+    Two loops estimate the same quantity and nothing reconciles them.
+
+    A verifier disagreeing with a worker is the POINT of a verifier — so this is not a defect
+    by itself. It is a defect when the group declares no policy reading both, because then
+    disagreement resolves by arrival order. Felt symptom: "my agents disagree and whichever
+    finishes last wins."
+    """
+    if not d.get("group"):
+        return []
+    out = []
+    for est, n in nodes.items():
+        if n.get("kind") != "Estimand":
+            continue
+        ers = sorted({a for a, b in rel(edges, "estimates") if b == est})
+        if len(ers) < 2:
+            continue
+        forms = {nodes[e].get("form") for e in ers if e in nodes}
+        readers = [p for p, pn in nodes.items() if pn.get("kind") == "Policy"
+                   and est in (pn.get("inputs") or [])]
+        if readers:
             continue
         out.append({
-            "pattern": "uncontrollable_target",
-            "claim": (f"`{a}` targets `{b}`, and no loop closes an intervention against any "
-                      f"signal measuring it. Controllability: a target you cannot drive toward "
-                      f"is a wish. Available interventions are {ivs} and none of them is wired "
-                      f"to this target."),
-            "evidence": {"target": b, "desired_condition": a, "interventions": ivs},
+            "pattern": "shared_estimand_no_arbiter",
+            "claim": (f"`{est}` is estimated by {len(ers)} independent estimators — {ers}, "
+                      f"by method(s) {sorted(f for f in forms if f)} — and no policy in the "
+                      f"group reads it. When they disagree nothing reconciles them, so the "
+                      f"value that survives is whichever wrote last. Felt symptom: my agents "
+                      f"disagree and the answer depends on ordering."),
+            "evidence": {"estimand": est, "estimators": ers},
+        })
+    return out
+
+
+def q_no_exogenous_grounding(d, nodes, edges):
+    """
+    A loop whose every signal is manufactured inside the group.
+
+    This is the Ralph finding, stated generally and computed rather than intuited. A loop with
+    no exogenous input cannot be corrected by the world: it can only be consistent with itself.
+    A verifier whose sole input is the worker's own report is the multi-agent instance, and it
+    is the most common broken shape in agent groups.
+    """
+    produced = {b for a, b in rel(edges, "produces")}
+    out = []
+    for lp in (d.get("loops") or []):
+        # every signal this loop reads, not merely the one it nominally closes on
+        mine = set(lp.get("signals") or ([lp["signal"]] if lp.get("signal") else []))
+        mine = {s for s in mine if nodes.get(s, {}).get("kind") == "Signal"}
+        if not mine:
+            continue
+        exo = mine - produced
+        if exo:
+            continue
+        out.append({
+            "pattern": "no_exogenous_grounding",
+            "claim": (f"Loop `{lp['id']}` reads only {sorted(mine)}, and every one of those is "
+                      f"produced by an act inside this group. Nothing it observes can surprise "
+                      f"it. It cannot be wrong in a way it did not already contain, so it will "
+                      f"converge on agreement rather than on truth."),
+            "evidence": {"loop": lp["id"], "signals": sorted(mine)},
+        })
+    return out
+
+
+def q_unowned_act(d, nodes, edges):
+    """
+    An act two loops can select under different approval rules.
+
+    Whichever loop reaches it first sets the gate. That is authority decided by scheduling.
+    """
+    if not d.get("group"):
+        return []
+    out = []
+    for act, n in nodes.items():
+        if n.get("kind") != "Intervention":
+            continue
+        selectors = sorted({a for a, b in rel(edges, "authorizes") if b == act
+                            and nodes.get(a, {}).get("kind") == "Policy"})
+        if len(selectors) < 2:
+            continue
+        out.append({
+            "pattern": "unowned_act",
+            "claim": (f"Intervention `{act}` is selected by {len(selectors)} policies — "
+                      f"{selectors} — belonging to different loops. Nothing says which one "
+                      f"owns it, so its approval rule is whichever loop reaches it first. "
+                      f"Authority decided by scheduling is not authority."),
+            "evidence": {"intervention": act, "policies": selectors},
         })
     return out
 
@@ -699,6 +841,9 @@ def q_no_escalation_path(d, nodes, edges):
 
 
 QUERIES = [
+    q_shared_estimand_no_arbiter,
+    q_no_exogenous_grounding,
+    q_unowned_act,
     q_irreversible_without_approval,
     q_human_without_signal,
     q_no_escalation_path,

@@ -1,0 +1,84 @@
+# A GROUP: three agents that together do research. Three documents, one file, `---` between.
+# Nodes with the same name are the same node — that merge is what makes a group a group,
+# and it is what the group checks read.
+#
+# This is the common orchestrator/worker/verifier shape. It is written here as its authors
+# usually intend it, not as a strawman.
+
+loop: orchestrator
+every: per_question
+
+regulates:
+  answer_quality:
+    target: "reviewer accepts without revision"
+
+estimates:
+  task_complete:
+    from: [worker_report, verifier_report]
+    method: judgement
+    # nothing calibrates this — the orchestrator never learns whether it stopped too early
+
+observes:
+  worker_report:   { measures: claim_truth, produced_by: emit_report }
+  verifier_report: { measures: claim_truth, produced_by: emit_report }
+
+acts:
+  dispatch_worker:   { moves: answer_quality }
+  dispatch_verifier: { moves: answer_quality }
+  return_answer:     { reversibility: costly }
+
+when:
+  - if: "task_complete below threshold"
+    do: dispatch_worker
+  - if: "task_complete above threshold"
+    do: return_answer
+
+parties:
+  orchestrator: { agent: true, bears: "nothing" }
+  user:         { human: true, bears: "acts on the answer" }
+
+---
+
+loop: worker
+every: per_subtask
+
+estimates:
+  claim_truth:
+    from: [web_search]
+    method: judgement
+
+observes:
+  web_search: { measures: claim_truth, cost: high }
+
+acts:
+  emit_report: { moves: claim_truth }
+
+when:
+  - if: "sources gathered"
+    do: emit_report
+
+parties:
+  orchestrator: { agent: true }
+
+---
+
+loop: verifier
+every: per_claim
+
+estimates:
+  claim_truth:                       # THE SAME ESTIMAND the worker produces
+    from: [worker_report]            # and its only input is the worker's own output
+    method: judgement
+
+observes:
+  worker_report: { measures: claim_truth, produced_by: emit_report }
+
+acts:
+  emit_report: { moves: claim_truth }
+
+when:
+  - if: "claim contradicted"
+    do: emit_report
+
+parties:
+  orchestrator: { agent: true }
