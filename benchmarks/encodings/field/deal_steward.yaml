@@ -1,0 +1,62 @@
+uras_version: 0
+encodes: deal_steward
+set: field
+domain: agent_loop
+encoded_by: claude-opus-5
+encoded_from: t-minus spec/DEAL-STEWARD-MEESEEKS.md + features/steward/*.feature
+shape: canonical-graph
+
+nodes:
+  - {id: steward, kind: System, name: deal_steward_agent}
+  - {id: boundary, kind: Boundary, inside: [linear_project, kk_ku_ledger],
+     outside: [attio, drive, slack_dd_channel, partners]}
+
+  - {id: partner, kind: Party}
+
+  - {id: deal_readiness, kind: Estimand, determination: latent, criticality: existential,
+     resolution_condition: 'every completed call debriefed AND no blocking unknown open'}
+  - {id: named_risk_status, kind: Estimand, determination: latent}
+  - {id: blocking_unknowns, kind: Estimand, determination: computed}
+
+  - {id: call_debrief, kind: Signal, frequency: per-call}
+  - {id: linear_state, kind: Signal, frequency: per-tick}
+  - {id: attio_stage, kind: Signal, frequency: per-tick}
+
+  - {id: readiness_check, kind: Estimator, form: rule,
+     idempotency_basis: per_deal_per_tick}
+  - {id: readiness_belief, kind: Estimate, held_by: partner, uncertainty: boolean}
+
+  - {id: propose_stage_move, kind: Intervention, target: world}
+  - {id: enrich_attio, kind: Intervention, target: world}
+  - {id: sync_drive, kind: Intervention, target: world}
+
+  - {id: readiness_policy, kind: Policy,
+     guard: 'all calls debriefed AND no blocking unknown open',
+     based_on: [deal_readiness]}
+
+  - {id: never_write_stage, kind: Constraint, tradeable: false,
+     rule: 'the steward proposes stage changes as a Linear task and never writes the Attio stage field'}
+  - {id: no_duplicate_proposal, kind: Constraint, tradeable: false,
+     rule: 'ticking again does not propose the same move twice'}
+  - {id: human_override_survives, kind: Constraint, tradeable: false,
+     rule: 'a human edit to a milestone survives the next sync and is never resurrected if cancelled'}
+
+  - {id: tick, kind: TimeScale, period: per_tick}
+
+edges:
+  - {from: steward, to: boundary, rel: contains}
+  - {from: call_debrief, to: deal_readiness, rel: measures}
+  - {from: linear_state, to: blocking_unknowns, rel: measures}
+  - {from: readiness_check, to: readiness_belief, rel: estimates}
+  - {from: partner, to: readiness_belief, rel: holds}
+  - {from: partner, to: propose_stage_move, rel: authorizes}
+  - {from: partner, to: enrich_attio, rel: authorizes}
+  - {from: partner, to: sync_drive, rel: authorizes}
+  - {from: readiness_policy, to: propose_stage_move, rel: closes}
+  - {from: never_write_stage, to: propose_stage_move, rel: constrains}
+  - {from: no_duplicate_proposal, to: propose_stage_move, rel: constrains}
+  - {from: human_override_survives, to: sync_drive, rel: constrains}
+
+loops:
+  - {id: readiness_loop, timescale: tick, signal: call_debrief,
+     intervention: propose_stage_move}

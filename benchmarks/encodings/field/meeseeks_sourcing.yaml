@@ -1,0 +1,57 @@
+uras_version: 0
+encodes: meeseeks_sourcing
+set: field
+domain: agent_loop
+encoded_by: claude-opus-5
+encoded_from: t-minus features/sourcing/meeseeks-mandate.feature
+shape: canonical-graph
+
+nodes:
+  - {id: meeseeks, kind: System, name: autonomous_sourcing_agent}
+  - {id: gp, kind: Party}
+
+  - {id: candidate_quality, kind: Estimand, determination: latent}
+  - {id: channel_viability, kind: Estimand, determination: computed,
+     resolution_condition: 'candidates above threshold found within the trial window'}
+  - {id: mandate_status, kind: Estimand, determination: computed}
+
+  - {id: github_channel, kind: Signal, frequency: per-tick}
+  - {id: research_connector, kind: Signal, frequency: per-tick}
+
+  - {id: three_dim_scorer, kind: Estimator, form: rubric,
+     idempotency_basis: per_candidate_id}
+  - {id: candidate_score, kind: Estimate, held_by: gp, uncertainty: numeric}
+
+  - {id: viability_review, kind: Calibration, window: trial_window_7d,
+     note: 'retires a channel that finds nothing — scores the SOURCE, not the candidate'}
+
+  - {id: search_channel, kind: Intervention, target: world}
+  - {id: retire_channel, kind: Intervention, target: own-structure,
+     motive: 'stop spending ticks on a source that has produced nothing in its trial window'}
+  - {id: discover_channel, kind: Intervention, target: own-structure,
+     motive: 'expand the set of places searched when existing ones are exhausted'}
+
+  - {id: viability_policy, kind: Policy,
+     guard: 'zero above-threshold candidates within trial window',
+     based_on: [channel_viability]}
+
+  - {id: tick, kind: TimeScale, period: per_tick}
+  - {id: gp_attention, kind: Resource, depletable: true}
+
+edges:
+  - {from: meeseeks, to: candidate_quality, rel: contains}
+  - {from: github_channel, to: candidate_quality, rel: measures}
+  - {from: research_connector, to: candidate_quality, rel: measures}
+  - {from: three_dim_scorer, to: candidate_score, rel: estimates}
+  - {from: gp, to: candidate_score, rel: holds}
+  - {from: gp, to: search_channel, rel: authorizes}
+  - {from: gp, to: retire_channel, rel: authorizes}
+  - {from: gp, to: discover_channel, rel: authorizes}
+  - {from: viability_policy, to: retire_channel, rel: closes}
+  - {from: viability_review, to: three_dim_scorer, rel: revises}
+  - {from: search_channel, to: gp_attention, rel: consumes}
+  - {from: search_channel, to: github_channel, rel: produces}
+
+loops:
+  - {id: sourcing_loop, timescale: tick, signal: github_channel,
+     intervention: search_channel}

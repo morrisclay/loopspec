@@ -1,0 +1,58 @@
+uras_version: 0
+encodes: conviction_termination
+set: field
+domain: agent_loop
+encoded_by: claude-opus-5
+encoded_from: t-minus features/complicate/conviction-termination.feature + investigate-resolve.feature
+shape: canonical-graph
+
+nodes:
+  - {id: reassess, kind: System, name: conviction_termination_loop}
+  - {id: analyst, kind: Party}
+
+  - {id: conviction, kind: Estimand, determination: computed,
+     resolution_condition: '0.4*hypothesis_score + 0.35*min(1,avg_confidence) + 0.25*convergence'}
+  - {id: expected_info_gain, kind: Estimand, determination: latent}
+  - {id: hypothesis_outcome, kind: Estimand, determination: latent,
+     resolution_condition: 'confirmed | disconfirmed | refined | inconclusive'}
+
+  - {id: resolved_hypotheses, kind: Signal, frequency: per-cycle}
+  - {id: scenario_probabilities, kind: Signal, frequency: per-cycle}
+
+  - {id: conviction_formula, kind: Estimator, form: expression,
+     expression: '0.4*hypothesis_score + 0.35*min(1,avg_confidence) + 0.25*convergence',
+     idempotency_basis: per_cycle_id}
+  - {id: conviction_value, kind: Estimate, held_by: analyst, uncertainty: numeric}
+
+  - {id: stop_threshold, kind: DesiredCondition, held_by: analyst,
+     target_type: threshold, value: 0.75, comparator: greater_equal}
+
+  - {id: continue_loop, kind: Intervention, target: world}
+  - {id: route_to_compile, kind: Intervention, target: own-structure,
+     motive: 'terminate the run and produce the output'}
+
+  - {id: stop_rules, kind: Policy,
+     guard: 'conviction >= 0.75 AND avg_confidence >= 0.75',
+     based_on: [conviction, expected_info_gain]}
+
+  - {id: length_not_a_gate, kind: Constraint, tradeable: false,
+     rule: 'conversation length is never a termination condition'}
+
+  - {id: cycle, kind: TimeScale, period: per_cycle}
+
+edges:
+  - {from: reassess, to: conviction, rel: contains}
+  - {from: resolved_hypotheses, to: conviction, rel: measures}
+  - {from: scenario_probabilities, to: conviction, rel: measures}
+  - {from: conviction_formula, to: conviction_value, rel: estimates}
+  - {from: analyst, to: conviction_value, rel: holds}
+  - {from: analyst, to: stop_threshold, rel: holds}
+  - {from: stop_threshold, to: conviction, rel: targets}
+  - {from: analyst, to: continue_loop, rel: authorizes}
+  - {from: analyst, to: route_to_compile, rel: authorizes}
+  - {from: stop_rules, to: route_to_compile, rel: closes}
+  - {from: length_not_a_gate, to: route_to_compile, rel: constrains}
+
+loops:
+  - {id: termination_loop, timescale: cycle, signal: resolved_hypotheses,
+     intervention: route_to_compile}
