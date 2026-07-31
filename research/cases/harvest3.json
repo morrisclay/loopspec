@@ -1,0 +1,864 @@
+{
+ "deepset": {
+  "status": "usable",
+  "domain": "deepset.ai",
+  "sector": "software",
+  "from_year": 2018,
+  "n_snaps": 8,
+  "early": {
+   "ts": "20191020014830",
+   "title": "deepset - Cutting-edge NLP Solutions",
+   "lines": [
+    "deepset - Cutting-edge NLP Solutions",
+    "20 Oct 2019 - 15 Jul 2026",
+    "Web crawl data from Common Crawl.",
+    "Making Machines Understand",
+    "Unlock value from text.",
+    "power of Natural Language Processing to your business.",
+    "No magic. Just cutting-edge NLP driven by Transfer Learning.",
+    "Document Classification",
+    "Automatically detect and tag different types of documents.",
+    "Condense texts to their absolute essence.",
+    "Search for content not just for keywords.",
+    "Detect the key topics across large corpora of documents.",
+    "Detect & extract structured data like products, proteins or liability sums from your documents with customized entity recognition.",
+    "Automatically reply to frequently occurring questions."
+   ]
+  },
+  "late": {
+   "ts": "20260106072234",
+   "title": "Custom AI Solutions | Solve Complex, High-Impact Challenges",
+   "lines": [
+    "Custom AI Solutions | Solve Complex, High-Impact Challenges",
+    "20 Oct 2019 - 15 Jul 2026",
+    "The main site for Archive Team is at",
+    "and contains up to the date information on various projects, manifestos, plans and walkthroughs.",
+    "This collection contains the output of many Archive Team projects, both ongoing and completed. Thanks to the generous providing of disk space by the Internet Archive, multi-terabyte datasets can be made available, as well as in use by the",
+    ", providing a path back to lost websites and work.",
+    "The Archive Team Panic Downloads",
+    "are full pulldowns of currently extant websites, meant to serve as emergency backups for needed sites that are in danger of closing, or which will be missed dearly if suddenly lost due to hard drive crashes or server failures.",
+    "Products and Services",
+    "Haystack Enterprise Starter",
+    "Haystack Enterprise Platform",
+    "Haystack Enterprise Platform Trial",
+    "Retrieval Augmented Generation (RAG)",
+    "Intelligent Document Processing (IDP)"
+   ]
+  },
+  "gap_months": 75,
+  "at_floor": false
+ },
+ "zama": {
+  "status": "usable",
+  "domain": "zama.ai",
+  "sector": "software",
+  "from_year": 2020,
+  "n_snaps": 6,
+  "early": {
+   "ts": "20200808200548",
+   "title": "Zama",
+   "lines": [
+    "21 Nov 2019 - 24 Apr 2026",
+    "Web crawl data from Common Crawl.",
+    "Use Zama's homomorphic machine learning",
+    "inference solution to process your users' data",
+    "Deploy a homomorphic version of your neural",
+    "Upload your trained model and validation set. It will",
+    "automatically be converted into an end-to-end encrypted",
+    "equivalent using our homomorphic compiler.",
+    "Choose how fast you want your encrypted model to run, and",
+    "we\u2019ll do the rest using our high performance",
+    "Integrate into your product",
+    "Use the provided API endpoint and SDK to send encrypted inputs",
+    "and receive encrypted outputs. No one can see the data, not",
+    "Supports all operators"
+   ]
+  },
+  "late": {
+   "ts": "20250107163606",
+   "title": "Zama - Open Source Cryptography",
+   "lines": [
+    "Zama - Open Source Cryptography",
+    "21 Nov 2019 - 24 Apr 2026",
+    "Charlotte Mecklenburg Library",
+    "Archive-It Partner 1989: Charlotte Mecklenburg Library",
+    "Archive-It Partner 1989: Charlotte Mecklenburg Library - Collection 23811: Civic Organizations",
+    "A pure rust implementation of the TFHE scheme for boolean and integer arithmetics over encrypted data.",
+    "TFHE compiler that converts python programs into FHE equivalent.",
+    "Privacy preserving ML framework built on top of Concrete, with bindings to traditional ML frameworks.",
+    "A fully homomorphic encryption protocol to write confidential smart contracts.",
+    "Products and Services",
+    "Privacy-preserving ML",
+    "Add confidentiality to your machine learning applications.",
+    "Build decentralized applications with full privacy and confidentiality on Ethereum.",
+    "A threshold key management system for secure FHE\u00a0key generation and ciphertexts decryption."
+   ]
+  },
+  "gap_months": 53,
+  "at_floor": false
+ },
+ "supabase": {
+  "status": "usable",
+  "domain": "supabase.com",
+  "sector": "software",
+  "from_year": 2020,
+  "n_snaps": 7,
+  "early": {
+   "ts": "20200919084738",
+   "title": "Portal Home - Supamaan Pte Ltd",
+   "lines": [
+    "Portal Home - Supamaan Pte Ltd",
+    "05 Aug 2018 - 30 Jul 2026",
+    "Web crawl data from Common Crawl.",
+    "accounts@im.skubbs.com",
+    "RapidFire SEO Services",
+    "Call one of our experts now: (+65) 6717-6668",
+    "The 1st Step in Building Your Online Identity",
+    "Secure the perfect domain name in minutes...",
+    "Reliable Hosting for Your Website",
+    "Start building an online home for your business..",
+    "Get started with your online business today..",
+    "Effective Search Engine Optimization",
+    "Get your website noticed online..",
+    "Digital Marketing That Delivers Results"
+   ]
+  },
+  "late": {
+   "ts": "20260101013524",
+   "title": "OpenAI logo",
+   "lines": [
+    "Supabase | The Postgres Development Platform.",
+    "05 Aug 2018 - 30 Jul 2026",
+    "The main site for Archive Team is at",
+    "and contains up to the date information on various projects, manifestos, plans and walkthroughs.",
+    "This collection contains the output of many Archive Team projects, both ongoing and completed. Thanks to the generous providing of disk space by the Internet Archive, multi-terabyte datasets can be made available, as well as in use by the",
+    ", providing a path back to lost websites and work.",
+    "The Archive Team Panic Downloads",
+    "are full pulldowns of currently extant websites, meant to serve as emergency backups for needed sites that are in danger of closing, or which will be missed dearly if suddenly lost due to hard drive crashes or server failures.",
+    "ArchiveBot: The Archive Team Crowdsourced Crawler",
+    "There is a dashboard running for the archivebot process at",
+    "http://www.archivebot.com",
+    "ArchiveBot's source code can be found at",
+    "https://github.com/ArchiveTeam/ArchiveBot",
+    "Supabase Wrapped 2025: The year in review"
+   ]
+  },
+  "gap_months": 64,
+  "at_floor": false
+ },
+ "neon": {
+  "status": "usable",
+  "domain": "neon.tech",
+  "sector": "software",
+  "from_year": 2021,
+  "n_snaps": 4,
+  "early": {
+   "ts": "20220423171545",
+   "title": "neon",
+   "lines": [
+    "11 Aug 2018 - 13 Jul 2026",
+    "The main site for Archive Team is at",
+    "and contains up to the date information on various projects, manifestos, plans and walkthroughs.",
+    "This collection contains the output of many Archive Team projects, both ongoing and completed. Thanks to the generous providing of disk space by the Internet Archive, multi-terabyte datasets can be made available, as well as in use by the",
+    ", providing a path back to lost websites and work.",
+    "The Archive Team Panic Downloads",
+    "are full pulldowns of currently extant websites, meant to serve as emergency backups for needed sites that are in danger of closing, or which will be missed dearly if suddenly lost due to hard drive crashes or server failures.",
+    "Neon is building open-source cloud-native PostgreSQL.",
+    "Our architecture separates storage from compute,",
+    "allowing for stateless and serverless Postgres.",
+    "We\u2019re a well funded startup with deep knowledge of",
+    "Postgres internals and decades of experience building",
+    "To learn more, please take a look at our",
+    "For information on opportunities at Neon, read jobs.txt."
+   ]
+  },
+  "late": {
+   "ts": "20250102111605",
+   "title": "Neon Serverless Postgres \u2014 Ship faster",
+   "lines": [
+    "Neon Serverless Postgres \u2014 Ship faster",
+    "11 Aug 2018 - 13 Jul 2026",
+    "A longitudinal web archival collection based on URIs from the daily feed of Media Cloud that maps news media coverage of current events.",
+    "If you're using Cloudflare Workers, combine Hyperdrive and Neon for 10x query speed \u2013 Learn more",
+    "Automatic instance sizing",
+    "Lower costs for dev/test",
+    "Thousands of connections",
+    "Build faster with Neon",
+    "Scale up/down automatically",
+    "Create one project per user",
+    "For non-prod environments",
+    "Learn from the experts",
+    "Explore product updates",
+    "Try interactive demos"
+   ]
+  },
+  "gap_months": 33,
+  "at_floor": false
+ },
+ "edgeless": {
+  "status": "usable",
+  "domain": "edgeless.systems",
+  "sector": "software",
+  "from_year": 2019,
+  "n_snaps": 8,
+  "early": {
+   "ts": "20190922192457",
+   "title": "Edgeless Systems",
+   "lines": [
+    "22 Sep 2019 - 18 Jul 2026",
+    "Web crawl data from Common Crawl.",
+    "The future is secure.",
+    "At Edgeless Systems we are building a high-performance platform for the provably secure and accountable processing of data.",
+    "Think always encrypted, think big data, think confidential smart-contracts. As foundation, we are using Trusted Execution Environments like Intel SGX.",
+    "We will have more to unveil later this year. In the meanwhile, check out the press release from our funders in",
+    "We have technical and non-technical openings in our Bochum, Germany office.",
+    "At Edgeless, you'll get the opportunity to work on a great security product within an outstanding team. We offer attractive stock-based compensation.",
+    "Positions are full or part time. We are also looking for student helpers and are interested in co-advising interesting theses.",
+    "Security Software Engineer"
+   ]
+  },
+  "late": {
+   "ts": "20260113013820",
+   "title": "Edgeless Systems \u2013 Confidential Computing & Runtime Encryption for Sensitive Workloads",
+   "lines": [
+    "Edgeless Systems \u2013 Confidential Computing & Runtime Encryption for Sensitive Workloads",
+    "22 Sep 2019 - 18 Jul 2026",
+    "Web crawl data from Common Crawl.",
+    "Always encrypted AI - Use AI without the security and privacy worries",
+    "Confidential-computing foundations",
+    "Build, manage, and scale confidential containers (SEV-SNP/TDX)",
+    "Manage and scale Intel SGX enclaves",
+    "Read the NVIDIA solution brief",
+    "Multi-party computation",
+    "Case study: STACKIT integrates Constellation into its sovereign cloud offering",
+    "OC3: Open Confidential Computing Conference",
+    "See the full Resource library",
+    "Confidential computing",
+    "About confidential computing"
+   ]
+  },
+  "gap_months": 76,
+  "at_floor": false
+ },
+ "tabular": {
+  "status": "usable",
+  "domain": "tabular.io",
+  "sector": "software",
+  "from_year": 2021,
+  "n_snaps": 5,
+  "early": {
+   "ts": "20210901013129",
+   "title": "Tabular",
+   "lines": [
+    "01 Sep 2021 - 23 Dec 2025",
+    "The main site for Archive Team is at",
+    "and contains up to the date information on various projects, manifestos, plans and walkthroughs.",
+    "This collection contains the output of many Archive Team projects, both ongoing and completed. Thanks to the generous providing of disk space by the Internet Archive, multi-terabyte datasets can be made available, as well as in use by the",
+    ", providing a path back to lost websites and work.",
+    "The Archive Team Panic Downloads",
+    "are full pulldowns of currently extant websites, meant to serve as emergency backups for needed sites that are in danger of closing, or which will be missed dearly if suddenly lost due to hard drive crashes or server failures.",
+    "We\u2019re busy building your new data platform",
+    "Introducing Tabular I\u2019m happy to announce that Dan Weeks, Jason Reid, and I have raised a series A from a16z to build a new kind of data platform around Apache Iceberg.",
+    "Tabular is building an independent cloud-native data platform powered by the open source standard for huge analytic datasets,",
+    ". The platform isn\u2019t public yet, but please",
+    "Designed from the ground up for cloud object stores",
+    "Any compute framework",
+    "Seamlessly work in Trino, Spark, Flink, and more without copying your data everywhere"
+   ]
+  },
+  "late": {
+   "ts": "20250123125357",
+   "title": "Tabular \u2013 An independent storage engine from the creators of Apache Iceberg",
+   "lines": [
+    "Tabular \u2013 An independent storage engine from the creators of Apache Iceberg",
+    "01 Sep 2021 - 23 Dec 2025",
+    "Web crawl data from Common Crawl.",
+    "Apache Iceberg Cookbook",
+    "Tabular has joined Databricks",
+    "A storage platform from the",
+    "original creators of Apache Iceberg",
+    "read the press release",
+    "Towards a joint vision of the open lakehouse",
+    "Towards a open, common standard for table format interoperability",
+    "Modern Slavery Statement",
+    "All rights reserved. Apache, Apache Iceberg, Iceberg and the Iceberg logo are trademarks of the Apache Software Foundation."
+   ]
+  },
+  "gap_months": 40,
+  "at_floor": false
+ },
+ "databricks": {
+  "status": "usable",
+  "domain": "databricks.com",
+  "sector": "software",
+  "from_year": 2013,
+  "n_snaps": 14,
+  "early": {
+   "ts": "20140104101512",
+   "title": "Databricks, Inc.",
+   "lines": [
+    "ArchiveIt-Partner-416",
+    "Archive-It Partner 416 IT History Society",
+    "IT Historical Resource Sites",
+    "platform, we're working to transform large-scale data analysis.",
+    "in shaping the future of big data.",
+    "Spark In MapReduce (SIMR)",
+    "Highlights From Spark Summit 2013",
+    "Putting Spark to Use - Fast In-Memory Computing for Your Big Data Applications",
+    "Spark Summit and training",
+    "huge success! Talk slides and videos are available now."
+   ]
+  },
+  "late": {
+   "ts": "20260101115645",
+   "title": "",
+   "lines": [
+    "Databricks: Leading Data and AI Platform for Enterprises",
+    "The main site for Archive Team is at",
+    "and contains up to the date information on various projects, manifestos, plans and walkthroughs.",
+    "This collection contains the output of many Archive Team projects, both ongoing and completed. Thanks to the generous providing of disk space by the Internet Archive, multi-terabyte datasets can be made available, as well as in use by the",
+    ", providing a path back to lost websites and work.",
+    "The Archive Team Panic Downloads",
+    "are full pulldowns of currently extant websites, meant to serve as emergency backups for needed sites that are in danger of closing, or which will be missed dearly if suddenly lost due to hard drive crashes or server failures.",
+    "Lakehouse Architecture",
+    "Databricks on AWS, Azure, GCP, and SAP",
+    "Consulting & System Integrators",
+    "Experts to build, deploy and migrate to Databricks",
+    "Connect your existing tools to your Lakehouse",
+    "Build, deploy or migrate to the Lakehouse",
+    "Access the ecosystem of data consumers"
+   ]
+  },
+  "gap_months": 144,
+  "at_floor": false
+ },
+ "motherduck": {
+  "status": "usable",
+  "domain": "motherduck.com",
+  "sector": "software",
+  "from_year": 2022,
+  "n_snaps": 5,
+  "early": {
+   "ts": "20220810194427",
+   "title": "MotherDuck: Data Infrastructure and Analytics",
+   "lines": [
+    "MotherDuck: Data Infrastructure and Analytics",
+    "02 Feb 2011 - 19 Jul 2026",
+    "The main site for Archive Team is at",
+    "and contains up to the date information on various projects, manifestos, plans and walkthroughs.",
+    "This collection contains the output of many Archive Team projects, both ongoing and completed. Thanks to the generous providing of disk space by the Internet Archive, multi-terabyte datasets can be made available, as well as in use by the",
+    ", providing a path back to lost websites and work.",
+    "The Archive Team Panic Downloads",
+    "are full pulldowns of currently extant websites, meant to serve as emergency backups for needed sites that are in danger of closing, or which will be missed dearly if suddenly lost due to hard drive crashes or server failures.",
+    "Data Infrastructure and Analytics",
+    "for data big and small",
+    "Sign up to hear first about what we're building!",
+    "World-class team which worked on databases and cloud services at AWS, Databricks, Elastic, Facebook, Firebolt, Google BigQuery, Neo4j, SingleStore, Snowflake and more.",
+    "joins us from Snowflake where he was a Principal Engineer on their Web UI. Previously he was an Eng Manager in Languages and Runtimes at Facebook and a Core Strat at Goldman Sachs. Antony created and maintains",
+    ", an OSS data exploration tool."
+   ]
+  },
+  "late": {
+   "ts": "20260109062253",
+   "title": "MotherDuck: Ducking Simple Data Warehouse based on DuckDB",
+   "lines": [
+    "MotherDuck: Ducking Simple Data Warehouse based on DuckDB",
+    "02 Feb 2011 - 19 Jul 2026",
+    "The main site for Archive Team is at",
+    "and contains up to the date information on various projects, manifestos, plans and walkthroughs.",
+    "This collection contains the output of many Archive Team projects, both ongoing and completed. Thanks to the generous providing of disk space by the Internet Archive, multi-terabyte datasets can be made available, as well as in use by the",
+    ", providing a path back to lost websites and work.",
+    "The Archive Team Panic Downloads",
+    "are full pulldowns of currently extant websites, meant to serve as emergency backups for needed sites that are in danger of closing, or which will be missed dearly if suddenly lost due to hard drive crashes or server failures.",
+    "AI AGENTS STRUGGLE WITH BUSINESS DATA ACCURACY. HERE'S HOW TO FIX IT",
+    "Register for the webinar",
+    "Data Warehousing and BI",
+    "Customer-facing Analytics",
+    "DuckDB cloud data warehouse scaling to terabytes",
+    "for customer-facing analytics and BI"
+   ]
+  },
+  "gap_months": 41,
+  "at_floor": false
+ },
+ "bruin": {
+  "status": "usable",
+  "domain": "getbruin.com",
+  "sector": "software",
+  "from_year": 2023,
+  "n_snaps": 3,
+  "early": {
+   "ts": "20240105165520",
+   "title": "Bruin - Unified Analytics Platform",
+   "lines": [
+    "Bruin - Unified Analytics Platform",
+    "18 Oct 2023 - 19 May 2026",
+    "Save Page Now Outlinks",
+    "Bruin enables you to transform, document, and monitor your data without any custom code.",
+    "Press enter or space to select a node. You can then use the arrow keys to move the node around. You can then use the arrow keys to move the node around, press delete to remove it and press escape to cancel.",
+    "Press enter or space to select an edge. You can then press delete to remove it or press escape to cancel.",
+    "From zero to full pipeline in minutes.",
+    "Built for data analysts.",
+    "Bruin enables data analysts to build production-grade data pipelines without any custom code.",
+    "SQL & Python Transformations",
+    "Bruin enables you to transform your data using SQL and Python without any custom code. SQL and Python transformations are executed in a serverless environment that scales with your data.",
+    "Using the built-in data quality checks enables building high-quality data assets.",
+    "Automated Materialization",
+    "query and let Bruin take care of building the tables and views for you. It handles incremental updates as well as full refreshes."
+   ]
+  },
+  "late": {
+   "ts": "20260120060142",
+   "title": "Bruin - Your Last Data Platform | 10x Faster, 90% Less Complexity",
+   "lines": [
+    "Bruin - Your Last Data Platform | 10x Faster, 90% Less Complexity",
+    "18 Oct 2023 - 19 May 2026",
+    "Web crawl data from Common Crawl.",
+    "Reliable data, 10x faster. Works with your",
+    "Trusted by forward-thinking teams",
+    "Bruin is a command-line data tool that lets you build SQL & Python pipelines with built-in quality checks, column-level lineage, and end-to-end observability.",
+    "https://getbruin.com/install/cli",
+    "Join our Slack community",
+    "Self-host on your infrastructure or use our managed cloud. You're always in control.",
+    "Join a growing community of contributors building the future of data platforms.",
+    "Modify, extend, and customize to fit your exact needs. All source code is available.",
+    "Built-in data ingestion.",
+    "Copy data from any source to any destination with CLI-based ingestion tool.",
+    "Use commercially, modify freely, and distribute without restrictions."
+   ]
+  },
+  "gap_months": 24,
+  "at_floor": false
+ },
+ "lace": {
+  "status": "usable",
+  "domain": "lace.io",
+  "sector": "software",
+  "from_year": 2019,
+  "n_snaps": 6,
+  "early": {
+   "ts": "20211210235100",
+   "title": "lace.io",
+   "lines": [
+    "07 Aug 2015 - 14 Jun 2026",
+    "2021 Copyright.  All Rights Reserved."
+   ]
+  },
+  "late": {
+   "ts": "20260107161144",
+   "title": "Lace | The light wallet platform to explore Web3",
+   "lines": [
+    "Lace | The light wallet platform to explore Web3",
+    "07 Aug 2015 - 14 Jun 2026",
+    "The main site for Archive Team is at",
+    "and contains up to the date information on various projects, manifestos, plans and walkthroughs.",
+    "This collection contains the output of many Archive Team projects, both ongoing and completed. Thanks to the generous providing of disk space by the Internet Archive, multi-terabyte datasets can be made available, as well as in use by the",
+    ", providing a path back to lost websites and work.",
+    "The Archive Team Panic Downloads",
+    "are full pulldowns of currently extant websites, meant to serve as emergency backups for needed sites that are in danger of closing, or which will be missed dearly if suddenly lost due to hard drive crashes or server failures.",
+    "Bitcoin DeFi is coming.",
+    "The fast and easy way to explore Web3",
+    "Discover the first light wallet platform from Input | Output, one of the creators of Cardano. Plus,",
+    "is here! Find out about the Glacier Drop and much more.",
+    "One platform for your Web3 life",
+    "Lace brings together a wealth of Web3 features, from managing digital assets, to accessing NFTs, DApps, and DeFi services, so you can discover and enjoy a new world of digital experiences."
+   ]
+  },
+  "gap_months": 49,
+  "at_floor": false
+ },
+ "callosum": {
+  "status": "usable",
+  "domain": "callosum.com",
+  "sector": "software",
+  "from_year": 2022,
+  "n_snaps": 3,
+  "early": {
+   "ts": "20240618094753",
+   "title": "",
+   "lines": [
+    "28 Nov 1999 - 16 Jun 2026",
+    "Web crawl data from Common Crawl."
+   ]
+  },
+  "late": {
+   "ts": "20260226060717",
+   "title": "Callosum",
+   "lines": [
+    "28 Nov 1999 - 16 Jun 2026",
+    "We are building the infrastructure where heterogeneous chips & intelligence co-evolve to solve the world's hardest problems.",
+    "div]:h-full [&>div]:w-auto\">",
+    "A totally new kind of AI & compute company.",
+    "Artificial intelligence scaled on a simple bet: identical chips, identical architectures, brute force. It worked remarkably well. But what began as a practical choice has hardened into an assumption: scaling means more of the same.",
+    "That assumption is now breaking",
+    "This is why Callosum exists. We have assembled world-class scientists, engineers and visionaries around a single conviction: the current paradigm is not enough.",
+    "Callosum is the Intelligent Systems Company.",
+    "Our tech & research stack",
+    "From heterogeneous silicon to real-world application.",
+    "Scientists, engineers & visionaries building for what comes next.",
+    "partnering@callosum.com",
+    "connecting@callosum.com",
+    "Callosum Technologies Ltd. All Rights Reserved."
+   ]
+  },
+  "gap_months": 20,
+  "at_floor": false
+ },
+ "oshen": {
+  "status": "usable",
+  "domain": "oshen.io",
+  "sector": "hardware",
+  "from_year": 2021,
+  "n_snaps": 3,
+  "early": {
+   "ts": "20210414104245",
+   "title": "Oshen \u2013 Capture the spirit of the Ocean, With Oshen",
+   "lines": [
+    "Oshen \u2013 Capture the spirit of the Ocean, With Oshen",
+    "14 Apr 2021 - 25 Jun 2025",
+    "The main site for Archive Team is at",
+    "and contains up to the date information on various projects, manifestos, plans and walkthroughs.",
+    "This collection contains the output of many Archive Team projects, both ongoing and completed. Thanks to the generous providing of disk space by the Internet Archive, multi-terabyte datasets can be made available, as well as in use by the",
+    ", providing a path back to lost websites and work.",
+    "The Archive Team Panic Downloads",
+    "are full pulldowns of currently extant websites, meant to serve as emergency backups for needed sites that are in danger of closing, or which will be missed dearly if suddenly lost due to hard drive crashes or server failures.",
+    "World\u2019s First & Exclusive Ocean NFTs",
+    "2021-04-12T07:52:14+00:00",
+    "What makes us Unique?",
+    "Highest Quality Standards",
+    "The artists, both filming and performing are of the highest caliber and have achieved results that are above the normal range of achievement.",
+    "There is no other NFT platform that offers the quality of artists and athletes of this high caliber."
+   ]
+  },
+  "late": {
+   "ts": "20250325003525",
+   "title": "",
+   "lines": [
+    "14 Apr 2021 - 25 Jun 2025",
+    "The Internet Archive discovers and captures web pages through many different web crawls.",
+    "At any given time several distinct crawls are running, some for months, and some every day or longer.",
+    "View the web archive through the",
+    "Certificate Transparency"
+   ]
+  },
+  "gap_months": 47,
+  "at_floor": false
+ },
+ "proxima_fusion": {
+  "status": "usable",
+  "domain": "proximafusion.com",
+  "sector": "hardware",
+  "from_year": 2023,
+  "n_snaps": 4,
+  "early": {
+   "ts": "20230321115005",
+   "title": "Proxima Fusion",
+   "lines": [
+    "27 Dec 2022 - 23 Jul 2026",
+    "Web crawl data from Common Crawl.",
+    "Designing stellarator power plants in Europe.",
+    "\u00a9 Proxima Fusion GmbH 2023"
+   ]
+  },
+  "late": {
+   "ts": "20260101030800",
+   "title": "Proxima Fusion | Building stellarators to power the future",
+   "lines": [
+    "Proxima Fusion | Building stellarators to power the future",
+    "27 Dec 2022 - 23 Jul 2026",
+    "The main site for Archive Team is at",
+    "and contains up to the date information on various projects, manifestos, plans and walkthroughs.",
+    "This collection contains the output of many Archive Team projects, both ongoing and completed. Thanks to the generous providing of disk space by the Internet Archive, multi-terabyte datasets can be made available, as well as in use by the",
+    ", providing a path back to lost websites and work.",
+    "The Archive Team Panic Downloads",
+    "are full pulldowns of currently extant websites, meant to serve as emergency backups for needed sites that are in danger of closing, or which will be missed dearly if suddenly lost due to hard drive crashes or server failures.",
+    "ArchiveBot: The Archive Team Crowdsourced Crawler",
+    "There is a dashboard running for the archivebot process at",
+    "http://www.archivebot.com",
+    "ArchiveBot's source code can be found at",
+    "https://github.com/ArchiveTeam/ArchiveBot",
+    "Building stellarators to power the future"
+   ]
+  },
+  "gap_months": 34,
+  "at_floor": true
+ },
+ "positron": {
+  "status": "usable",
+  "domain": "positron.ai",
+  "sector": "hardware",
+  "from_year": 2023,
+  "n_snaps": 4,
+  "early": {
+   "ts": "20231211132433",
+   "title": "Positron AI",
+   "lines": [
+    "11 Dec 2023 - 22 Jul 2026",
+    "Web crawl data from Common Crawl.",
+    "TRANSFORMING \u200bthe coSt of \u200bMACHINE LEARNING",
+    "See us at neurips 2023: Booth 309",
+    "Transformer Inference \u200bAppliance",
+    "5x Better Performance per Dollar \u200b",
+    "Support 500B+ parameter models",
+    "Individual LoRAs per user",
+    "Llama 2 70B performance",
+    "Batch 1 \u2192 480 tokens/sec/user",
+    "Batch 8 \u2192 160 tokens/sec/user",
+    "Available Spring 2024",
+    "*All performance estimates are subject to change. All numbers are based on BF16 computation, and without speculative decoding or paged attention.",
+    "Building the Positronic Brains of \u200bthe future"
+   ]
+  },
+  "late": {
+   "ts": "20260117194932",
+   "title": "Positron | Generative AI Acceleration",
+   "lines": [
+    "Positron | Generative AI Acceleration",
+    "11 Dec 2023 - 22 Jul 2026",
+    "Web crawl data from Common Crawl.",
+    "Accelerating Intelligence",
+    "with Hardware for Transformer Model Inference",
+    "Purpose Built Generative AI Systems",
+    "Positron delivers the highest performance, lowest power, and best total cost of ownership solution for Transformer Model Inference.",
+    "Head to Head Systems Comparison",
+    "(Llama 3.1 8B with BF16 compute, no speculation or paged attention)",
+    "Positron delivers leading Performance per Dollar and Performance per Watt compared to NVIDIA",
+    "Every Transformer Runs on Positron",
+    "Supports all Transformer models",
+    "seamlessly with zero time and zero effort",
+    "Positron maps any trained HuggingFace Transformers Library model directly onto hardware for maximum performance and ease of use"
+   ]
+  },
+  "gap_months": 25,
+  "at_floor": false
+ },
+ "fractile": {
+  "status": "usable",
+  "domain": "fractile.ai",
+  "sector": "hardware",
+  "from_year": 2022,
+  "n_snaps": 4,
+  "early": {
+   "ts": "20231208160223",
+   "title": "Fractile",
+   "lines": [
+    "11 Oct 2023 - 24 Jul 2026",
+    "Web crawl data from Common Crawl.",
+    "Fractile\u2019s revolutionary approach to computing can run the world\u2019s largest language models",
+    "* Than a (cluster of) H100 GPUs with 8-bit quantisation and FasterTransformer, on Llama2 70B",
+    "We are building the hardware that will remove every bottleneck to the fastest possible inference of the largest transformer networks",
+    "This means the biggest LLMs in the world running faster than you can read, and a universe of completely new capabilities and possibilities for how we work that will be unlocked by near-instant inference of models with superhuman intelligence.",
+    "Existing hardware is not fit for the AI revolution",
+    "When a trained language model is run for a user, over 99% of the total compute time is spent not on arithmetic but on moving model weights from memory to the processor",
+    "* Llama2 70B at 8 bit quantisation, on 80GB A100 GPU",
+    "By performing 100% of the operations needed to run model inference in memory, we blast through the memory bottleneck",
+    "The time taken to run the arithmetic for generating a single word",
+    "The time taken moving parameters from memory to the processor for each word",
+    "The total time a Fractile processor takes to generate the same word",
+    "if you are interested in learning more, or connect with us on"
+   ]
+  },
+  "late": {
+   "ts": "20260107183935",
+   "title": "Fractile - Radically Accelerate\nFrontier Model Inference",
+   "lines": [
+    "Fractile - Radically Accelerate",
+    "Frontier Model Inference",
+    "11 Oct 2023 - 24 Jul 2026",
+    "Radically Accelerate Frontier Model Inference",
+    "Run the most advanced models up to 25x faster and at 1/10th the cost.",
+    "revolutionising compute",
+    "to build the engine that can power the",
+    "next generation of AI",
+    "The Future of AI Scaling",
+    "The number of tokens we are processing with frontier AI models is growing by more than 10x\u00a0every year.",
+    "This exponential is set to continue, above all because of the continuing trend that AI models that reason with more tokens produce far smarter outputs. Players that fail to scale their token processing will be out of the race.",
+    "Frontier model inference has two critical requirements that existing hardware cannot satisfy simultaneously: low latency and high throughput.",
+    "Join us and build the future of AI",
+    "Fractile is home to some of the world\u2019s most talented, driven and energetic technologists and thinkers, who are inspired to take on some of the world\u2019s most impactful technical challenges in a deeply collaborative environment."
+   ]
+  },
+  "gap_months": 25,
+  "at_floor": false
+ },
+ "lumai": {
+  "status": "usable",
+  "domain": "lumai.ai",
+  "sector": "hardware",
+  "from_year": 2022,
+  "n_snaps": 4,
+  "early": {
+   "ts": "20230321113102",
+   "title": "",
+   "lines": [
+    "21 Mar 2023 - 16 Jun 2026",
+    "The main site for Archive Team is at",
+    "and contains up to the date information on various projects, manifestos, plans and walkthroughs.",
+    "This collection contains the output of many Archive Team projects, both ongoing and completed. Thanks to the generous providing of disk space by the Internet Archive, multi-terabyte datasets can be made available, as well as in use by the",
+    ", providing a path back to lost websites and work.",
+    "The Archive Team Panic Downloads",
+    "are full pulldowns of currently extant websites, meant to serve as emergency backups for needed sites that are in danger of closing, or which will be missed dearly if suddenly lost due to hard drive crashes or server failures."
+   ]
+  },
+  "late": {
+   "ts": "20260117013326",
+   "title": "Lumai - Revolutionary AI Computing",
+   "lines": [
+    "Lumai - Revolutionary AI Computing",
+    "21 Mar 2023 - 16 Jun 2026",
+    "Web crawl data from Common Crawl.",
+    "The future of AI acceleration",
+    "By using 3D optical computing,\u00a0we\u00a0are enabling AI deployment at scale \u2013 with the fastest, most energy-efficient AI data center processor.",
+    "A leap in AI datacenter performance at a fraction of the cost",
+    "Increase in AI Performance",
+    "Lumai\u2019s processor is many times faster than transistor-only accelerators. With a roadmap from 4x to 50x the performance, it is the future of AI.",
+    "of the Total Cost of Ownership",
+    "Using 3D optical components means we don't rely on expensive, power-hungry silicon only technology. This results in much lower costs \u2013 both capital and operational.",
+    "Not only is our accelerator fast, it is extremely energy efficient, offering a TOPS/W efficiency that far exceeds existing solutions.",
+    "A unique approach. A jump in performance",
+    "without compromising latency",
+    "unlocked by 3D geometry"
+   ]
+  },
+  "gap_months": 34,
+  "at_floor": false
+ },
+ "ncodin": {
+  "status": "usable",
+  "domain": "ncodin.com",
+  "sector": "hardware",
+  "from_year": 2022,
+  "n_snaps": 4,
+  "early": {
+   "ts": "20230609202747",
+   "title": "Illuminating the future of computing \u2013 Light down to the core",
+   "lines": [
+    "Illuminating the future of computing \u2013 Light down to the core",
+    "05 Aug 2018 - 11 Jul 2026",
+    "Web crawl data from Common Crawl.",
+    "Afficher/masquer la navigation",
+    "Permuter la colonne lat\u00e9rale et la navigation",
+    "Illuminating the future of computing",
+    "Light down to the core",
+    "Our vision: an optical interposer",
+    "The High Performance Computing (",
+    ") and ArtificiaI Intelligence (",
+    ", we enable ultra-fast and energy efficient die-to-die interconnects using light as the vehicle of information. We develop an optical interposer based on a proprietary and revolutionary technology, unblocking the full scalability of multi-chiplets based",
+    "NcodiN harnesses III-V semiconductors to achieve lasers with unprecedented small footprint. Our technology will enable innovative ways for the on-chip convergence of electronics and photonics with disruptive bandwidth and power efficiency.",
+    "Our technology will enable Zettascale supercomputers (10",
+    "calculations/s) that will solve problems that are now unthinkable or even impossible to tackle, such as Climate modelling, Autonomous driving, Medical treatments or Smart cities."
+   ]
+  },
+  "late": {
+   "ts": "20260121145453",
+   "title": "Ncodin - Our vision: an optical interposer - Illuminating the future of computing",
+   "lines": [
+    "Ncodin - Our vision: an optical interposer - Illuminating the future of computing",
+    "100k processing units. Chiplets-based disaggregated processors and memory-centric computing architectures are taking over and require an ever more intensive communication between dies. Thus, today interconnect bottleneck is the main\"/>",
+    "05 Aug 2018 - 11 Jul 2026",
+    "Web crawl data from Common Crawl.",
+    "The world\u2019s smallest laser",
+    "integrated on silicon",
+    "Breaking the copper wall to scale AI",
+    "The future of High Performance Computing",
+    "Using light for unlimited scaling",
+    "At\u00a0NcodiN, we shatter these limits.\u00a0Our optical interconnect technology unlocks the next frontier, allowing chipmakers to\u00a0pack the power of a supercomputer into a single processor.",
+    "Blazing-fast. Energy-efficient. Infinitely scalable",
+    "Optical interconnects redefining data processing",
+    "Extend communication beyond limits\u2014achieving longer reach and higher efficiency than traditional copper links.",
+    "Low power consumption"
+   ]
+  },
+  "gap_months": 31,
+  "at_floor": false
+ },
+ "emm": {
+  "status": "usable",
+  "domain": "emm.com",
+  "sector": "hardware",
+  "from_year": 2020,
+  "n_snaps": 6,
+  "early": {
+   "ts": "20211018223037",
+   "title": "",
+   "lines": [
+    "01 Jul 1997 - 10 May 2026",
+    "Web crawl data from Common Crawl.",
+    "data protection information",
+    "\u00a9 EMM 2021 | All rights reserved.",
+    "Thanks for contacting us! We will get in touch with you shortly.",
+    "Bolivia, Plurinational State of",
+    "Bonaire, Sint Eustatius and Saba",
+    "Bosnia and Herzegovina",
+    "British Indian Ocean Territory",
+    "Central African Republic",
+    "Cocos (Keeling) Islands",
+    "Congo, the Democratic Republic of the",
+    "Falkland Islands (Malvinas)",
+    "French Southern Territories"
+   ]
+  },
+  "late": {
+   "ts": "20260125052226",
+   "title": "EMM \u2013 Smart Solutions for Automotive, Industry, Aviation & Marine | Colad, Finixa & Hamach",
+   "lines": [
+    "EMM \u2013 Smart Solutions for Automotive, Industry, Aviation & Marine | Colad, Finixa & Hamach",
+    "01 Jul 1997 - 10 May 2026",
+    "Web crawl data from Common Crawl.",
+    "Bonaire, Sint Eustatius and Saba",
+    "Bosnia and Herzegovina",
+    "British Indian Ocean Territory",
+    "Central African Republic",
+    "Cocos (Keeling) Islands",
+    "Congo, Democratic Republic of the",
+    "Falkland Islands (Malvinas)",
+    "French Southern Territories",
+    "Heard Island and McDonald Islands",
+    "Korea, Democratic People's Republic of",
+    "Lao People's Democratic Republic"
+   ]
+  },
+  "gap_months": 51,
+  "at_floor": false
+ },
+ "axiom_tx": {
+  "status": "usable",
+  "domain": "axiomtx.com",
+  "sector": "biotech",
+  "from_year": 2019,
+  "n_snaps": 5,
+  "early": {
+   "ts": "20190630110106",
+   "title": "axiom",
+   "lines": [
+    "11 Apr 2004 - 26 Jul 2025",
+    "The Internet Archive discovers and captures web pages through many different web crawls.",
+    "At any given time several distinct crawls are running, some for months, and some every day or longer.",
+    "View the web archive through the",
+    "Survey Crawl Number 9"
+   ]
+  },
+  "late": {
+   "ts": "20250206191015",
+   "title": "Home | Axiom Systems",
+   "lines": [
+    "11 Apr 2004 - 26 Jul 2025",
+    "The Internet Archive discovers and captures web pages through many different web crawls.",
+    "At any given time several distinct crawls are running, some for months, and some every day or longer.",
+    "View the web archive through the",
+    "Certificate Transparency",
+    "Free Over The Phone Estimate Call Now!",
+    "Use tab to navigate through the menu items.",
+    "Welcome to Axiom Systems",
+    "Your One-Stop Solution for IT Services",
+    "Get the Best IT Support and Services at Affordable Prices",
+    "Get A Free Quote Online!",
+    "We Will Contact You Soon",
+    "Receive Your Free Quote",
+    "Recive Huge Rewards For Referring Us"
+   ]
+  },
+  "gap_months": 68,
+  "at_floor": false
+ }
+}
