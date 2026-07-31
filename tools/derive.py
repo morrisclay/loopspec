@@ -431,7 +431,95 @@ def q_policy_on_unmeasured_inputs(d, nodes, edges):
     return out
 
 
+def q_estimand_never_estimated(d, nodes, edges):
+    """An estimand declared as state but with nothing estimating it."""
+    est_targets = {b for _, b in rel(edges, "estimates")}
+    holders = {}
+    for i, n in nodes.items():
+        if n.get("kind") == "Estimate":
+            holders[i] = n
+    # estimands covered by some Estimate (directly or via `about`)
+    covered = set()
+    for a, b in rel(edges, "estimates") + rel(edges, "explains"):
+        covered.add(b)
+    for i, n in nodes.items():
+        if n.get("kind") == "Estimate":
+            for a, b in edges_from(edges, i):
+                covered.add(b)
+    out = []
+    for i, n in nodes.items():
+        if n.get("kind") != "Estimand" or n.get("determination") == "computed":
+            continue
+        if i in covered:
+            continue
+        out.append({
+            "pattern": "estimand_never_estimated",
+            "claim": (f"`{i}` is declared as estimated state, but nothing in the loop produces "
+                      f"an estimate of it — no estimator, no belief. It is named as something "
+                      f"you track and there is no machinery tracking it."),
+            "evidence": {"estimand": i},
+        })
+    return out
+
+
+def q_orphan_signal(d, nodes, edges):
+    """A signal that measures nothing declared."""
+    measuring = {a for a, _ in rel(edges, "measures")}
+    reading = {b for _, b in rel(edges, "reads")} if True else set()
+    out = []
+    for i, n in nodes.items():
+        if n.get("kind") != "Signal" or i in measuring:
+            continue
+        out.append({
+            "pattern": "orphan_signal",
+            "claim": (f"Signal `{i}` is observed but is not connected to any estimand. You are "
+                      f"collecting it without having said what it tells you."),
+            "evidence": {"signal": i},
+        })
+    return out
+
+
+def q_no_loop_closed(d, nodes, edges):
+    """Interventions and signals exist but no loop is declared."""
+    loops = d.get("loops") or []
+    ivs = [i for i, n in nodes.items() if n.get("kind") == "Intervention"]
+    sigs = [i for i, n in nodes.items() if n.get("kind") == "Signal"]
+    if loops or not (ivs and sigs):
+        return []
+    return [{
+        "pattern": "no_loop_closed",
+        "claim": (f"{len(sigs)} signal(s) and {len(ivs)} intervention(s) are declared and NO "
+                  f"loop closes between them. Nothing states which observation triggers which "
+                  f"action, or on what cadence — so this is a list of parts, not a control "
+                  f"loop."),
+        "evidence": {"signals": sigs, "interventions": ivs},
+    }]
+
+
+def q_interventions_without_policy(d, nodes, edges):
+    """More than one intervention and nothing selects between them."""
+    ivs = [i for i, n in nodes.items() if n.get("kind") == "Intervention"]
+    pols = [i for i, n in nodes.items() if n.get("kind") == "Policy"]
+    if len(ivs) < 2 or pols:
+        return []
+    return [{
+        "pattern": "interventions_without_policy",
+        "claim": (f"{len(ivs)} interventions are available ({', '.join(ivs)}) and no policy "
+                  f"selects between them. Nothing states the condition under which you would "
+                  f"choose one over the other."),
+        "evidence": {"interventions": ivs},
+    }]
+
+
+def edges_from(edges, node):
+    return [(e.get("from"), e.get("to")) for e in edges if e.get("from") == node]
+
+
 QUERIES = [
+    q_estimand_never_estimated,
+    q_orphan_signal,
+    q_no_loop_closed,
+    q_interventions_without_policy,
     q_policy_on_unmeasured_inputs,
     q_invariant_on_unmeasured,
     q_hinge_without_sensor,

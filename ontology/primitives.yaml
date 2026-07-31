@@ -1,639 +1,682 @@
-# URAS Primitive Catalog — v0
-#
-# DERIVED from the four seed descriptions in benchmarks/seed/, not from the charter's
-# candidate list and not from prior-art vocabulary. Where derivation disagreed with an
-# earlier guess, the derivation wins and the disagreement is recorded.
-#
-# Machine-readable source of truth. tools/score.py reads this file.
-#
-# tier: core | provisional | extension
-# depth: composition depth (0 = irreducible)
-#
-# demanded_by: DOCUMENTATION ONLY — which systems are known to have forced this primitive.
-#   NOT the coverage metric. Coverage is computed from the `demands:` declared in each
-#   benchmark's front matter, because a field maintained here measured the maintainer's
-#   diligence in updating it rather than actual coverage. Treat this list as a hint that may
-#   lag; benchmarks/ is authoritative.
-# not_in_charter / renamed_from: where derivation departed from the earlier list
-
 version: 0
-budget: 20
-
+budget: 18
 primitives:
+- name: System
+  tier: core
+  depth: 0
+  definition: 'A bounded region of the world under description. Recursive: a system may contain systems.
+    Not required to hold goals or beliefs — see the immune system.
 
-  - name: System
-    tier: core
-    depth: 0
-    definition: >
-      A bounded region of the world under description. Recursive: a system may contain
-      systems. Not required to hold goals or beliefs — see the immune system.
-    demanded_by: [thermostat, immune_system, hospital, startup]
+    '
+  demanded_by:
+  - thermostat
+  - immune_system
+  - hospital
+  - startup
+- name: Boundary
+  tier: core
+  depth: 1
+  definition: 'What is inside a system and what is outside. A simple property for now, holding multiple
+    declared boundaries where they conflict. The immune system establishes its own boundary during
+    development and can establish it wrongly, which is the strongest pressure toward making this
+    a first-class relation — deferred until a benchmark forces it.
 
-  - name: Boundary
-    tier: core
-    depth: 1
-    definition: >
-      What is inside a system and what is outside. A simple property for now, holding
-      multiple declared boundaries where they conflict. The immune system establishes its
-      own boundary during development and can establish it wrongly, which is the strongest
-      pressure toward making this a first-class relation — deferred until a benchmark
-      forces it.
-    demanded_by: [immune_system, startup, spacex]
-    note: >
-      The startup's advisor and lead investor are more inside than one employee, for
-      purposes of predicting behaviour. Membership is graded, not binary.
-    note_deferral_third_time: >
-      Promotion to a first-class relation is deferred for a THIRD time, now on examination
-      rather than on cost. I predicted in reference_set.md that SpaceX would force it.
-      Examining it, it does not: vertical integration moves a component from outside to
-      inside SEQUENTIALLY, which is a property changing over time, and Revision already
-      covers boundary redrawing explicitly.
+    '
+  demanded_by:
+  - immune_system
+  - startup
+  - spacex
+  note: 'The startup''s advisor and lead investor are more inside than one employee, for purposes
+    of predicting behaviour. Membership is graded, not binary.
 
-      What would force relation-hood is SIMULTANEOUS dual membership — a component inside for
-      one purpose and outside for another, both memberships reasoned about at once. SpaceX
-      does not present that. supply_chain remains the predicted breaker.
+    '
+  note_deferral_third_time: 'Promotion to a first-class relation is deferred for a THIRD time, now
+    on examination rather than on cost. I predicted in reference_set.md that SpaceX would force it.
+    Examining it, it does not: vertical integration moves a component from outside to inside SEQUENTIALLY,
+    which is a property changing over time, and Revision already covers boundary redrawing explicitly.
 
-      Recorded as a failed prediction because the temptation was to declare the deferral
-      resolved and take the credit for the earlier call.
+    What would force relation-hood is SIMULTANEOUS dual membership — a component inside for one purpose
+    and outside for another, both memberships reasoned about at once. SpaceX does not present that.
+    supply_chain remains the predicted breaker.
 
-  - name: Party
-    tier: core
-    depth: 1
-    renamed_from: Observer
-    discriminator: >
-      RESOLVED by narrowing. A Party MUST bear a consequence. It may additionally hold
-      estimates, hold desired conditions, and exercise authority, but consequence-bearing is
-      what makes it a party rather than a mechanism.
-    discriminator_rationale: >
-      Round 1 exposed that the definition was broader than its author'"'"'s use of it: gpt-5-codex
-      counted a thermostat controller as a Party because it exercises authority, and by the
-      definition as written codex was right.
+    Recorded as a failed prediction because the temptation was to declare the deferral resolved and
+    take the credit for the earlier call.
 
-      Narrowing rather than broadening, because the alternative makes every relay and actuator
-      a Party, which dilutes the construct to nothing. Party was introduced to carry
-      INTERESTED parties with asymmetric stakes; a relay has no stake.
+    '
+- name: Party
+  tier: core
+  depth: 1
+  renamed_from: Observer
+  discriminator: 'RESOLVED by narrowing. A Party MUST bear a consequence. It may additionally hold
+    estimates, hold desired conditions, and exercise authority, but consequence-bearing is what makes
+    it a party rather than a mechanism.
 
-      Authority is therefore delegable to a non-Party component. The thermostat controller
-      holds authority over fire_boiler and is a component; the householder bears the
-      consequence of being cold and is the Party.
+    '
+  discriminator_rationale: 'Round 1 exposed that the definition was broader than its author''"''"''s
+    use of it: gpt-5-codex counted a thermostat controller as a Party because it exercises authority,
+    and by the definition as written codex was right.
 
-      Side benefit: this links Party to Consequence constitutively, which independently
-      justifies Consequence beyond its coverage count — it is not an optional annotation but
-      the thing that makes a Party identifiable.
-    definition: >
-      A locus that may hold estimates, hold desired conditions, exercise authority, and
-      bear consequences. Need not be a person: a lymphocyte population is a party in the
-      estimate-holding sense only.
-    demanded_by: [hospital, startup, thermostat]
-    rename_rationale: >
-      Derivation contradicted the earlier guess. "Observer" names only the sensing role,
-      but the hospital demands a construct that simultaneously holds estimates, holds
-      goals, has authority, and bears asymmetric error costs. Those four attach to the
-      same entity and separating them produced four parallel registries keyed by the same
-      identity — which is one construct wearing four names.
+    Narrowing rather than broadening, because the alternative makes every relay and actuator a Party,
+    which dilutes the construct to nothing. Party was introduced to carry INTERESTED parties with
+    asymmetric stakes; a relay has no stake.
 
-  - name: Estimand
-    tier: core
-    depth: 1
-    definition: >
-      A quantity of interest, typically not directly observable, for which at least one
-      conceivable observation would settle the matter.
-    attributes:
-      - criticality: >
-          existential | high | moderate | low. How much of the system's viability rests on
-          this quantity. An Estimand with criticality `existential` is what practitioners
-          call a HINGE — the whole thing turns on it.
-      - determination: >
-          computed | latent. A COMPUTED estimand is a deterministic function of signals —
-          runway is cash_balance divided by burn_rate — and carries no uncertainty of its own
-          beyond its inputs. A LATENT estimand is inferred and irreducibly uncertain —
-          willingness to pay is not a function of anything observed.
+    Authority is therefore delegable to a non-Party component. The thermostat controller holds authority
+    over fire_boiler and is a component; the householder bears the consequence of being cold and
+    is the Party.
 
-          The distinction is load-bearing rather than cosmetic: a computed estimand needs no
-          Calibration, because there is no prediction to score. A latent one does. Conflating
-          them causes a venture to calibrate an arithmetic identity while leaving the actual
-          bet unscored.
-      - resolution_condition: >
-          The observation, declared IN ADVANCE, that would settle this estimand. Required
-          when criticality is existential.
+    Side benefit: this links Party to Consequence constitutively, which independently justifies Consequence
+    beyond its coverage count — it is not an optional annotation but the thing that makes a Party
+    identifiable.
 
-          This is the individuation rule's settling observation, written down before the
-          fact rather than reconstructed after. Declaring it early is what makes a hinge
-          actionable: it converts "we are betting on this" into "here is what would tell us,
-          and here is whether anyone is watching for it."
-    individuation_rule: >
-      ADOPTED. The settling-observation test, in three parts:
+    '
+  definition: 'A locus that may hold estimates, hold desired conditions, exercise authority, and
+    bear consequences. Need not be a person: a lymphocyte population is a party in the estimate-holding
+    sense only.
 
-      1. Two assessments are the SAME estimand if and only if the same conceivable
-         observation would settle both. Different settling observation, different estimand.
-      2. Same settling observation, different assessors, different results: ONE estimand
-         with MULTIPLE estimates, indexed by Party.
-      3. If NO conceivable observation would settle it, it is NOT AN ESTIMAND. It is a
-         decision, and it belongs to Policy.
-    individuation_rule_DID_NOT_FIX_DETERMINACY: >
-      NEGATIVE RESULT, recorded because the rule was adopted partly to fix determinacy and
-      did not.
+    '
+  demanded_by:
+  - hospital
+  - startup
+  - thermostat
+  rename_rationale: 'Derivation contradicted the earlier guess. "Observer" names only the sensing
+    role, but the hospital demands a construct that simultaneously holds estimates, holds goals,
+    has authority, and bears asymmetric error costs. Those four attach to the same entity and separating
+    them produced four parallel registries keyed by the same identity — which is one construct wearing
+    four names.
 
-      Measured on two independent encoder pairs across three adversarial systems, with the
-      rule shipped in the catalog versus absent:
-        gemini vs deepseek   0.122 -> 0.111
-        codex  vs gemini     0.111 -> 0.111
-      Estimand count discipline was also unchanged at 4.0 per encoding.
+    '
+- name: Estimand
+  tier: core
+  depth: 1
+  definition: 'A quantity of interest, typically not directly observable, for which at least one
+    conceivable observation would settle the matter.
 
-      DIAGNOSIS. The divergence is not about individuation. Encoders following the rule
-      perfectly still disagree about ALTITUDE. On the same system one produced three
-      doctrine-level estimands (defect_present, process_is_optimal, report_matches_reality)
-      and another produced six operational ones (defect_rate, station_cycle_time,
-      line_stoppage_frequency, ...). Both are internally consistent and both obey the rule.
-      The rule constrains individuation WITHIN a chosen altitude and says nothing about which
-      altitude to choose.
+    '
+  attributes:
+  - criticality: 'existential | high | moderate | low. How much of the system''s viability rests
+      on this quantity. An Estimand with criticality `existential` is what practitioners call a HINGE
+      — the whole thing turns on it.
 
-      A second fix was tried and was worse: anchoring estimands to those measured by a signal
-      closing a declared loop took agreement from 0.111 to 0.000, because encoders then
-      disagree about which loops exist AND which estimands anchor to them.
+      '
+  - determination: 'computed | latent. A COMPUTED estimand is a deterministic function of signals
+      — runway is cash_balance divided by burn_rate — and carries no uncertainty of its own beyond
+      its inputs. A LATENT estimand is inferred and irreducibly uncertain — willingness to pay is
+      not a function of anything observed.
 
-      The rule is RETAINED regardless, because it earned itself on a different axis: it
-      settled the discharge_readiness question by showing that an aggregate nobody can observe
-      is a Policy output rather than an Estimand. That was a real correction. It simply does
-      not do the job it was also hoped to do.
+      The distinction is load-bearing rather than cosmetic: a computed estimand needs no Calibration,
+      because there is no prediction to score. A latent one does. Conflating them causes a venture
+      to calibrate an arithmetic identity while leaving the actual bet unscored.
 
-      OPEN. Whether encoding altitude is specifiable at all, or is irreducibly a modelling
-      choice like selecting a coordinate system. If the latter, altitude should become a
-      declared parameter of an encoding and D should compare only within an altitude. Two
-      rule-shaped attempts have now failed, which is weak evidence this is not a rule-shaped
-      problem.
+      '
+  - resolution_condition: 'The observation, declared IN ADVANCE, that would settle this estimand.
+      Required when criticality is existential.
 
-    individuation_rationale: >
-      Resolves the worst remaining determinacy divergence — estimand agreement was
-      0.43-0.67 across independent encoders on the institutional benchmark, against 1.00 on
-      the simple one.
+      This is the individuation rule''s settling observation, written down before the fact rather
+      than reconstructed after. Declaring it early is what makes a hinge actionable: it converts
+      "we are betting on this" into "here is what would tell us, and here is whether anyone is watching
+      for it."
 
-      Part 3 is the part with teeth, and applying it shows I WAS WRONG and the independent
-      encoder was right. I had modelled "discharge readiness" as an estimand: five distinct
-      estimands plus a sixth contested aggregate over them. But no observation settles
-      discharge-readiness-in-general — there is no measurement of it. It is the OUTPUT of a
-      negotiation over several estimands, which makes it a decision wearing a quantity's
-      clothing. gpt-5-codex declined to model it as an estimand and was correct.
+      '
+  individuation_rule: "ADOPTED. The settling-observation test, in three parts:\n1. Two assessments\
+    \ are the SAME estimand if and only if the same conceivable\n   observation would settle both.\
+    \ Different settling observation, different estimand.\n2. Same settling observation, different\
+    \ assessors, different results: ONE estimand\n   with MULTIPLE estimates, indexed by Party.\n\
+    3. If NO conceivable observation would settle it, it is NOT AN ESTIMAND. It is a\n   decision,\
+    \ and it belongs to Policy.\n"
+  individuation_rule_DID_NOT_FIX_DETERMINACY: "NEGATIVE RESULT, recorded because the rule was adopted\
+    \ partly to fix determinacy and did not.\nMeasured on two independent encoder pairs across three\
+    \ adversarial systems, with the rule shipped in the catalog versus absent:\n  gemini vs deepseek\
+    \   0.122 -> 0.111\n  codex  vs gemini     0.111 -> 0.111\nEstimand count discipline was also\
+    \ unchanged at 4.0 per encoding.\nDIAGNOSIS. The divergence is not about individuation. Encoders\
+    \ following the rule perfectly still disagree about ALTITUDE. On the same system one produced\
+    \ three doctrine-level estimands (defect_present, process_is_optimal, report_matches_reality)\
+    \ and another produced six operational ones (defect_rate, station_cycle_time, line_stoppage_frequency,\
+    \ ...). Both are internally consistent and both obey the rule. The rule constrains individuation\
+    \ WITHIN a chosen altitude and says nothing about which altitude to choose.\nA second fix was\
+    \ tried and was worse: anchoring estimands to those measured by a signal closing a declared loop\
+    \ took agreement from 0.111 to 0.000, because encoders then disagree about which loops exist\
+    \ AND which estimands anchor to them.\nThe rule is RETAINED regardless, because it earned itself\
+    \ on a different axis: it settled the discharge_readiness question by showing that an aggregate\
+    \ nobody can observe is a Policy output rather than an Estimand. That was a real correction.\
+    \ It simply does not do the job it was also hoped to do.\nOPEN. Whether encoding altitude is\
+    \ specifiable at all, or is irreducibly a modelling choice like selecting a coordinate system.\
+    \ If the latter, altitude should become a declared parameter of an encoding and D should compare\
+    \ only within an altitude. Two rule-shaped attempts have now failed, which is weak evidence this\
+    \ is not a rule-shaped problem.\n"
+  individuation_rationale: 'Resolves the worst remaining determinacy divergence — estimand agreement
+    was 0.43-0.67 across independent encoders on the institutional benchmark, against 1.00 on the
+    simple one.
 
-      The error is worth naming because it is attractive: an aggregate feels like a quantity
-      because parties argue about it. Arguing about something does not make it measurable.
+    Part 3 is the part with teeth, and applying it shows I WAS WRONG and the independent encoder
+    was right. I had modelled "discharge readiness" as an estimand: five distinct estimands plus
+    a sixth contested aggregate over them. But no observation settles discharge-readiness-in-general
+    — there is no measurement of it. It is the OUTPUT of a negotiation over several estimands, which
+    makes it a decision wearing a quantity''s clothing. gpt-5-codex declined to model it as an estimand
+    and was correct.
 
-      Cross-checks. Hospital: clinical stability and functional capacity are settled by
-      different observations (a blood panel versus watching someone walk), so they are
-      distinct estimands — while two consultants disagreeing about clinical stability is one
-      estimand with two estimates, which is where genuine plural belief actually lives.
-      Thermostat: room comfort has a conceivable settling observation and survives, which
-      is consistent with all five encoders having agreed on it 1.00.
-    demanded_by: [thermostat, hospital, startup]
+    The error is worth naming because it is attractive: an aggregate feels like a quantity because
+    parties argue about it. Arguing about something does not make it measurable.
 
-  - name: Signal
-    tier: core
-    depth: 1
-    definition: >
-      What is actually measured, as opposed to what is cared about. Hallway air
-      temperature at 1.5m. A ward round observation once daily. Pipeline volume at low n.
-    demanded_by: [thermostat, hospital, startup]
-    note: >
-      The Signal/Estimand split is the thermostat's central lesson and the easiest thing
-      to omit. Collapsing them would make the most important fact about the simplest
-      benchmark inexpressible.
+    Cross-checks. Hospital: clinical stability and functional capacity are settled by different observations
+    (a blood panel versus watching someone walk), so they are distinct estimands — while two consultants
+    disagreeing about clinical stability is one estimand with two estimates, which is where genuine
+    plural belief actually lives. Thermostat: room comfort has a conceivable settling observation
+    and survives, which is consistent with all five encoders having agreed on it 1.00.
 
-  - name: Estimate
-    tier: core
-    depth: 2
-    definition: >
-      A party's assessment of an estimand, carrying uncertainty. Uncertainty need not be
-      numeric — the startup shows that demanding numeric priors produces theatre. Ordinal
-      and qualitative confidence are first-class.
-    demanded_by: [hospital, startup, thermostat]
-    note: >
-      Necessarily indexed by party. The hospital has five estimates of one estimand, none
-      of which is noise around a truth. Permitting only one estimate per estimand makes
-      institutions inexpressible.
+    '
+  demanded_by:
+  - thermostat
+  - hospital
+  - startup
+- name: Signal
+  tier: core
+  depth: 1
+  definition: 'What is actually measured, as opposed to what is cared about. Hallway air temperature
+    at 1.5m. A ward round observation once daily. Pipeline volume at low n.
 
-  - name: Estimator
-    tier: core
-    depth: 2
-    definition: >
-      The process mapping signals to an estimate. May have no locus: in the immune system
-      the population's composition IS the estimate, and no cell assesses anything.
-      Must declare its idempotency basis.
-    attributes:
-      - expression: >
-          For estimators over COMPUTED estimands, the actual function — `cash_balance /
-          burn_rate`. Writing it down is what makes the estimate checkable rather than
-          asserted, and it is what distinguishes an arithmetic identity from a judgement.
-      - form: >
-          bayesian | identity | expression | population | judgement. `identity` is the
-          degenerate case where the estimator passes a signal through as though it were the
-          estimand — the thermostat's flaw, and worth being able to state explicitly.
-    demanded_by: [immune_system, hospital, thermostat]
+    '
+  demanded_by:
+  - thermostat
+  - hospital
+  - startup
+  note: 'The Signal/Estimand split is the thermostat''s central lesson and the easiest thing to omit.
+    Collapsing them would make the most important fact about the simplest benchmark inexpressible.
 
-  - name: DesiredCondition
-    tier: core
-    depth: 2
-    definition: >
-      A target on an estimand, held by a party. May be held by a party OUTSIDE the
-      boundary (the householder at the dial), or by no party at all (the immune system
-      regulates without anyone wanting anything).
-    demanded_by: [thermostat, hospital, startup, toyota]
-    note: >
-      Includes structural tolerance — the thermostat's deadband is not measurement error,
-      it is a feature preventing oscillation. Modelling it as error gets it wrong.
-    note_external_holder: >
-      An externally-held desired condition is the NORMAL case, not an edge case. The
-      reference set shows three distinct arrangements, and the seeds contained all three
-      without this being noticed: goal-holder outside the boundary (thermostat; Hop Aero
-      steered by a USAF contract, Lodestar by ESA/MoD grants exceeding its equity), no
-      goal-holder anywhere (immune system; Supabase and xorq validated by a diffuse
-      community with no locus), and plural goal-holders inside negotiating with each other
-      (Toyota — which had NO seed exemplar). Requiring an internal goal-holder is therefore
-      a hard error, not a simplification.
+    '
+- name: Estimate
+  tier: core
+  depth: 2
+  definition: 'A party''s assessment of an estimand, carrying uncertainty. Uncertainty need not be
+    numeric — the startup shows that demanding numeric priors produces theatre. Ordinal and qualitative
+    confidence are first-class.
 
-  - name: PreferenceOrdering
-    tier: core
-    depth: 2
-    definition: >
-      A ranking over conditions, explicitly permitted to be PARTIAL. Incommensurable
-      objectives are representable as such.
-    demanded_by: [hospital, startup]
-    note: >
-      Throughput, safety, cost and staff sustainability have no exchange rates in a real
-      hospital. Requiring a total order would invent information that does not exist.
+    '
+  demanded_by:
+  - hospital
+  - startup
+  - thermostat
+  note: 'Necessarily indexed by party. The hospital has five estimates of one estimand, none of which
+    is noise around a truth. Permitting only one estimate per estimand makes institutions inexpressible.
 
-  - name: Consequence
-    tier: core
-    depth: 2
-    definition: >
-      What a party bears when an estimate is wrong. Asymmetric across parties.
-    demanded_by: [hospital, hop_aero]
-    note: >
-      Retained on the strength of the hospital, where asymmetry of consequence is WHY the
-      estimates differ — model the estimates without it and rational disagreement looks like
-      irrationality. Expected to be demanded by military_command and democracy.
-    note_hop_aero: >
-      Hop Aero supplies the cleanest instance yet: the launch regulator holds pure downside
-      and no upside whatsoever, since its best outcome is nothing happening. Its caution is
-      not obstruction but the correct response to that asymmetry. A representation without
-      Consequence describes the regulator as an irrational obstacle, which is both wrong and
-      the exact mistake founders make about regulators in practice.
+    '
+- name: Estimator
+  tier: core
+  depth: 2
+  definition: 'The process mapping signals to an estimate. May have no locus: in the immune system
+    the population''s composition IS the estimate, and no cell assesses anything. Must declare its
+    idempotency basis.
 
-  - name: Intervention
-    tier: core
-    depth: 2
-    definition: >
-      An act intended to change either the world or the system's own structure. Authority
-      over it is a relation to Party, not a separate primitive.
-    demanded_by: [thermostat, hospital, startup, toyota, spacex, hop_aero]
-    attributes:
-      - target: >
-          world | own-structure. Acts on the world: fire the boiler, discharge the patient,
-          ship the feature. Acts on own structure: give line workers a stop cord, build a
-          tethered test rig, bring a supplier in-house, land the booster instead of dropping
-          it.
-      - motive: >
-          Required when target is own-structure. Structural interventions pay off entirely in
-          future evidence economics — what becomes knowable, how fast, at what cost, with what
-          reversibility. Recording the change without the motive loses why the system is
-          shaped as it is.
-    note_structural: >
-      Derived from SpaceX, and the reason it matters is that structural interventions are
-      INVISIBLE when scored against present-world outcomes. Reusability judged on the launch
-      it occurs in is pure overhead; its payoff is that a flown component can be inspected
-      later. This is why traditional aerospace found the move hard to justify — not
-      conservatism, a measurement artifact.
+    '
+  attributes:
+  - expression: 'For estimators over COMPUTED estimands, the actual function — `cash_balance / burn_rate`.
+      Writing it down is what makes the estimate checkable rather than asserted, and it is what distinguishes
+      an arithmetic identity from a judgement.
 
-      Not a new primitive: same mechanism, different target. Coverage is comfortable at five
-      systems across three domains — Toyota's andon cord, Hop Aero's tethered flight, SpaceX's
-      vertical integration and reusability, Lumi Science's entire product, and the immune
-      system's affinity maturation, which improves the estimator rather than the body.
-    note: >
-      The prior-art gate found legitimacy does not survive as an expressivity claim, while
-      the hospital seed insists authority is structural. Reconciled by making authority a
-      relation on Intervention x Party rather than a primitive — real, checkable, and not
-      costing budget.
+      '
+  - form: 'bayesian | identity | expression | population | judgement. `identity` is the degenerate
+      case where the estimator passes a signal through as though it were the estimand — the thermostat''s
+      flaw, and worth being able to state explicitly.
 
-  - name: Policy
-    tier: core
-    depth: 3
-    definition: >
-      Mapping from estimates to choice of intervention.
-    attributes:
-      - guard: >
-          The condition under which the policy fires — `when runway < 12 months`. Distinct
-          from `based_on`, which lists the quantities read. A policy may read many quantities
-          and fire on a predicate over one.
-      - based_on: >
-          The estimands the decision reads. Every entry should be measured by some signal;
-          entries that are not are the policy_on_unmeasured_inputs defect.
-    demanded_by: [thermostat, hospital]
+      '
+  demanded_by:
+  - immune_system
+  - hospital
+  - thermostat
+- name: DesiredCondition
+  tier: core
+  depth: 2
+  definition: 'A target on an estimand, held by a party. May be held by a party OUTSIDE the boundary
+    (the householder at the dial), or by no party at all (the immune system regulates without anyone
+    wanting anything).
 
-  - name: Loop
-    tier: core
-    depth: 3
-    identity_rule: >
-      ADOPTED. One loop per distinct (timescale, closing intervention) pair. Two candidate
-      loops sharing both are one loop; differing in either are two.
-    identity_rule_rationale: >
-      Resolves the worst measured divergence (0.333 — three loops vs one on the hospital,
-      both defensible because the catalog previously said nothing about where a loop ends).
-      Not a matter of taste: per research/flue_notes.md, one alarm per Durable Object makes
-      Loop the unit that maps to a DO, so 3-vs-1 was a disagreement about deployed
-      architecture.
+    '
+  demanded_by:
+  - thermostat
+  - hospital
+  - startup
+  - toyota
+  note: 'Includes structural tolerance — the thermostat''s deadband is not measurement error, it
+    is a feature preventing oscillation. Modelling it as error gets it wrong.
 
-      TESTED AGAINST TOYOTA, which was the stated risk — five timescales that might fragment
-      under the rule. It gives five loops: station cycle (takt / assemble), line stoppage
-      (defect signal / stop-and-fix), improvement (worker proposal / change standard), quality
-      (field defect data / design change), and platform (strategy / platform decision).
+    '
+  note_external_holder: 'An externally-held desired condition is the NORMAL case, not an edge case.
+    The reference set shows three distinct arrangements, and the seeds contained all three without
+    this being noticed: goal-holder outside the boundary (thermostat; Hop Aero steered by a USAF
+    contract, Lodestar by ESA/MoD grants exceeding its equity), no goal-holder anywhere (immune system;
+    Supabase and xorq validated by a diffuse community with no locus), and plural goal-holders inside
+    negotiating with each other (Toyota — which had NO seed exemplar). Requiring an internal goal-holder
+    is therefore a hard error, not a simplification.
 
-      That is not over-fragmentation. Those five have different signals, different closing
-      interventions, and different authorities, and Toyota itself treats them as separate
-      named mechanisms — jidoka, kaizen and hoshin kanri are not one loop in Toyota'"'"'s own
-      account. The rule reproduces the distinctions the organisation already draws, which is
-      the strongest evidence available that it carves at a real joint.
+    '
+- name: PreferenceOrdering
+  tier: extension
+  depth: 2
+  definition: 'A ranking over conditions, explicitly permitted to be PARTIAL. Incommensurable objectives
+    are representable as such.
 
-      Cross-checks: thermostat gives one loop, matching both independent encoders. Hospital
-      gives three. Both consistent.
-    definition: >
-      A closed cycle: signal, estimate, policy, intervention, world, signal. Carries its
-      own time scale. Non-terminating by default.
-    demanded_by: [thermostat, immune_system, hospital, startup]
-    note: >
-      The unit that maps to one Cloudflare Durable Object, since one alarm per object
-      means a multi-timescale system cannot be a single object. System is therefore a
-      grouping over loops, which was not the obvious first guess.
+    '
+  demanded_by:
+  - hospital
+  - startup
+  note: 'Throughput, safety, cost and staff sustainability have no exchange rates in a real hospital.
+    Requiring a total order would invent information that does not exist.
 
-  - name: Delay
-    tier: core
-    depth: 1
-    definition: >
-      Lag between intervention and observable effect. Heat takes 15-40 minutes to reach
-      room air and keeps arriving after the boiler stops.
-    demanded_by: [thermostat, hospital]
+    '
+  demoted_in: fork
+  demotion_reason: 'Multi-party incommensurable objectives and asymmetric stakes. Real, and out of
+    scope for agent loop engineering — these are what made organisations fail to converge (estimand
+    agreement 0.46 vs 1.00 on loops) and neither maps to Flue. Retained as an extension rather than
+    deleted: the hospital and Toyota encodings depend on them and remain valid evidence.'
+- name: Consequence
+  tier: extension
+  depth: 2
+  definition: 'What a party bears when an estimate is wrong. Asymmetric across parties.
 
-  - name: TimeScale
-    tier: core
-    depth: 1
-    definition: >
-      The cadence at which a loop runs. Multiple scales coexist and conflict: hourly bed
-      pressure against quarterly budget, minutes/days/decades in immunity.
-    demanded_by: [immune_system, hospital]
+    '
+  demanded_by:
+  - hospital
+  - hop_aero
+  note: 'Retained on the strength of the hospital, where asymmetry of consequence is WHY the estimates
+    differ — model the estimates without it and rational disagreement looks like irrationality. Expected
+    to be demanded by military_command and democracy.
 
-  - name: Resource
-    tier: core
-    depth: 1
-    definition: >
-      A depletable stock that interventions consume. Runway. Beds. Staff hours. Finite
-      immunological repertoire.
-    demanded_by: [hospital, startup, immune_system]
+    '
+  note_hop_aero: 'Hop Aero supplies the cleanest instance yet: the launch regulator holds pure downside
+    and no upside whatsoever, since its best outcome is nothing happening. Its caution is not obstruction
+    but the correct response to that asymmetry. A representation without Consequence describes the
+    regulator as an irrational obstacle, which is both wrong and the exact mistake founders make
+    about regulators in practice.
 
-  - name: Constraint
-    tier: core
-    depth: 2
-    definition: >
-      An invariant that must hold, distinct from something merely desired. Not tradeable at
-      any exchange rate.
-    demanded_by: [hospital, thermostat, hop_aero]
-    note: >
-      Hop Aero moves this off the at-risk list. Range safety approval, launch licensing and
-      export control are not things the company wants more or less of — they are conditions
-      of operating at all, and violation ends the company or imprisons someone. There is no
-      amount of speed that compensates. A representation able to express only strong
-      preference cannot say this, and treating them as heavily weighted objectives is a
-      category error rather than an approximation.
+    '
+  demoted_in: fork
+  demotion_reason: 'Multi-party incommensurable objectives and asymmetric stakes. Real, and out of
+    scope for agent loop engineering — these are what made organisations fail to converge (estimand
+    agreement 0.46 vs 1.00 on loops) and neither maps to Flue. Retained as an extension rather than
+    deleted: the hospital and Toyota encodings depend on them and remain valid evidence.'
+- name: Intervention
+  tier: core
+  depth: 2
+  definition: 'An act intended to change either the world or the system''s own structure. Authority
+    over it is a relation to Party, not a separate primitive.
 
-  - name: Calibration
-    tier: core
-    depth: 3
-    definition: >
-      A loop that closes on an ESTIMATOR rather than on the world: it compares what the
-      estimator predicted against what later happened, over a declared window, and adjusts
-      the estimator's trust rather than the system's actions.
-    demanded_by: [fusion_venture, ai_frontier_lab, materials_discovery, venture_acme]
-    attributes:
-      - window: >
-          The period over which prediction and outcome are compared. Necessarily longer than
-          the loop being calibrated, which is why calibration is usually the slowest loop in
-          any system and the first to be dropped under pressure.
-    restored_in: round4
-    restoration_reason: >
-      Calibration was in the charter's candidate list, was DROPPED in the v0 derivation
-      because none of the four seed descriptions demanded it, and is now restored because
-      that was a corpus gap rather than a real absence.
+    '
+  demanded_by:
+  - thermostat
+  - hospital
+  - startup
+  - toyota
+  - spacex
+  - hop_aero
+  attributes:
+  - target: 'world | own-structure. Acts on the world: fire the boiler, discharge the patient, ship
+      the feature. Acts on own structure: give line workers a stop cord, build a tethered test rig,
+      bring a supplier in-house, land the booster instead of dropping it.
 
-      Four systems demand it, across three domains, and the demand is central rather than
-      incidental in each. A fusion venture's entire epistemic risk is whether its simulation
-      codes are trustworthy in a regime never reached — which is a calibration question and
-      nothing else. A frontier lab's evals are a calibration apparatus whose incompleteness
-      everyone acknowledges. A materials venture's real asset IS the accumulated record of
-      where its model predictions broke against experiment. And a venture's belief-update
-      discipline is worthless without a window over which its own past estimates are scored.
+      '
+  - motive: 'Required when target is own-structure. Structural interventions pay off entirely in
+      future evidence economics — what becomes knowable, how fast, at what cost, with what reversibility.
+      Recording the change without the motive loses why the system is shaped as it is.
 
-      This is the second time a gap in the seed corpus produced a wrong conclusion about the
-      ontology; the first was the loci hypothesis, which Toyota overturned. Both times the
-      corpus was missing a system that does the thing WELL.
+      '
+  note_structural: 'Derived from SpaceX, and the reason it matters is that structural interventions
+    are INVISIBLE when scored against present-world outcomes. Reusability judged on the launch it
+    occurs in is pure overhead; its payoff is that a flown component can be inspected later. This
+    is why traditional aerospace found the move hard to justify — not conservatism, a measurement
+    artifact.
 
-  - name: Explanation
-    tier: core
-    depth: 3
-    definition: >
-      A proposed generative mechanism: what produces an estimand's behaviour. Distinct from
-      an Estimate, which is a VALUE. "Runway is nine months" is an estimate; "burn is high
-      because we hired ahead of revenue" is an explanation.
-    attributes:
-      - confidence: >
-          How strongly the mechanism is held. Ordinal or qualitative — the same discipline
-          that applies to Estimate.
-      - would_be_refuted_by: >
-          Required. The observation that would overturn this mechanism. An explanation with
-          no refutation condition is a story, and the field exists to make the difference
-          checkable rather than rhetorical.
-      - competing: >
-          Other explanations of the same estimand currently in play. Explanations compete;
-          estimates merely differ.
-    demanded_by: [third_order_loop, bhaskar_real_domain, startup, hop_aero]
-    rationale: >
-      THREE INDEPENDENT ROUTES arrived at this gap, which is the evidence standard used for
-      informal_influence and for restoring Calibration.
+    Not a new primitive: same mechanism, different target. Coverage is comfortable at five systems
+    across three domains — Toyota''s andon cord, Hop Aero''s tethered flight, SpaceX''s vertical
+    integration and reusability, Lumi Science''s entire product, and the immune system''s affinity
+    maturation, which improves the estimator rather than the body.
 
-      1. research/prior_art_gate.md identified the sole genuine expressivity gap against every
-         POMDP variant as their fixing S at specification time while real systems discover
-         variables nobody conceived. That was the differentiator the project proceeded on, and
-         it was never built.
-      2. Bhaskar's three domains map onto the catalog as Empirical -> Signal and Actual ->
-         Estimand, with REAL — the generative mechanism — absent entirely.
-      3. The operational loop observe -> explain -> intervene -> learn -> refine explanation ->
-         intervene better has two unrepresentable steps, and `explain` is the first.
+    '
+  note: 'The prior-art gate found legitimacy does not survive as an expressivity claim, while the
+    hospital seed insists authority is structural. Reconciled by making authority a relation on Intervention
+    x Party rather than a primitive — real, checkable, and not costing budget.
 
-      WHY THE CORPUS DID NOT DEMAND IT. A direct search found three mechanism-language hits
-      across 35 encodings, all false positives. That test failed for the same reason it failed
-      for Calibration: encoders cannot demand what they have never been offered. The corpus is
-      evidence about a catalog that lacked this, not evidence that systems lack mechanisms.
+    '
+- name: Policy
+  tier: core
+  depth: 3
+  definition: 'Mapping from estimates to choice of intervention.
 
-      WHY IT MATTERS OPERATIONALLY: you intervene on mechanisms, not on values. That is why
-      "intervene better" follows "refine explanation" and not "refine estimate", and it is why
-      an ontology with estimates but no explanations cannot express improvement at all.
+    '
+  attributes:
+  - guard: 'The condition under which the policy fires — `when runway < 12 months`. Distinct from
+      `based_on`, which lists the quantities read. A policy may read many quantities and fire on
+      a predicate over one.
 
-  - name: Revision
-    tier: core
-    depth: 3
-    definition: >
-      Change to the schema of the system rather than to its values: a desired condition
-      replaced by choice, a new estimand admitted to the vocabulary, a boundary redrawn.
-      Records what changed, when, on whose recognition, and whether the prior condition
-      was refuted or merely abandoned.
-    demanded_by: [startup, immune_system, toyota]
-    attributes:
-      - regime: >
-          routine-incremental | episodic-discontinuous. Toyota revises continuously in small
-          increments against a documented baseline (kaizen on standardized work); the startup
-          revised once, discontinuously, under a clock. Same primitive, and treating the two
-          alike loses whether the prior condition was refuted or abandoned.
-    note: >
-      The refuted/abandoned distinction is load-bearing. The startup's pivot left the old
-      question open — nobody proved late-delivery prediction was a bad business. Modelled
-      as Bayesian revision it is misdescribed, and the misdescription matters for whether
-      anyone should trust the next such decision.
+      '
+  - based_on: 'The estimands the decision reads. Every entry should be measured by some signal; entries
+      that are not are the policy_on_unmeasured_inputs defect.
 
-# ---------------------------------------------------------------------------
-# Fields, not primitives. Deliberately not costed against the budget.
-# ---------------------------------------------------------------------------
+      '
+  demanded_by:
+  - thermostat
+  - hospital
+- name: Loop
+  tier: core
+  depth: 3
+  identity_rule: 'ADOPTED. One loop per distinct (timescale, closing intervention) pair. Two candidate
+    loops sharing both are one loop; differing in either are two.
 
+    '
+  identity_rule_rationale: 'Resolves the worst measured divergence (0.333 — three loops vs one on
+    the hospital, both defensible because the catalog previously said nothing about where a loop
+    ends). Not a matter of taste: per research/flue_notes.md, one alarm per Durable Object makes
+    Loop the unit that maps to a DO, so 3-vs-1 was a disagreement about deployed architecture.
+
+    TESTED AGAINST TOYOTA, which was the stated risk — five timescales that might fragment under
+    the rule. It gives five loops: station cycle (takt / assemble), line stoppage (defect signal
+    / stop-and-fix), improvement (worker proposal / change standard), quality (field defect data
+    / design change), and platform (strategy / platform decision).
+
+    That is not over-fragmentation. Those five have different signals, different closing interventions,
+    and different authorities, and Toyota itself treats them as separate named mechanisms — jidoka,
+    kaizen and hoshin kanri are not one loop in Toyota''"''"''s own account. The rule reproduces
+    the distinctions the organisation already draws, which is the strongest evidence available that
+    it carves at a real joint.
+
+    Cross-checks: thermostat gives one loop, matching both independent encoders. Hospital gives three.
+    Both consistent.
+
+    '
+  definition: 'A closed cycle: signal, estimate, policy, intervention, world, signal. Carries its
+    own time scale. Non-terminating by default.
+
+    '
+  demanded_by:
+  - thermostat
+  - immune_system
+  - hospital
+  - startup
+  note: 'The unit that maps to one Cloudflare Durable Object, since one alarm per object means a
+    multi-timescale system cannot be a single object. System is therefore a grouping over loops,
+    which was not the obvious first guess.
+
+    '
+- name: Delay
+  tier: core
+  depth: 1
+  definition: 'Lag between intervention and observable effect. Heat takes 15-40 minutes to reach
+    room air and keeps arriving after the boiler stops.
+
+    '
+  demanded_by:
+  - thermostat
+  - hospital
+- name: TimeScale
+  tier: core
+  depth: 1
+  definition: 'The cadence at which a loop runs. Multiple scales coexist and conflict: hourly bed
+    pressure against quarterly budget, minutes/days/decades in immunity.
+
+    '
+  demanded_by:
+  - immune_system
+  - hospital
+- name: Resource
+  tier: core
+  depth: 1
+  definition: 'A depletable stock that interventions consume. Runway. Beds. Staff hours. Finite immunological
+    repertoire.
+
+    '
+  demanded_by:
+  - hospital
+  - startup
+  - immune_system
+- name: Constraint
+  tier: core
+  depth: 2
+  definition: 'An invariant that must hold, distinct from something merely desired. Not tradeable
+    at any exchange rate.
+
+    '
+  demanded_by:
+  - hospital
+  - thermostat
+  - hop_aero
+  note: 'Hop Aero moves this off the at-risk list. Range safety approval, launch licensing and export
+    control are not things the company wants more or less of — they are conditions of operating at
+    all, and violation ends the company or imprisons someone. There is no amount of speed that compensates.
+    A representation able to express only strong preference cannot say this, and treating them as
+    heavily weighted objectives is a category error rather than an approximation.
+
+    '
+- name: Calibration
+  tier: core
+  depth: 3
+  definition: 'A loop that closes on an ESTIMATOR rather than on the world: it compares what the
+    estimator predicted against what later happened, over a declared window, and adjusts the estimator''s
+    trust rather than the system''s actions.
+
+    '
+  demanded_by:
+  - fusion_venture
+  - ai_frontier_lab
+  - materials_discovery
+  - venture_acme
+  attributes:
+  - window: 'The period over which prediction and outcome are compared. Necessarily longer than the
+      loop being calibrated, which is why calibration is usually the slowest loop in any system and
+      the first to be dropped under pressure.
+
+      '
+  restored_in: round4
+  restoration_reason: 'Calibration was in the charter''s candidate list, was DROPPED in the v0 derivation
+    because none of the four seed descriptions demanded it, and is now restored because that was
+    a corpus gap rather than a real absence.
+
+    Four systems demand it, across three domains, and the demand is central rather than incidental
+    in each. A fusion venture''s entire epistemic risk is whether its simulation codes are trustworthy
+    in a regime never reached — which is a calibration question and nothing else. A frontier lab''s
+    evals are a calibration apparatus whose incompleteness everyone acknowledges. A materials venture''s
+    real asset IS the accumulated record of where its model predictions broke against experiment.
+    And a venture''s belief-update discipline is worthless without a window over which its own past
+    estimates are scored.
+
+    This is the second time a gap in the seed corpus produced a wrong conclusion about the ontology;
+    the first was the loci hypothesis, which Toyota overturned. Both times the corpus was missing
+    a system that does the thing WELL.
+
+    '
+- name: Explanation
+  tier: core
+  depth: 3
+  definition: 'A proposed generative mechanism: what produces an estimand''s behaviour. Distinct
+    from an Estimate, which is a VALUE. "Runway is nine months" is an estimate; "burn is high because
+    we hired ahead of revenue" is an explanation.
+
+    '
+  attributes:
+  - confidence: 'How strongly the mechanism is held. Ordinal or qualitative — the same discipline
+      that applies to Estimate.
+
+      '
+  - would_be_refuted_by: 'Required. The observation that would overturn this mechanism. An explanation
+      with no refutation condition is a story, and the field exists to make the difference checkable
+      rather than rhetorical.
+
+      '
+  - competing: 'Other explanations of the same estimand currently in play. Explanations compete;
+      estimates merely differ.
+
+      '
+  demanded_by:
+  - third_order_loop
+  - bhaskar_real_domain
+  - startup
+  - hop_aero
+  rationale: "THREE INDEPENDENT ROUTES arrived at this gap, which is the evidence standard used for\
+    \ informal_influence and for restoring Calibration.\n1. research/prior_art_gate.md identified\
+    \ the sole genuine expressivity gap against every\n   POMDP variant as their fixing S at specification\
+    \ time while real systems discover\n   variables nobody conceived. That was the differentiator\
+    \ the project proceeded on, and\n   it was never built.\n2. Bhaskar's three domains map onto\
+    \ the catalog as Empirical -> Signal and Actual ->\n   Estimand, with REAL — the generative mechanism\
+    \ — absent entirely.\n3. The operational loop observe -> explain -> intervene -> learn -> refine\
+    \ explanation ->\n   intervene better has two unrepresentable steps, and `explain` is the first.\n\
+    \nWHY THE CORPUS DID NOT DEMAND IT. A direct search found three mechanism-language hits across\
+    \ 35 encodings, all false positives. That test failed for the same reason it failed for Calibration:\
+    \ encoders cannot demand what they have never been offered. The corpus is evidence about a catalog\
+    \ that lacked this, not evidence that systems lack mechanisms.\nWHY IT MATTERS OPERATIONALLY:\
+    \ you intervene on mechanisms, not on values. That is why \"intervene better\" follows \"refine\
+    \ explanation\" and not \"refine estimate\", and it is why an ontology with estimates but no\
+    \ explanations cannot express improvement at all.\n"
+- name: Revision
+  tier: core
+  depth: 3
+  definition: 'Change to the schema of the system rather than to its values: a desired condition
+    replaced by choice, a new estimand admitted to the vocabulary, a boundary redrawn. Records what
+    changed, when, on whose recognition, and whether the prior condition was refuted or merely abandoned.
+
+    '
+  demanded_by:
+  - startup
+  - immune_system
+  - toyota
+  attributes:
+  - regime: 'routine-incremental | episodic-discontinuous. Toyota revises continuously in small increments
+      against a documented baseline (kaizen on standardized work); the startup revised once, discontinuously,
+      under a clock. Same primitive, and treating the two alike loses whether the prior condition
+      was refuted or abandoned.
+
+      '
+  note: 'The refuted/abandoned distinction is load-bearing. The startup''s pivot left the old question
+    open — nobody proved late-delivery prediction was a bad business. Modelled as Bayesian revision
+    it is misdescribed, and the misdescription matters for whether anyone should trust the next such
+    decision.
+
+    '
 fields:
-  - name: excluded_variables
-    on: System
-    definition: >
-      Variables known to exist and deliberately left out. The candidate set for Revision
-      when a system underperforms. The startup's "proving fault, not predicting lateness"
-      sat outside the vocabulary for eight months; this field is where it lands earlier.
+- name: excluded_variables
+  true: System
+  definition: 'Variables known to exist and deliberately left out. The candidate set for Revision
+    when a system underperforms. The startup''s "proving fault, not predicting lateness" sat outside
+    the vocabulary for eight months; this field is where it lands earlier.
 
-  - name: specification_status
-    on: any
-    values: [specified, unknown, deliberately-unspecified]
-    definition: >
-      Distinguishes not-yet-measured from intentionally-not-modelled. Different execution
-      semantics: an estimator should spend evidence-gathering budget reducing the former
-      and must not spend it on the latter.
+    '
+- name: specification_status
+  true: any
+  values:
+  - specified
+  - unknown
+  - deliberately-unspecified
+  definition: 'Distinguishes not-yet-measured from intentionally-not-modelled. Different execution
+    semantics: an estimator should spend evidence-gathering budget reducing the former and must not
+    spend it on the latter.
 
-  - name: authority
-    applies_to: Intervention
-    definition: Which parties may perform this intervention. Deliberately independent of who holds relevant estimates.
+    '
+- name: authority
+  applies_to: Intervention
+  definition: Which parties may perform this intervention. Deliberately independent of who holds
+    relevant estimates.
+- name: informal_influence
+  applies_to: Party
+  definition: 'Influence over outcomes not accounted for by declared authority. Records THAT a discrepancy
+    exists and its direction, not its content.
 
-  - name: informal_influence
-    applies_to: Party
-    definition: >
-      Influence over outcomes not accounted for by declared authority. Records THAT a
-      discrepancy exists and its direction, not its content.
-    rationale: >
-      Added because two fully independent routes found the same gap.
+    '
+  rationale: 'Added because two fully independent routes found the same gap.
 
-      (1) The Scott critique in research/external_critiques.md predicted that metis — local
-      unwritten practical knowledge — is load-bearing and would be the thing the
-      representation could not hold.
+    (1) The Scott critique in research/external_critiques.md predicted that metis — local unwritten
+    practical knowledge — is load-bearing and would be the thing the representation could not hold.
 
-      (2) The round-1 adjudicator, a model that never saw that critique and worked only from
-      the encodings, independently reported: the ontology "appears to lack a way to represent
-      load-bearing tacit institutional rules, contextual exceptions, and informal
-      credibility, forcing both hospital encodings to relegate them to excluded variables
-      rather than make them behaviorally operative."
+    (2) The round-1 adjudicator, a model that never saw that critique and worked only from the encodings,
+    independently reported: the ontology "appears to lack a way to represent load-bearing tacit institutional
+    rules, contextual exceptions, and informal credibility, forcing both hospital encodings to relegate
+    them to excluded variables rather than make them behaviorally operative."
 
-      Scott is right that the CONTENT of metis cannot be codified without destroying it, so
-      this field deliberately does not try. It records the discrepancy — this party's
-      concerns carry weight beyond their formal authority — which is enough to make it
-      operative in a policy without codifying which person, or why.
+    Scott is right that the CONTENT of metis cannot be codified without destroying it, so this field
+    deliberately does not try. It records the discrepancy — this party''s concerns carry weight beyond
+    their formal authority — which is enough to make it operative in a policy without codifying which
+    person, or why.
 
-      A field rather than a primitive: no budget cost, and it is a property of a Party
-      rather than a thing in its own right.
+    A field rather than a primitive: no budget cost, and it is a property of a Party rather than
+    a thing in its own right.
 
-# ---------------------------------------------------------------------------
-
+    '
 retired:
-  - name: Evidence
-    retired_in: round3
-    reason: >
-      PHANTOM PRIMITIVE. Declared in the `uses` list of 7 encodings across 5 vendors and
-      instantiated as a node ZERO times. The only core primitive with that property.
+- name: Evidence
+  retired_in: round3
+  reason: 'PHANTOM PRIMITIVE. Declared in the `uses` list of 7 encodings across 5 vendors and instantiated
+    as a node ZERO times. The only core primitive with that property.
 
-      The diagnosis is a layer boundary rather than a modelling mistake. A Signal is a
-      CHANNEL (the hallway thermometer); Evidence would be a DATUM that arrived through it
-      (19.3C at 14:02). That is a runtime instance, not a specification-time structure — so
-      Evidence belongs to the execution layer, not the IR. Encoders sensed this and silently
-      declined to instantiate it.
+    The diagnosis is a layer boundary rather than a modelling mistake. A Signal is a CHANNEL (the
+    hallway thermometer); Evidence would be a DATUM that arrived through it (19.3C at 14:02). That
+    is a runtime instance, not a specification-time structure — so Evidence belongs to the execution
+    layer, not the IR. Encoders sensed this and silently declined to instantiate it.
 
-      Its two jobs are already covered: identity by Signal, and protection against
-      double-counting by Estimator.idempotency_basis (required, per the at-least-once
-      finding in research/flue_notes.md).
+    Its two jobs are already covered: identity by Signal, and protection against double-counting
+    by Estimator.idempotency_basis (required, per the at-least-once finding in research/flue_notes.md).
 
-      CAVEAT ON WHO DECIDED THIS: ontology/score.md lists "whether a merge lost something" as
-      something the score cannot see, and I am the party judging that the channel/datum
-      distinction is not load-bearing at specification time. The mechanical evidence is
-      strong (7 declared, 0 instantiated) but the judgement is mine. Reversible in one commit
-      if an encoding ever needs it.
+    CAVEAT ON WHO DECIDED THIS: ontology/score.md lists "whether a merge lost something" as something
+    the score cannot see, and I am the party judging that the channel/datum distinction is not load-bearing
+    at specification time. The mechanical evidence is strong (7 declared, 0 instantiated) but the
+    judgement is mine. Reversible in one commit if an encoding ever needs it.
 
+    '
 honest_notes:
-  count: >
-    19 core primitives against a budget of 20. Landing just inside on first derivation is
-    a warning sign, not an achievement — it suggests the derivation was calibrated to the
-    budget rather than to the seeds. Treat 19 as an unverified upper bound.
+  count: '19 core primitives against a budget of 20. Landing just inside on first derivation is a
+    warning sign, not an achievement — it suggests the derivation was calibrated to the budget rather
+    than to the seeds. Treat 19 as an unverified upper bound.
 
+    '
   merge_candidates:
-    - Signal and Evidence may be one construct at different stages of processing.
-    - Delay and TimeScale are both temporal and may collapse.
-    - Policy and PreferenceOrdering are adjacent; a policy may just be an ordering plus a
-      selection rule.
-    - Constraint and DesiredCondition differ only in whether violation is permitted.
-
+  - Signal and Evidence may be one construct at different stages of processing.
+  - Delay and TimeScale are both temporal and may collapse.
+  - Policy and PreferenceOrdering are adjacent; a policy may just be an ordering plus a selection
+    rule.
+  - Constraint and DesiredCondition differ only in whether violation is permitted.
   at_risk_under_orphan_rule:
     still_thin:
-      - Delay — two systems, both engineering-adjacent. Still the thinnest.
-      - PreferenceOrdering — two systems. Expected to be demanded by democracy.
-      - Boundary — three systems but never load-bearing enough to force its own promotion,
-        which is either a sign it is correctly cheap or a sign it is underspecified.
+    - Delay — two systems, both engineering-adjacent. Still the thinnest.
+    - PreferenceOrdering — two systems. Expected to be demanded by democracy.
+    - Boundary — three systems but never load-bearing enough to force its own promotion, which is
+      either a sign it is correctly cheap or a sign it is underspecified.
     resolved:
-      - Consequence — was one seed; Hop Aero's launch regulator (pure downside, no upside)
-        supplies a second and cleaner instance.
-      - Constraint — was thin; Hop Aero's licensing and export control are non-tradeable at
-        any exchange rate, which is the distinction Constraint exists to carry.
-
-  evidence_cost_axis: >
-    reference_set.md predicted that expensive-evidence systems would invest in Estimator
-    quality while cheap-evidence systems would run weak estimators over many observations.
+    - Consequence — was one seed; Hop Aero's launch regulator (pure downside, no upside) supplies
+      a second and cleaner instance.
+    - Constraint — was thin; Hop Aero's licensing and export control are non-tradeable at any exchange
+      rate, which is the distinction Constraint exists to carry.
+  evidence_cost_axis: 'reference_set.md predicted that expensive-evidence systems would invest in
+    Estimator quality while cheap-evidence systems would run weak estimators over many observations.
     Traditional aerospace versus SpaceX confirms the contrast.
 
-    CORRECTION: SpaceX did not pick a strategy on the axis, it MOVED ITS POSITION along the
-    axis. Vertical integration, reusability and cadence are all interventions aimed at making
-    evidence cheaper and more reversible. So there are three strategies, not two: estimate
-    harder, observe more, or change what observation costs.
+    CORRECTION: SpaceX did not pick a strategy on the axis, it MOVED ITS POSITION along the axis.
+    Vertical integration, reusability and cadence are all interventions aimed at making evidence
+    cheaper and more reversible. So there are three strategies, not two: estimate harder, observe
+    more, or change what observation costs.
 
     The third now has five independent instances and became Intervention.target.
 
-  loci_hypothesis: >
-    RESOLVED IN FAVOUR, reversing the previous entry. research/prior_art_gate.md predicted
-    Party, Revision and recursive System are one capability at three scales. Derivation from
-    the four seeds did NOT collapse them, and that was recorded here as evidence against the
+    '
+  loci_hypothesis: 'RESOLVED IN FAVOUR, reversing the previous entry. research/prior_art_gate.md
+    predicted Party, Revision and recursive System are one capability at three scales. Derivation
+    from the four seeds did NOT collapse them, and that was recorded here as evidence against the
     unification.
 
-    Toyota overturns it. Goal decomposition-with-pushback (hoshin kanri) is simultaneously
-    nested across levels, plural within each level, and endogenous — positions change through
-    negotiation rather than by learning what the true target was. One mechanism, all three
-    faces, engineered deliberately and running for decades.
+    Toyota overturns it. Goal decomposition-with-pushback (hoshin kanri) is simultaneously nested
+    across levels, plural within each level, and endogenous — positions change through negotiation
+    rather than by learning what the true target was. One mechanism, all three faces, engineered
+    deliberately and running for decades.
 
-    The reason the seed derivation got this wrong matters more than the answer: none of the
-    four seeds contained an organisation that does goal formation WELL. The hospital has
-    plural goals and handles them badly; the startup revises episodically under duress.
-    Only against a system that does it as routine practice is it visible that the three are
-    the same thing.
+    The reason the seed derivation got this wrong matters more than the answer: none of the four
+    seeds contained an organisation that does goal formation WELL. The hospital has plural goals
+    and handles them badly; the startup revises episodically under duress. Only against a system
+    that does it as routine practice is it visible that the three are the same thing.
 
-    A GAP IN THE CORPUS PRODUCED A WRONG FINDING ABOUT THE ONTOLOGY. This is the clearest
-    available argument for why the corpus must come first and must be chosen for structural
-    spread rather than for variety — and a warning that "derivation from data" is only as
-    good as the data selected.
+    A GAP IN THE CORPUS PRODUCED A WRONG FINDING ABOUT THE ONTOLOGY. This is the clearest available
+    argument for why the corpus must come first and must be chosen for structural spread rather than
+    for variety — and a warning that "derivation from data" is only as good as the data selected.
 
-    Consequence: whether the three primitives should MERGE is now a live question rather than
-    a closed one. Not merging yet — Toyota shows they are one capability, not that they are
-    one construct, and collapsing them prematurely would lose the distinction the score
-    cannot see disappearing.
+    Consequence: whether the three primitives should MERGE is now a live question rather than a closed
+    one. Not merging yet — Toyota shows they are one capability, not that they are one construct,
+    and collapsing them prematurely would lose the distinction the score cannot see disappearing.
 
-  untested_against_seeds: >
-    Calibration was in the charter's list and no seed demanded it. Deliberately omitted
-    rather than carried forward on authority. Expect scientific_community to demand it.
+    '
+  untested_against_seeds: 'Calibration was in the charter''s list and no seed demanded it. Deliberately
+    omitted rather than carried forward on authority. Expect scientific_community to demand it.
+
+    '
+scope: agent control loops — see FORK.md

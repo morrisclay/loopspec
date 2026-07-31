@@ -1,0 +1,59 @@
+uras_version: 0
+encodes: customer_acquisition
+set: field
+domain: venture
+encoded_by: claude-opus-5
+shape: canonical-graph
+
+# Canonical IR for the loop spec as written. Deliberately encodes ONLY what the spec says —
+# gaps are left as gaps so the linter can find them rather than being quietly filled in.
+
+nodes:
+  - {id: acquisition, kind: System, name: customer_acquisition}
+
+  - {id: founder, kind: Party}
+
+  # goal: metric CAC, target <400
+  - {id: cac, kind: Estimand, determination: computed}
+  - {id: cac_target, kind: DesiredCondition, held_by: founder,
+     target_type: threshold, value: 400, comparator: less_than}
+
+  # state.estimated
+  - {id: pmf, kind: Estimand, determination: latent}
+  - {id: brand_strength, kind: Estimand, determination: latent}
+
+  # observe
+  - {id: stripe, kind: Signal}
+  - {id: crm, kind: Signal}
+  - {id: founder_interviews, kind: Signal}
+
+  # beliefs
+  - {id: pmf_estimator, kind: Estimator, form: bayesian,
+     idempotency_basis: per_observation_batch}
+  - {id: pmf_belief, kind: Estimate, held_by: founder, uncertainty: ordinal}
+
+  # interventions
+  - {id: increase_budget, kind: Intervention, target: world}
+  - {id: change_pricing, kind: Intervention, target: world}
+
+edges:
+  - {from: acquisition, to: cac, rel: contains}
+  - {from: founder, to: cac_target, rel: holds}
+  - {from: cac_target, to: cac, rel: targets}
+  - {from: stripe, to: cac, rel: measures}
+  - {from: founder, to: increase_budget, rel: authorizes}
+  - {from: founder, to: change_pricing, rel: authorizes}
+  - {from: pmf_estimator, to: pmf_belief, rel: estimates}
+  - {from: founder, to: pmf_belief, rel: holds}
+
+# The spec declares no loop closure — no timescale, and no statement of which intervention
+# closes which loop. Left absent on purpose.
+loops: []
+
+source_spec: |
+  loop: Customer Acquisition
+  goal:      { metric: CAC, target: <400 }
+  state.estimated: [PMF, BrandStrength]
+  observe:   [Stripe, CRM, Founder Interviews]
+  beliefs:   { PMF: { estimator: Bayesian } }
+  interventions: [Increase Budget, Change Pricing]

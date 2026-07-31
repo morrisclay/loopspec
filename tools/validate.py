@@ -194,8 +194,9 @@ def check_canonical(path, doc, allp, rep):
     bears = {e["from"] for e in edges if e.get("rel") == "bears"}
     for pid in kinds.get("Party", []):
         if pid not in bears:
-            rep.err(where, f"party `{pid}` bears no Consequence — under the narrowed definition "
-                           f"an authority-holding node bearing none is a component, not a Party")
+            rep.warn(where, f"party `{pid}` bears no Consequence. Consequence is an EXTENSION "
+                            f"in the agent-loop scope, so this is advisory — but if the loop "
+                            f"has stakes worth modelling, name who carries them")
 
     # every Estimator declares an idempotency basis
     for eid in kinds.get("Estimator", []):
