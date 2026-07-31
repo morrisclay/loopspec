@@ -1,5 +1,9 @@
 # Universal Representation for Adaptive Systems (URAS)
 
+> **Start here:** [`SYNTHESIS.md`](SYNTHESIS.md) — where the field is, what this can
+> contribute, and what it cannot claim. [`REFERENCES.md`](REFERENCES.md) tracks every
+> external source and the decision it shaped.
+
 ## Rethinking how we specify intelligent systems
 
 ---
