@@ -95,8 +95,38 @@ And three that are worth reading before you touch anything:
 | `no_escalation_path` | a human is declared and there is no condition under which the loop stops and asks them |
 | `consequence_without_authority` | `support_lead` carries the customer relationship and approves nothing |
 
+### The output is ranked, and two of the checks are deliberately not findings
+
+Findings are ordered by how **unusual** they are, measured against a reference corpus:
+
+- **SPECIFIC TO THIS LOOP** — rare. Most loops do not have these. Read these first.
+- **COMMON** — seen in a fair number of loops. Still worth deciding about.
+- **UNIVERSAL** — context, not a finding. `regulator_without_model` fires on **21 of 21**
+  specs in the corpus, including every framework's own best-practice example. A check that
+  fires on everything carries **zero bits** about *your* loop, so it is reported as background
+  rather than printed first in the same typeface as something rare.
+
+Both things are true at once: *"100% of published loops lack calibration"* is the strongest
+claim this project has **about the field**, and useless **as a lint on your spec**.
+
+### Recording a decision — `consider:`
+
 **You do not have to fix everything.** A finding you have read and decided against is a
-different thing from one you never saw. That distinction is the entire value here.
+different thing from one you never saw, and the format has somewhere to put that:
+
+```yaml
+consider:
+  orphan_signal/crm_stage:
+    because: "read only to detect drift; it feeds no belief on purpose"
+    revisit: "if we ever move stages automatically rather than proposing them"
+  belief_never_checked:
+    because: "no outcome arrives until a deal closes, which is 6-18 months"
+    revisit: "when the first cohort of proposed deals has resolved"
+```
+
+This **does not suppress the finding.** It moves to a `CONSIDERED` section with your reason
+attached, so a reviewer sees the decision rather than a silence. And if the spec changes so the
+finding no longer fires, the linter says so — *a stale justification is worse than none*.
 
 ## 4. Fix the two that matter
 

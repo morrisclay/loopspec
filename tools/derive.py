@@ -44,6 +44,86 @@ def kind(nodes, k):
     return [i for i, n in nodes.items() if n.get("kind") == k]
 
 
+
+# ---------------------------------------------------------------------------------------
+# PRESENTING FINDINGS.
+#
+# A flat list ranked by nothing was the output for most of this project's life, and measuring
+# it was uncomfortable: `regulator_without_model` fires on 21 of 21 specs. That is ZERO BITS.
+# It says nothing whatever about YOUR loop, and it was printed first, every time, in the same
+# typeface as a finding that fires on one spec in twenty.
+#
+# Both things are true and they are different uses. "100% of loops lack calibration" is the
+# strongest claim this project has ABOUT THE FIELD. It is useless AS A LINT on your loop.
+# So universal findings become context, rare findings lead, and duplicates collapse.
+# ---------------------------------------------------------------------------------------
+
+import math
+
+_RATES = None
+
+
+def base_rates():
+    global _RATES
+    if _RATES is None:
+        try:
+            p = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                             "docs", "base_rates.json")
+            d = json.load(open(p))
+            _RATES = {k: v / d["n"] for k, v in d["fires"].items()}
+        except Exception:
+            _RATES = {}
+    return _RATES
+
+
+def surprisal(pattern):
+    """Bits. A check firing on everything carries none."""
+    r = base_rates().get(pattern)
+    return 99.0 if r is None else -math.log2(max(r, 1e-9))
+
+
+def _subject(c):
+    e = c.get("evidence") or {}
+    for k in ("belief", "signal", "intervention", "action", "estimand", "target", "resource",
+              "loop", "policy", "party"):
+        if e.get(k):
+            return str(e[k])
+    return None
+
+
+def organise(d, claims):
+    """Split into: decided-about, specific-to-you, common, and universal-so-not-a-finding."""
+    considered = d.get("considered") or {}
+    out = {"considered": [], "specific": [], "common": [], "universal": [], "stale": []}
+    matched = set()
+
+    for c in claims:
+        p = c["pattern"]
+        subj = _subject(c)
+        key = next((k for k in (f"{p}/{subj}", p) if k in considered), None)
+        if key:
+            matched.add(key)
+            body = considered[key]
+            out["considered"].append((c, body.get("because", ""), body.get("revisit")))
+            continue
+        bits = surprisal(p)
+        bucket = "universal" if bits < 0.35 else ("specific" if bits >= 2.0 else "common")
+        out[bucket].append(c)
+
+    out["stale"] = [k for k in considered if k not in matched]
+    for k in ("specific", "common"):
+        out[k].sort(key=lambda c: -surprisal(c["pattern"]))
+    return out
+
+
+def group(claims):
+    """Collapse repeats: three unscored beliefs is one finding about three beliefs."""
+    by = {}
+    for c in claims:
+        by.setdefault(c["pattern"], []).append(c)
+    return by
+
+
 # ------------------------------------------------------------------ queries
 
 def q_estimate_without_authority(d, nodes, edges):
@@ -1239,12 +1319,58 @@ def main():
                 print(f"  query {q.__name__} failed: {e}", file=sys.stderr)
         allout[d.get("encodes")] = claims
         if not as_json:
+            org = organise(d, claims)
             print("=" * 72)
-            print(f"{d.get('encodes')} — {len(claims)} derived claim(s)")
+            print(f"{d.get('encodes')} — {len(claims)} finding(s)")
             print("=" * 72)
-            for c in claims:
-                print(f"\n[{c['pattern']}]")
-                print(f"  {plain(c['claim'])}")
+
+            def show(title, blurb, items):
+                if not items:
+                    return
+                print(f"\n{title}")
+                print(f"  {blurb}")
+                for pat, cs in group(items).items():
+                    subs = [s for s in (_subject(c) for c in cs) if s]
+                    tag = f"[{pat}]" + (f" ×{len(cs)}" if len(cs) > 1 else "")
+                    print(f"\n  {tag}")
+                    if len(cs) > 1 and subs:
+                        print(f"    affects: {', '.join(subs)}")
+                    print(f"    {plain(cs[0]['claim'])}")
+
+            show("SPECIFIC TO THIS LOOP",
+                 "unusual — most loops in the reference corpus do not have these.",
+                 org["specific"])
+            show("COMMON", "seen in a fair number of loops; still worth deciding about.",
+                 org["common"])
+
+            if org["universal"]:
+                pats = sorted({c["pattern"] for c in org["universal"]})
+                print("\nUNIVERSAL — context, not a finding about this loop")
+                print("  Every loop in the reference corpus has these, including every "
+                      "framework's own\n  best-practice examples. Real, and they tell you "
+                      "nothing about YOUR spec specifically.")
+                for p in pats:
+                    r = base_rates().get(p, 0)
+                    print(f"    {p} ({r:.0%} of the corpus)")
+
+            if org["considered"]:
+                print("\nCONSIDERED — you have read these and decided")
+                print("  Not suppressed. Shown so a reviewer sees the decision rather than a "
+                      "silence.")
+                seen = {}
+                for c, because, revisit in org["considered"]:
+                    seen.setdefault((c["pattern"], because, revisit), []).append(c)
+                for (pat, because, revisit), cs in seen.items():
+                    subs = [x for x in (_subject(c) for c in cs) if x]
+                    tag = f"[{pat}]" + (f" ×{len(cs)}" if len(cs) > 1 else "")
+                    print(f"\n  {tag} decided" + (f" — {', '.join(subs)}" if subs else ""))
+                    print(f"    because: {because}")
+                    if revisit:
+                        print(f"    revisit: {revisit}")
+
+            for k in org["stale"]:
+                print(f"\n  ! `consider: {k}` matches no finding — the spec changed and the "
+                      f"justification did not.\n    A stale justification is worse than none.")
     if as_json:
         print(json.dumps(allout, indent=2))
     return 0

@@ -1,0 +1,26 @@
+{
+  "fires": {
+    "accountable_but_blind": 4,
+    "belief_never_checked": 20,
+    "ceiling_without_correction": 6,
+    "consequence_without_authority": 6,
+    "expensive_signal_unreviewed": 3,
+    "informs_no_decision": 4,
+    "irreversible_without_approval": 6,
+    "no_escalation_path": 4,
+    "no_exogenous_grounding": 9,
+    "no_human_at_all": 14,
+    "orphan_signal": 3,
+    "policy_reads_undeclared": 2,
+    "regulator_without_model": 21,
+    "reinforcing_loop_no_balancer": 7,
+    "shared_estimand_no_arbiter": 2,
+    "single_point_of_grounding": 6,
+    "spends_without_limit": 4,
+    "unbounded_loop": 11,
+    "uncontrollable_target": 2,
+    "unmeasured_estimand": 9,
+    "unowned_act": 1
+  },
+  "n": 21
+}

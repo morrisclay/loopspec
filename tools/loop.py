@@ -229,6 +229,7 @@ class Graph:
     def __init__(self):
         self.nodes, self.edges, self.loops = {}, [], []
         self.excluded, self.warnings = [], []
+        self.considered = {}
 
     def node(self, nid, kind, **fields):
         nid = slug(nid)
@@ -252,9 +253,12 @@ class Graph:
             self.edges.append(e)
 
     def doc(self, name):
-        return {"uras_version": 0, "encodes": name, "set": "field",
-                "nodes": list(self.nodes.values()), "edges": self.edges,
-                "loops": self.loops, "excluded_variables": self.excluded}
+        d = {"uras_version": 0, "encodes": name, "set": "field",
+             "nodes": list(self.nodes.values()), "edges": self.edges,
+             "loops": self.loops, "excluded_variables": self.excluded}
+        if self.considered:
+            d["considered"] = self.considered
+        return d
 
 
 def timescale(g, period, owner):
@@ -422,6 +426,11 @@ def expand_one(g, spec, path="<spec>", scope=None):
         g.edge(cid, lid + "_system", "constrains")
 
     g.excluded += [str(x) for x in (spec.get("not_modelling") or [])]
+
+    # `consider:` rides along on the graph so the linter can pair decisions with findings.
+    for key, body in (spec.get("consider") or {}).items():
+        body = body if isinstance(body, dict) else {"because": str(body)}
+        g.considered[str(key)] = body
 
     # --- the loop record itself -------------------------------------------------------
     sigs = list((spec.get("observes") or {}).keys())

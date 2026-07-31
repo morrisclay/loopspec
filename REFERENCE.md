@@ -25,6 +25,7 @@ One document per loop. `---` separates loops in a group; **names resolve across 
 | `asks_human_when` | list[str] |  | The conditions under which the loop stops and asks a person. Top-level and on its own, because burying escalation inside the decision rule is how it goes missing — this is the list a reader scans first to find out whether the thing can run away. |
 | `people` *(alias: `parties`)* | map of entries |  | Who is involved — human or agent — and what each stands to lose. |
 | `spends` | map of entries |  | What the loop burns as it runs — iterations, tokens, money, someone's attention — and what stops it. Harness engineering treats budgets, step ceilings and stall detection as standard, and this format could not express any of them: ceilings were prose inside `never`, where nothing could check them. |
+| `consider` | map of entries |  | Findings you have read and decided about, keyed by check name — optionally `check/subject` to decide about one instance. This does NOT suppress anything: the finding moves to a `considered` section with your reason attached, so a reviewer sees the decision rather than a silence. A finding you have read and rejected is a different artifact from one you never saw, and that difference is most of what this notation is for. The linter warns when a `consider:` entry no longer matches any finding, because a stale justification is worse than none. |
 | `never` | list[str] |  | Hard limits that hold regardless of the goal. |
 | `not_modelling` *(alias: `ignoring`)* | list[str] |  | Knowingly out of scope. Not decoration: this is the first list to revisit when the loop misbehaves for reasons it cannot see. |
 
@@ -93,6 +94,15 @@ What the loop burns, and what stops it.
 | `limit` | str |  | The ceiling — `25 iterations`, `100k tokens`, `5 hours a week`. A limit is a STOP, not a correction: it truncates the loop rather than regulating it. Declaring one is necessary and is not the same as being able to slow down before reaching it. |
 | `replenished` | str |  | What refills this, if anything. Omit and it only ever depletes. |
 | `spent_by` | str|list |  | Which actions draw it down. Each must name an entry in `actions`. |
+
+## `consider.<check>`
+
+A finding you have read and decided about. Does not suppress it.
+
+| key | type | required | meaning |
+|---|---|---|---|
+| `because` | str |  | Why this is acceptable here. Write it for whoever reads the spec after you. |
+| `revisit` | str |  | What would change your mind, or when to look again. Optional and worth writing. |
 
 ## `when[]`
 

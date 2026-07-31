@@ -72,6 +72,13 @@
       },
       "description": "What the loop burns as it runs \u2014 iterations, tokens, money, someone's attention \u2014 and what stops it. Harness engineering treats budgets, step ceilings and stall detection as standard, and this format could not express any of them: ceilings were prose inside `never`, where nothing could check them."
     },
+    "consider": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/consider_entry"
+      },
+      "description": "Findings you have read and decided about, keyed by check name \u2014 optionally `check/subject` to decide about one instance. This does NOT suppress anything: the finding moves to a `considered` section with your reason attached, so a reviewer sees the decision rather than a silence. A finding you have read and rejected is a different artifact from one you never saw, and that difference is most of what this notation is for. The linter warns when a `consider:` entry no longer matches any finding, because a stale justification is worse than none."
+    },
     "never": {
       "type": "array",
       "items": {
@@ -315,6 +322,20 @@
             "array"
           ],
           "description": "Which actions draw it down. Each must name an entry in `actions`."
+        }
+      }
+    },
+    "consider_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "because": {
+          "type": "string",
+          "description": "Why this is acceptable here. Write it for whoever reads the spec after you."
+        },
+        "revisit": {
+          "type": "string",
+          "description": "What would change your mind, or when to look again. Optional and worth writing."
         }
       }
     },
