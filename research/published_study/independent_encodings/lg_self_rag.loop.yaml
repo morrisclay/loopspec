@@ -1,0 +1,146 @@
+loop: self_rag
+runs: per_question
+
+goal:
+  grounded_answer:
+    keep: "yes"
+    from:
+      - generation_grounding_grade
+  question_resolved:
+    keep: "yes"
+    from:
+      - answer_resolution_grade
+
+beliefs:
+  retrieved_document_relevance:
+    question: Does each retrieved document contain keywords or semantic meaning relevant to the current question?
+    from:
+      - user_question
+      - rewritten_question
+      - retrieved_documents
+    how: An LLM returns a structured binary yes-or-no relevance grade for each document.
+    explains: grounded_answer
+  generation_grounding:
+    question: Is the generated answer grounded in and supported by the filtered retrieved documents?
+    from:
+      - filtered_documents
+      - generated_answer
+    how: An LLM returns a structured binary yes-or-no grounding grade.
+    explains: grounded_answer
+  answer_resolves_question:
+    question: Does the generated answer address or resolve the current question?
+    from:
+      - user_question
+      - rewritten_question
+      - generated_answer
+    how: An LLM returns a structured binary yes-or-no answer grade.
+    explains: question_resolved
+  underlying_question_intent:
+    question: What is the underlying semantic intent or meaning of the question?
+    from:
+      - user_question
+    how: An LLM reasons about the question and formulates a version optimized for vector-store retrieval.
+    explains: question_resolved
+
+observes:
+  user_question:
+    informs:
+      - retrieved_document_relevance
+      - generation_grounding
+      - answer_resolves_question
+      - underlying_question_intent
+    every: per_question
+    origin: outside
+    how: reported
+    reported_by: user
+  retrieved_documents:
+    informs: retrieved_document_relevance
+    origin: ourselves
+    how: calculated
+    produced_by: retrieve_documents
+  document_relevance_grades:
+    informs: retrieved_document_relevance
+    origin: ourselves
+    how: reported
+    reported_by: self_rag_agent
+    produced_by: grade_and_filter_documents
+  filtered_documents:
+    informs: generation_grounding
+    origin: ourselves
+    how: calculated
+    produced_by: grade_and_filter_documents
+  generated_answer:
+    informs:
+      - generation_grounding
+      - answer_resolves_question
+    origin: ourselves
+    how: reported
+    reported_by: self_rag_agent
+    produced_by: generate_answer
+  generation_grounding_grade:
+    informs:
+      - grounded_answer
+      - generation_grounding
+    origin: ourselves
+    how: reported
+    reported_by: self_rag_agent
+    produced_by: grade_generation_grounding
+  answer_resolution_grade:
+    informs:
+      - question_resolved
+      - answer_resolves_question
+    origin: ourselves
+    how: reported
+    reported_by: self_rag_agent
+    produced_by: grade_answer_resolution
+  rewritten_question:
+    informs:
+      - retrieved_document_relevance
+      - generation_grounding
+      - answer_resolves_question
+    origin: ourselves
+    how: reported
+    reported_by: self_rag_agent
+    produced_by: rewrite_question
+
+actions:
+  retrieve_documents:
+    moves: retrieved_document_relevance
+  grade_and_filter_documents:
+    moves: grounded_answer
+  generate_answer:
+    moves:
+      - grounded_answer
+      - question_resolved
+  grade_generation_grounding: {}
+  grade_answer_resolution: {}
+  rewrite_question:
+    moves:
+      - retrieved_document_relevance
+      - question_resolved
+
+when:
+  - if: A user question is received.
+    do: retrieve_documents
+  - if: Documents have been retrieved and not yet graded for relevance.
+    do: grade_and_filter_documents
+  - if: No documents remain after relevance filtering.
+    do: rewrite_question
+  - if: A rewritten question has been produced.
+    do: retrieve_documents
+  - if: At least one relevant document remains after filtering.
+    do: generate_answer
+  - if: A generated answer has not yet been graded for grounding.
+    do: grade_generation_grounding
+  - if: The generation grounding grade is no.
+    do: generate_answer
+  - if: The generation grounding grade is yes and the answer has not yet been graded against the question.
+    do: grade_answer_resolution
+  - if: The answer resolution grade is no.
+    do: rewrite_question
+
+people:
+  user:
+    human: true
+  self_rag_agent:
+    agent: true

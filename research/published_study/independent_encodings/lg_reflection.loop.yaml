@@ -1,0 +1,91 @@
+loop: reflective_essay_generation
+runs: per request
+
+goal:
+  essay_quality:
+    keep: an excellent 5-paragraph essay answering the user's request
+
+beliefs:
+  quality_assessment:
+    question: What weaknesses in the current essay should be corrected?
+    from:
+      - user_request
+      - current_essay
+      - reflection_feedback
+    how: an LLM prompted as a teacher generates detailed critique and recommendations
+    explains: essay_quality
+
+observes:
+  user_request:
+    informs:
+      - essay_quality
+      - quality_assessment
+    every: once per request
+    origin: outside
+    how: reported
+    reported_by: user
+
+  current_essay:
+    informs: quality_assessment
+    every: after each generation step
+    origin: ourselves
+    how: calculated
+    produced_by: generate_or_revise
+
+  reflection_feedback:
+    informs:
+      - essay_quality
+      - quality_assessment
+    every: after each reflection step
+    origin: ourselves
+    how: calculated
+    produced_by: reflect
+
+  message_history_length:
+    every: after each generation step
+    origin: ourselves
+    how: calculated
+
+actions:
+  generate_or_revise:
+    moves: essay_quality
+    effect_after: when the LLM generation completes
+
+  reflect:
+    moves: quality_assessment
+    effect_after: when the LLM reflection completes
+
+  end_loop: {}
+
+when:
+  - if: the graph starts with the original user request
+    do: generate_or_revise
+  - if: generation completes and len(state["messages"]) > 6
+    do: end_loop
+  - if: generation completes and len(state["messages"]) <= 6
+    do: reflect
+  - if: reflection completes
+    do: generate_or_revise
+
+people:
+  user:
+    human: true
+    may_decide: the requested essay topic
+
+  essay_generator:
+    agent: true
+    sees:
+      - essay_quality
+      - quality_assessment
+
+  teacher_reflector:
+    agent: true
+    sees:
+      - essay_quality
+
+never:
+  - continue the reflection loop after len(state["messages"]) exceeds 6
+
+not_modelling:
+  - independent feedback from a human teacher
+  - additional context or feedback from tools, environment observations, or external checks

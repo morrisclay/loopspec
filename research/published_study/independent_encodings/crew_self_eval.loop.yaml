@@ -1,0 +1,67 @@
+loop: shakespeare_x_post_flow
+runs: per kickoff
+
+goal:
+  valid_shakespearean_x_post_about_flying_cars:
+    keep: assessed as valid before saving
+    from:
+      - x_post_validity_assessment
+
+beliefs:
+  x_post_validity_assessment:
+    question: Does the review crew judge the current generated X post to be valid?
+    from:
+      - generated_x_post
+      - review_valid_flag
+      - review_feedback
+    how: formed from the result returned by XPostReviewCrew
+
+observes:
+  generated_x_post:
+    informs: x_post_validity_assessment
+    origin: ourselves
+    produced_by: generate_shakespeare_x_post
+  review_valid_flag:
+    informs: x_post_validity_assessment
+    origin: ourselves
+    how: reported
+    reported_by: XPostReviewCrew
+    produced_by: review_x_post
+  review_feedback:
+    informs: x_post_validity_assessment
+    origin: ourselves
+    how: reported
+    reported_by: XPostReviewCrew
+    produced_by: review_x_post
+
+actions:
+  generate_shakespeare_x_post:
+    moves: valid_shakespearean_x_post_about_flying_cars
+    can_undo: yes
+  review_x_post:
+    moves: x_post_validity_assessment
+    can_undo: yes
+  save_result:
+    can_undo: no
+  max_retry_exceeded_exit:
+    can_undo: yes
+
+when:
+  - if: the flow starts or the review router returns retry
+    do: generate_shakespeare_x_post
+  - if: generation completes and retry_count is greater than 3
+    do: max_retry_exceeded_exit
+  - if: generation completes and retry_count is at most 3
+    do: review_x_post
+  - if: review_x_post sets valid to true
+    do: save_result
+  - if: review_x_post sets valid to false
+    do: generate_shakespeare_x_post
+
+asks_human_when: []
+
+people: {}
+
+never:
+  - save x_post.txt unless the review crew has set valid to true
+  - perform more than four review attempts per kickoff

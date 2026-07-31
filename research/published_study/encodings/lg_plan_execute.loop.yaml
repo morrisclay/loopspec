@@ -1,0 +1,28 @@
+# LangGraph tutorial: Plan-and-Execute. Graph: planner -> agent -> replan.
+loop: langgraph_plan_execute
+runs: per_step
+goal:
+  objective_met: { keep: "the replanner returns a final response" }
+beliefs:
+  objective_met:
+    question: "Have the remaining steps become unnecessary?"
+    from: [step_results]
+    how: judgement          # the replanner, an LLM reading past step output
+    # no checked_by
+observes:
+  step_results:
+    informs: objective_met
+    every: per_step
+    origin: outside         # the agent executes real tools
+    how: measured
+actions:
+  plan:         { moves: objective_met, can_undo: yes }
+  execute_step: { moves: objective_met, can_undo: yes }
+  replan:       { moves: objective_met, can_undo: yes }
+when:
+  - if: "the plan still has steps"
+    do: execute_step
+people: {}
+not_modelling:
+  - the cost of executing a step
+  - whether the plan was a good plan

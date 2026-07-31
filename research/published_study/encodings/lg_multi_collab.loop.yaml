@@ -1,0 +1,46 @@
+# LangGraph tutorial: Multi-agent collaboration. researcher and chart_generator
+# share one message state and hand off to each other.
+loop: researcher
+runs: per_turn
+goal:
+  task_complete: { keep: "an agent emits FINAL ANSWER" }
+beliefs:
+  task_complete:
+    question: "Is the task finished?"
+    from: [search_results]
+    how: judgement
+observes:
+  search_results:
+    informs: task_complete
+    every: per_turn
+    origin: outside
+    how: measured
+actions:
+  research: { moves: task_complete, can_undo: yes }
+when:
+  - if: "no agent has said FINAL ANSWER"
+    do: research
+people:
+  shared_state: { agent: yes }
+---
+loop: chart_generator
+runs: per_turn
+beliefs:
+  task_complete:              # THE SAME quantity the researcher judges
+    question: "Is the task finished?"
+    from: [chart_output]
+    how: judgement
+observes:
+  chart_output:
+    informs: task_complete
+    every: per_turn
+    origin: ourselves
+    how: reported
+    produced_by: make_chart
+actions:
+  make_chart: { moves: task_complete, can_undo: yes }
+when:
+  - if: "no agent has said FINAL ANSWER"
+    do: make_chart
+people:
+  shared_state: { agent: yes }

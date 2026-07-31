@@ -1,0 +1,114 @@
+loop: rewoo_task_solver
+runs: per task
+
+goal:
+  task_response:
+    keep: answer the initial task directly according to the generated plan and retrieved evidence
+    from:
+      - final_response
+
+beliefs:
+  plan_effectiveness:
+    question: Will the generated sequence of tool calls solve the task?
+    from:
+      - task_input
+      - generated_plan
+    how: GPT-4o generates the full plan in one call using the planner prompt
+    explains: whether the planned tool sequence can solve the task
+  evidence_supported_answer:
+    question: What answer to the task is supported by the collected tool results?
+    from:
+      - task_input
+      - google_search_results
+      - llm_tool_results
+    how: GPT-4o reasons over the full plan and corresponding evidence
+    explains: the answer returned for the initial task
+
+observes:
+  task_input:
+    informs:
+      - plan_effectiveness
+      - evidence_supported_answer
+    every: once per task
+    origin: outside
+    how: reported
+    reported_by: caller
+  generated_plan:
+    informs: plan_effectiveness
+    every: once per task
+    origin: ourselves
+    how: calculated
+    produced_by: plan_task
+  google_search_results:
+    informs: evidence_supported_answer
+    every: for each planned Google step
+    origin: outside
+    how: measured
+  llm_tool_results:
+    informs: evidence_supported_answer
+    every: for each planned LLM step
+    origin: ourselves
+    how: calculated
+    produced_by: reason_with_llm
+  final_response:
+    informs: task_response
+    every: once after all planned steps complete
+    origin: ourselves
+    how: calculated
+    produced_by: solve_task
+
+actions:
+  plan_task:
+    moves: plan_effectiveness
+    effect_after: after one planner LLM call
+    consumes:
+      - tokens
+      - execution time
+  search_google:
+    moves: evidence_supported_answer
+    effect_after: after the search invocation returns
+    consumes:
+      - execution time
+  reason_with_llm:
+    moves: evidence_supported_answer
+    effect_after: after the LLM invocation returns
+    consumes:
+      - tokens
+      - execution time
+  solve_task:
+    moves:
+      - evidence_supported_answer
+      - task_response
+    effect_after: after the solver LLM call
+    consumes:
+      - tokens
+      - execution time
+
+when:
+  - if: no plan has been generated for the task
+    do: plan_task
+  - if: an unexecuted planned step remains and its tool is Google, after substituting prior evidence variables into its input
+    do: search_google
+  - if: an unexecuted planned step remains and its tool is LLM, after substituting prior evidence variables into its input
+    do: reason_with_llm
+  - if: all planned steps have been executed
+    do: solve_task
+
+people:
+  planner:
+    agent: true
+    may_decide: the ordered plans, tools, tool inputs, and evidence variables for the task
+  worker:
+    agent: true
+    may_decide: which supported tool implementation executes the current planned step
+  solver:
+    agent: true
+    may_decide: the final direct response based on the plan and collected evidence
+
+never:
+  - execute a planned tool other than Google or LLM
+  - invoke the solver before every planned task has been executed
+
+not_modelling:
+  - parallel execution of independent tool calls
+  - environment context not supplied to the planner

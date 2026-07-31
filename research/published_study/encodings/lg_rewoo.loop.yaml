@@ -1,0 +1,28 @@
+# LangGraph tutorial: ReWOO. Graph: plan -> tool -> solve. The plan is made ONCE,
+# up front, and the tool node walks it; there is no replanning step.
+loop: langgraph_rewoo
+runs: per_step
+goal:
+  question_answered: { keep: "the solver produces an answer" }
+beliefs:
+  question_answered:
+    question: "Do the accumulated tool results answer the question?"
+    from: [tool_results]
+    how: judgement
+    # no checked_by
+observes:
+  tool_results:
+    informs: question_answered
+    every: per_step
+    origin: outside
+    how: measured
+actions:
+  plan:      { moves: question_answered, can_undo: yes }
+  call_tool: { moves: question_answered, can_undo: yes }
+  solve:     { moves: question_answered, can_undo: yes }
+when:
+  - if: "steps remain in the plan"
+    do: call_tool
+people: {}
+not_modelling:
+  - what happens when an early tool result invalidates the plan

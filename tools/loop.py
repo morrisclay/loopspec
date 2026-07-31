@@ -266,9 +266,16 @@ def expand_one(g, spec, path="<spec>", scope=None):
                          confidence_in_target=body.get("confidence"))
             g.edge(tid, est, "targets")
 
-    # --- estimates: what it believes but cannot see --------------------------------
+    # --- beliefs: what it holds a view on but cannot read off ------------------------
+    # A name appearing in BOTH `goal` and `beliefs` is a quantity you steer toward AND form
+    # a view about — essay quality, answer usefulness. It is LATENT: a judgement is being
+    # made. `goal` runs first and would otherwise fix it as `computed`, which silently
+    # exempts it from every calibration check. That suppressed the project's headline
+    # finding across a whole study before anyone noticed.
     for est, body in (spec.get("beliefs") or {}).items():
         body = body or {}
+        if est in g.nodes and g.nodes[est].get("determination") == "computed":
+            g.nodes[est]["determination"] = "latent"
         g.node(est, "Estimand", determination="latent",
                settled_by=body.get("settled_by"), question=body.get("question"),
                known_bias=body.get("known_bias"))

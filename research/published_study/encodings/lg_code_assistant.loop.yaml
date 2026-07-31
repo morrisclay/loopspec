@@ -1,0 +1,39 @@
+# LangGraph tutorial: Code assistant. Graph: generate -> check_code -> reflect.
+loop: langgraph_code_assistant
+runs: per_iteration
+goal:
+  code_correct: { keep: "imports and execution both succeed" }
+beliefs:
+  code_correct:
+    question: "Does this code actually run?"
+    from: [import_check, execution_check, reflection]
+    how: judgement
+    # no checked_by
+observes:
+  import_check:
+    informs: code_correct
+    every: per_iteration
+    origin: outside          # the interpreter, not the model
+    how: measured
+  execution_check:
+    informs: code_correct
+    every: per_iteration
+    origin: outside
+    how: measured
+  reflection:
+    informs: code_correct
+    every: per_iteration
+    origin: ourselves
+    how: reported
+    produced_by: reflect
+actions:
+  generate: { moves: code_correct, can_undo: yes }
+  reflect:  { moves: code_correct, can_undo: yes }
+when:
+  - if: "the error count is below the ceiling"
+    do: generate
+people: {}
+never:
+  - "exceed max_iterations"
+not_modelling:
+  - whether the code does the right thing when it runs

@@ -1,0 +1,31 @@
+# CrewAI flows: self_evaluation_loop_flow/main.py
+# generate_shakespeare_x_post -> evaluate_x_post (router) -> retry | complete,
+# with retry_count > 3 as the ceiling.
+loop: crewai_self_evaluation
+runs: per_retry
+goal:
+  post_valid: { keep: "the review crew returns valid" }
+beliefs:
+  post_valid:
+    question: "Is this X post good enough to publish?"
+    from: [review_feedback]
+    how: judgement
+    # no checked_by
+observes:
+  review_feedback:
+    informs: post_valid
+    every: per_retry
+    origin: ourselves        # XPostReviewCrew is inside this flow
+    how: reported
+    produced_by: review_post
+actions:
+  generate_post: { moves: post_valid, can_undo: yes }
+  review_post:   { moves: post_valid, can_undo: yes }
+when:
+  - if: "not valid and retry_count is at or below 3"
+    do: generate_post
+people: {}
+never:
+  - "retry more than 3 times"
+not_modelling:
+  - whether the post performs when published

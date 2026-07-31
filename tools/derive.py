@@ -727,6 +727,11 @@ def q_policy_reads_undeclared(d, nodes, edges):
         if n.get("kind") != "Policy":
             continue
         for name in (n.get("reads_undeclared") or []):
+            # Only identifier-shaped tokens. Conditions are written in prose, and without
+            # this the check flagged "plan", "remain" and "steps" as undeclared quantities —
+            # measuring the author's sentence structure at a 100% rate rather than the loop.
+            if "_" not in name:
+                continue
             out.append({
                 "pattern": "policy_reads_undeclared",
                 "claim": (f"The decision rule tests `{name}`, and `{name}` is declared nowhere "
@@ -934,9 +939,22 @@ def q_human_without_signal(d, nodes, edges):
 def q_no_escalation_path(d, nodes, edges):
     """A loop with a human party and no policy that escalates to them."""
     parties = [i for i, n in nodes.items() if n.get("kind") == "Party"]
+    humans = [i for i in parties
+              if (nodes[i].get("party_kind") or "human") not in ("agent", "system")]
     pols = [n for i, n in nodes.items() if n.get("kind") == "Policy"]
-    if not parties or not pols:
+    if not pols:
         return []
+    if not humans:
+        # Requiring a declared human before checking for escalation had it backwards: a loop
+        # that names NO person is the more alarming case, and the check skipped it silently.
+        return [{
+            "pattern": "no_human_at_all",
+            "claim": (f"The loop makes decisions — {len(pols)} rule(s) — and declares no "
+                      f"person anywhere. Nobody approves anything, nobody is escalated to, "
+                      f"and nobody is recorded as bearing the cost when it is wrong. Whatever "
+                      f"this loop does, it does unattended and unowned."),
+            "evidence": {"policies": len(pols), "people": parties},
+        }]
     if any(p.get("escalates") for p in pols):
         return []
     gated = any(n.get("requires_approval_from")

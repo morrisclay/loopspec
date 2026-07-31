@@ -1,0 +1,32 @@
+# OpenAI Agents SDK: agent_patterns/llm_as_a_judge.py
+# while True: generator -> evaluator; stop when the evaluator returns "pass".
+loop: openai_llm_as_a_judge
+runs: per_iteration
+goal:
+  outline_quality: { keep: "the evaluator returns pass" }
+beliefs:
+  outline_quality:
+    question: "Is this story outline good enough?"
+    from: [evaluator_feedback]
+    how: judgement
+    # no checked_by — nothing scores the evaluator. Its instructions say
+    # "Never give it a pass on the first try", which is a prompt-level hack,
+    # and "after 5 attempts you can give it a pass", which is a ceiling.
+observes:
+  evaluator_feedback:
+    informs: outline_quality
+    every: per_iteration
+    origin: ourselves        # the evaluator is part of this loop
+    how: reported
+    produced_by: evaluate
+actions:
+  generate_outline: { moves: outline_quality, can_undo: yes }
+  evaluate:         { moves: outline_quality, can_undo: yes }
+when:
+  - if: "the evaluator has not returned pass"
+    do: generate_outline
+people: {}
+never:
+  - "run past max_rounds in auto mode"
+not_modelling:
+  - whether anyone actually wants this story

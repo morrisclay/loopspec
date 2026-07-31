@@ -1,0 +1,35 @@
+# LangGraph tutorial: Reflexion. Graph: draft -> execute_tools -> revise.
+loop: langgraph_reflexion
+runs: per_iteration
+goal:
+  answer_quality: { keep: "the answer survives its own critique" }
+beliefs:
+  answer_quality:
+    question: "Is this answer right, and what is missing from it?"
+    from: [search_results, self_critique]
+    how: judgement
+    # no checked_by
+observes:
+  search_results:
+    informs: answer_quality
+    every: per_iteration
+    origin: outside          # execute_tools runs a real web search
+    how: measured
+  self_critique:
+    informs: answer_quality
+    every: per_iteration
+    origin: ourselves
+    how: reported
+    produced_by: draft
+actions:
+  draft:         { moves: answer_quality, can_undo: yes }
+  execute_tools: { moves: answer_quality, can_undo: yes }
+  revise:        { moves: answer_quality, can_undo: yes }
+when:
+  - if: "fewer than N iterations"
+    do: revise
+people: {}
+never:
+  - "exceed the iteration ceiling"
+not_modelling:
+  - whether the search results are trustworthy

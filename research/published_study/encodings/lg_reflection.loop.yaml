@@ -1,0 +1,30 @@
+# LangGraph tutorial: Reflection.  docs/docs/tutorials/reflection/reflection.ipynb
+# Graph: generate <-> reflect, conditional edge on message count.
+loop: langgraph_reflection
+runs: per_iteration
+goal:
+  essay_quality: { keep: "good enough to stop revising" }
+beliefs:
+  essay_quality:
+    question: "Is this essay any good?"
+    from: [critique]
+    how: judgement          # an LLM asked to critique the previous draft
+    # no checked_by — nothing scores whether the critic's past judgements were right
+observes:
+  critique:
+    informs: essay_quality
+    every: per_iteration
+    origin: ourselves       # produced by the reflect node
+    how: reported
+    produced_by: reflect
+actions:
+  generate: { moves: essay_quality, can_undo: yes }
+  reflect:  { moves: essay_quality, can_undo: yes }
+when:
+  - if: "fewer than N messages so far"
+    do: generate
+people: {}                  # the tutorial declares no human
+never:
+  - "exceed the message-count ceiling"   # a stop, not a correction
+not_modelling:
+  - whether the essay meets any external standard

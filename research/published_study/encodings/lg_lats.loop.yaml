@@ -1,0 +1,35 @@
+# LangGraph tutorial: LATS (Language Agent Tree Search).
+# Tree search with a reflection/scoring step choosing which node to expand.
+loop: langgraph_lats
+runs: per_expansion
+goal:
+  solution_found: { keep: "a node scores above the threshold or is marked solved" }
+beliefs:
+  candidate_score:
+    question: "How promising is this branch?"
+    from: [tool_results, reflection]
+    how: judgement          # a reflection LLM emitting a numeric score
+    explains: solution_found
+    # no checked_by — the scorer that steers the whole search is never scored
+observes:
+  tool_results:
+    informs: candidate_score
+    every: per_expansion
+    origin: outside
+    how: measured
+  reflection:
+    informs: candidate_score
+    every: per_expansion
+    origin: ourselves
+    how: reported
+    produced_by: expand
+actions:
+  expand: { moves: candidate_score, can_undo: yes }
+when:
+  - if: "no solved node and the depth ceiling is not reached"
+    do: expand
+people: {}
+never:
+  - "exceed the tree depth ceiling"
+not_modelling:
+  - the token cost of expanding the tree

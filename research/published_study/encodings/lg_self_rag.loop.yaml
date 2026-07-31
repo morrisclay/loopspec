@@ -1,0 +1,46 @@
+# LangGraph tutorial: Self-RAG.
+# Graph: retrieve -> grade_documents -> generate -> transform_query, with
+# retrieval_grader, hallucination_grader, answer_grader.
+loop: langgraph_self_rag
+runs: per_query
+goal:
+  answer_useful: { keep: "the answer addresses the question and is grounded" }
+beliefs:
+  document_relevance:
+    question: "Is this retrieved document relevant to the question?"
+    from: [retrieved_docs]
+    how: judgement           # retrieval_grader, an LLM
+  answer_grounded:
+    question: "Is the generation supported by the documents, or hallucinated?"
+    from: [generation]
+    how: judgement           # hallucination_grader
+    explains: answer_useful
+  answer_useful:
+    question: "Does the answer actually address the question?"
+    from: [generation]
+    how: judgement           # answer_grader
+  # none of the three graders has a checked_by
+observes:
+  retrieved_docs:
+    informs: document_relevance
+    every: per_query
+    origin: outside          # a vector store of real documents
+    how: measured
+  generation:
+    informs: answer_grounded
+    every: per_query
+    origin: ourselves
+    how: reported
+    produced_by: generate
+actions:
+  retrieve:        { moves: document_relevance, can_undo: yes }
+  generate:        { moves: answer_useful, can_undo: yes }
+  transform_query: { moves: document_relevance, can_undo: yes }
+when:
+  - if: "no relevant documents"
+    do: transform_query
+  - if: "generation is grounded and useful"
+    do: generate
+people: {}
+not_modelling:
+  - whether the corpus contains the answer at all

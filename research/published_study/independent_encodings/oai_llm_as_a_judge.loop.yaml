@@ -1,0 +1,93 @@
+loop: story_outline_judging
+runs: per_question
+
+goal:
+  outline_acceptance:
+    keep: evaluator score is pass
+    from:
+      - evaluator_score
+
+beliefs:
+  outline_is_good_enough:
+    question: Is the current story outline good enough for the user's request?
+    from:
+      - user_story_request
+      - generated_outline
+      - evaluator_feedback
+    how: LLM evaluation
+
+observes:
+  user_story_request:
+    informs:
+      - outline_is_good_enough
+    origin: outside
+    how: reported
+    reported_by: user
+
+  generated_outline:
+    informs:
+      - outline_is_good_enough
+    origin: ourselves
+    produced_by: generate_or_improve_outline
+
+  evaluator_score:
+    informs:
+      - outline_acceptance
+      - outline_is_good_enough
+    origin: ourselves
+    how: reported
+    reported_by: evaluator
+    produced_by: evaluate_outline
+
+  evaluator_feedback:
+    informs:
+      - outline_is_good_enough
+    origin: ourselves
+    how: reported
+    reported_by: evaluator
+    produced_by: evaluate_outline
+
+actions:
+  generate_or_improve_outline:
+    moves: outline_acceptance
+
+  evaluate_outline:
+    moves: outline_is_good_enough
+
+  append_evaluator_feedback: {}
+
+  accept_outline_and_exit: {}
+
+  stop_and_return_latest_outline: {}
+
+when:
+  - if: no evaluator result exists
+    do:
+      - generate_or_improve_outline
+      - evaluate_outline
+
+  - if: evaluator score is pass
+    do: accept_outline_and_exit
+
+  - if: auto mode is enabled and three non-pass rounds have completed
+    do: stop_and_return_latest_outline
+
+  - if: evaluator score is needs_improvement or fail
+    do:
+      - append_evaluator_feedback
+      - generate_or_improve_outline
+      - evaluate_outline
+
+people:
+  user:
+    human: true
+
+  story_outline_generator:
+    agent: true
+
+  evaluator:
+    agent: true
+
+never:
+  - The evaluator must never give the outline a pass on the first try.
+  - After five attempts, the evaluator must not require perfection when the outline is good enough.
