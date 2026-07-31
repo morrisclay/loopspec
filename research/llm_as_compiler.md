@@ -81,9 +81,48 @@ declined; it was silently lost.
 
 This is not an argument against LLM-as-compiler. It is an argument that compilation output
 must be checked against the spec rather than trusted — which is cheap, because the spec is
-machine-readable and the check is the one this study already ran. **A `--verify` mode that
-lints the compiled artifact back against the source spec is now the highest-priority tool**,
-and it did not exist before this study justified it.
+machine-readable and the check is the one this study already ran. **`tools/verify.py` now exists** and was built from this
+finding: it checks a compiled artifact back against its source spec, in any language, and
+ranks a lost approval gate above a lost act. Run across all 43 archived compilations it flags
+a CRITICAL in 5 of 21 (v0) and 3 of 22 (v1) — every one of the known drops, plus two
+non-answers the fidelity grader had excluded on length.
+
+## CORRECTION — the headline was measuring the wrong thing
+
+The fidelity numbers above are real and they do not mean what I said they meant.
+
+Fidelity asks *did every element of the spec survive*. It cannot ask *is this the target's
+actual API*, and the difference turns out to be most of the result. `gpt-5.6-sol` compiling to
+Flue produced 17k characters that carry every element of the spec perfectly — inside an
+invented `FlueWorkflow` interface it made up. `@flue/runtime` is never imported.
+`gemini-2.5-pro`'s "Goose recipe" uses `metrics:` and `guardrails:`, which is not Goose's
+format; it is my spec transliterated into plausible YAML. Both score near 1.00.
+
+`research/compile_study/target_knowledge.py` asks the other question:
+
+| target | uses the real API |
+|---|---|
+| LangGraph | **86%** (12/14) |
+| Goose | 38% (6/16) |
+| Flue | **18%** (2/11) |
+
+**That is a ranking of how well these models know the target, not of how legible the format
+is.** LangGraph is everywhere in training data; Flue is a beta nobody has seen.
+
+### The experiment that separates them
+
+If the format were the bottleneck, supplying the target's API would not help much. So: same
+spec, same eight models, Flue again, with **one page** of Flue API appended
+(`flue_api.md`, ~40 lines).
+
+> **Flue, without the API: 18%. Flue, with it: 100%** — 6 of 6 scored, including
+> `qwen3-8b` and `llama-3.1-8b`.
+
+The format is not the bottleneck. **Target knowledge is, and one page of API reference closes
+it completely.** This strengthens the original claim while correcting its evidence: any LLM
+can act as the compiler, for any target, *provided the target's API travels with the spec*.
+For LangGraph that is already in the weights. For anything newer than the model, it is a
+required input — and cheap.
 
 ## Limits, stated
 
