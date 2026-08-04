@@ -1,0 +1,56 @@
+---
+interface Props {
+	chart: string;
+	caption?: string;
+	label?: string;
+}
+
+const { chart, caption, label = 'LoopSpec loop diagram' } = Astro.props;
+---
+
+<figure class="loopspec-mermaid-shell is-loading">
+	<p class="loopspec-diagram-state" aria-live="polite">Rendering diagram…</p>
+	<pre class="mermaid" aria-label={label}>{chart}</pre>
+	{caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<script>
+	import mermaid from 'mermaid';
+
+	mermaid.initialize({
+		startOnLoad: false,
+		securityLevel: 'strict',
+		theme: 'base',
+		flowchart: { curve: 'basis', htmlLabels: true },
+		themeVariables: {
+			background: '#151a16',
+			primaryColor: '#263b30',
+			primaryTextColor: '#f1f1e9',
+			primaryBorderColor: '#6f947c',
+			lineColor: '#8ba094',
+			secondaryColor: '#2d332f',
+			tertiaryColor: '#202521',
+			fontFamily: 'Geist Variable, system-ui, sans-serif',
+		},
+	});
+
+	async function renderDiagrams() {
+		const nodes = [...document.querySelectorAll<HTMLElement>('.mermaid:not([data-processed="true"])')];
+		for (const node of nodes) {
+			const shell = node.closest<HTMLElement>('.loopspec-mermaid-shell');
+			try {
+				await mermaid.run({ nodes: [node] });
+				shell?.classList.remove('is-loading');
+				shell?.querySelector('.loopspec-diagram-state')?.remove();
+			} catch {
+				shell?.classList.remove('is-loading');
+				shell?.classList.add('has-error');
+				const state = shell?.querySelector('.loopspec-diagram-state');
+				if (state) state.textContent = 'The diagram could not be rendered. Its source remains below.';
+			}
+		}
+	}
+
+	renderDiagrams();
+	document.addEventListener('astro:page-load', renderDiagrams);
+</script>

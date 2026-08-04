@@ -1,246 +1,125 @@
-# The Ruleset — lint checks grounded in cybernetics, not in my taste
+# Ruleset contract
 
-Every check currently in `tools/derive.py` was invented from the corpus. None was derived from
-the literature. That is the Phase 1 discipline the original charter demanded — *survey adjacent
-work, identify what is missing* — skipped for the linter.
+The linter reports only what can be derived from the encoded structure. Its source of truth is
+[`docs/checks.yaml`](docs/checks.yaml); [`docs/CHECKS.md`](docs/CHECKS.md) and
+[`docs/base_rates.json`](docs/base_rates.json) are generated from that metadata and a live
+corpus run.
 
-This document fixes it. Where a check follows from a **theorem**, it is a necessary condition
-rather than a style opinion, and can be stated as such to a user.
+## Two independent axes
 
----
+Every check has two labels that answer different questions.
 
-## Tier 1 — checks that follow from theorems
+**Assurance** describes what one finding establishes:
 
-These are not preferences. A loop violating them is provably not a good regulator.
+- `structural` — follows directly from declared fields, nodes, and edges;
+- `qualitative-proxy` — a screening pattern that requires domain analysis;
+- `quantitative` — follows from explicit numeric dynamics and assumptions;
+- `empirical` — supported by observed outcomes over a stated cohort and window.
 
-### 1. Good Regulator — `regulator_without_model`
+**Evidence** describes how the check's prevalence or usefulness has been evaluated:
 
-> **Conant & Ashby, 1970:** *every good regulator of a system must be a model of that system.*
+- `robust` — survived an independent encoding exercise;
+- `corpus` — measured on the repository corpus;
+- `motivated` — justified by real instances but not validated at rate;
+- `legacy` — retained for historical hand-authored graph encodings.
 
-A loop with a `Policy` and a `DesiredCondition` but **no model of what it regulates** — no
-`Explanation`, no `Estimator` over the targeted estimand — is not a good regulator in the
-theorem's sense. It is a reflex.
+A check can be empirically common and still have only structural assurance. Frequency does not
+turn a graph pattern into a theorem.
 
-This is the strongest check available because it is a proved necessary condition, and because
-most agent loops fail it: they have prompts and tools and no model of the thing they are
-supposed to be controlling.
+## Active theoretical boundary
 
-**Status: not implemented.** Highest priority.
+The following distinctions are deliberate:
 
-### 2. Requisite Variety — `insufficient_variety`
-
-> **Ashby, 1956:** *only variety can destroy variety.* A regulator can absorb disturbance only
-> if its variety is at least as great as the disturbance's.
-
-Count distinguishable `Intervention`s against distinguishable disturbance modes. Two levers
-against ten failure modes cannot regulate, and no amount of prompt quality fixes it.
-
-**Blocked by a missing primitive.** `Disturbance` was in the charter's original candidate list,
-was dropped in the seed derivation because no seed demanded it, and Ashby's Law needs it. Same
-pattern that dropped `Calibration` and then had to restore it: *encoders cannot demand what
-they have never been offered.*
-
-**Status: not implemented; requires `Disturbance`.**
-
-### 3. Observability — `unmeasured_estimand` ✅
-
-> **Kalman:** a state is observable if it can be inferred from outputs.
-
-Every estimand must be reachable from some signal. Already implemented, and now it has a name
-and a theory rather than being a hunch.
-
-### 4. Controllability — `uncontrollable_target`
-
-> **Kalman:** a state is controllable if it can be driven to a target from any starting state.
-
-For every `DesiredCondition`, is there an `Intervention` with a path to the estimand it
-targets? A target nothing can move is a wish.
-
-**Status: not implemented.** This is fundamental and its absence is embarrassing — the
-Customer Acquisition spec targets `CAC < 400` and the check for whether either intervention can
-actually move CAC was never run.
-
-### 5. Loop polarity — `reinforcing_loop_without_balancer`
-
-> **System dynamics (Forrester, Sterman):** a loop with an even number of negative links is
-> *reinforcing* — runaway. Odd is *balancing* — self-correcting.
-
-Compute polarity over the loop's edges. A reinforcing agent loop with no balancing path will
-diverge.
-
-**This formalises the Ralph finding.** I described Ralph as "epistemically closed, grounded only
-through tests" from intuition. Polarity says it precisely: the agent→files→agent path carries
-no negative link, so it is reinforcing. Tests are the sole negative link, and therefore the only
-thing making the loop balancing. Remove them and it provably runs away.
-
-**Status: not implemented.** Second priority — it is computable from edges already present.
-
-### 6. Delay with gain — `delay_without_damping`
-
-> **Nyquist:** high loop gain combined with delay produces oscillation.
-
-A loop containing a `Delay` and no declared deadband, damping or rate limit will thrash.
-
-The thermostat's deadband is exactly this, and so is the venture loop's gap between an 18-month
-target and a 12-month trigger. Both were noticed informally; neither was checked.
-
-**Status: not implemented.**
-
----
-
-## Tier 2 — structural checks, defensible but not theorems
-
-Currently implemented, and honestly labelled as conventions rather than laws:
-
-| check | what it catches | status |
+| Check | Assurance | Boundary |
 |---|---|---|
-| `uncalibrated_estimator` | nothing scores the estimator's past predictions | ✅ — 3 independent hits |
-| `estimand_never_estimated` | declared as tracked, nothing tracks it | ✅ |
-| `orphan_signal` | collected without saying what it tells you | ✅ |
-| `no_loop_closed` | parts declared, nothing closes | ✅ |
-| `interventions_without_policy` | levers with no selection rule | ✅ |
-| `policy_on_unmeasured_inputs` | decision rule reads what nothing measures | ✅ |
-| `invariant_on_unmeasured` | invariant nothing can check | ✅ |
-| `hinge_without_sensor` | existential bet nothing observes | ✅ |
+| `no_explicit_process_model` | structural | says no `explains` relation is encoded; does not test the Good Regulator theorem |
+| `unmeasured_estimand` | structural | says no signal informs a quantity; does not test Kalman observability |
+| `target_without_actuator` | structural | says no action declares it moves a target; does not test Kalman controllability |
+| `endogenous_feedback_without_crosscheck` | structural | says feedback lacks an independent observation; does not infer causal polarity or stability |
+| `process_path_not_declared` | structural | says no action→process→observation path is represented; does not establish actual causation, gain, or dynamics |
+| `effect_direction_unspecified` | structural | says a sign is neither declared nor explicitly unknown; a declared sign is still not loop polarity |
+| `cascade_cadence_inversion` | qualitative-proxy | compares update cadences; does not know bandwidth or settling time |
 
-`uncalibrated_estimator` is arguably Tier 1 by a different route — an estimator that is never
-scored cannot be shown to be a model of anything, so it is Good Regulator adjacent. Left in
-Tier 2 until that argument is made properly.
+The old `insufficient_variety` check is withdrawn. Counting `not_modelling` entries against
+actions confused model exclusions with disturbances and headcounts with Ashby's state variety.
 
----
+## Structural families
 
-## Tier 3 — surveyed and deliberately not adopted
+The active rules cover five practical families.
 
-- **Beer's VSM five systems.** Which of S1–S5 does the loop have? Most agent loops are S1 plus
-  a bit of S3, with no S4 environmental scanning. Genuinely diagnostic, but requires imposing a
-  five-level decomposition on things that may have one level, and the org-modelling failure was
-  exactly that kind of imposition.
-- **Requisite hierarchy.** Regulation capacity bounded by information capacity. True and hard to
-  operationalise without a variety measure.
-- **Petri net properties** — liveness, boundedness, deadlock-freedom. Machine-checkable and
-  well-studied, but they check the *control flow*, which is the thing frameworks already do.
-- **Perceptual Control Theory** (Powers) — control the perception, not the output. Directly
-  relevant to agents, since an agent controlling its *report* of success rather than success is
-  a real failure mode. No obvious lint yet; worth returning to.
+### Closure
 
----
+- target without actuator;
+- quantity without observation;
+- observation and action present but not joined by one loop;
+- action and observation present but not joined through a controlled process;
+- target present but no ordered rule explicitly uses it as a reference;
+- multiple actions with no selection rule;
+- policy inputs that are undeclared or unobserved.
 
-## What this changes
+### Epistemics
 
-**Five new checks, three of them from proved results**, versus eight invented ones. The pitch
-changes with it: not *"here are some things I noticed"* but *"your loop violates the Good
-Regulator theorem, and here is the line."*
+- belief never scored against outcomes;
+- explicit process model absent;
+- observation with no declared use;
+- entirely endogenous or singly grounded observation channels;
+- costly observation source with no review loop;
+- named calibration or attention review without the fields needed to close its structural contract.
 
-It also exposes a missing primitive — `Disturbance` — via exactly the mechanism that caught
-`Calibration`. The fork's core is 18 with the budget full; adding it means demoting something,
-which is what the budget is for.
+### Framing and effect
 
-**Priority order:** loop polarity first (computable from existing edges, and it formalises the
-best finding so far), then Good Regulator (strongest claim), then controllability (fundamental
-and cheap), then `Disturbance` and requisite variety.
+- observer, purpose, or system/environment boundary absent;
+- intended action effect has neither a declared direction nor explicit `unknown`;
+- exclusions remain boundary notes and are never promoted to disturbances by inference.
 
----
+### Governance
 
-## Tier 1b — human-in-the-loop, specifiable as you go
+- irreversible/costly action without approval;
+- consequence bearer without authority or information;
+- no human or escalation path;
+- escalation conditions with no named recipient;
+- shared action or shared estimate with no arbiter.
 
-Added because "human in the loop" is claimed far more often than it is wired, and because
-nothing in any agent framework represents the question every deployment actually turns on:
-**what may this thing do without approval, and irreversibly?**
+### Resources
 
-Three attributes, no new primitives, no budget cost:
+- no declared budget;
+- consumed resource with no limit or replenishment;
+- a ceiling that no decision rule reads.
 
-```yaml
-- {id: partner, kind: Party, party_kind: human}
+### Hierarchy
 
-- {id: propose_stage_move, kind: Intervention,
-   reversibility: reversible,
-   requires_approval_from: partner}      # the gate, stated structurally
+- setpoint assigned to an outer loop that cannot move the referenced quantity;
+- inner cadence no faster than outer cadence, reported only as a proxy.
 
-- {id: readiness_policy, kind: Policy,
-   escalates: partner}                   # where the loop stops and asks
-```
+The exact query, felt symptom, repair, prevalence, assurance, and evidence for each check are in
+the generated checks reference.
 
-`reversibility: reversible | costly | irreversible` is the load-bearing one. Approval is cheap
-to demand everywhere and nobody does it; approval demanded *where the act cannot be undone* is
-a rule people will actually follow.
+## Admission rule for a new check
 
-### The three checks
+A diagnostic may join the active ruleset only when all of the following are true:
 
-| check | felt symptom |
-|---|---|
-| `irreversible_without_approval` | *"my agent did something I can't undo"* |
-| `accountable_but_blind` | *"I'm accountable for it and I find out afterwards"* |
-| `no_escalation_path` | *"it never asks me anything"* |
+1. The source language or IR can represent every premise it inspects.
+2. The query combines at least two independent declarations; it is not typed paraphrase.
+3. A counterexample test shows when the query must remain silent.
+4. Its message states the strongest justified conclusion and an explicit non-claim where a
+   reader could confuse it with a theorem.
+5. It has an assurance level and actionable repair in `docs/checks.yaml`.
+6. The generated checks reference and base rates remain synchronized.
+7. Product examples complete expansion, semantic validation, and analysis without hidden
+   query failure.
 
-**`accountable_but_blind` is the sharp one.** A party that bears a consequence and holds no
-estimate has the cost of being wrong and nothing with which to be right. That is human
-oversight as compliance theatre, and it is structurally detectable — a `bears` edge with no
-`holds` edge.
+## Withheld analyses
 
-### It already found something
+LoopSpec does not currently report these because their premises are absent:
 
-Run against the Deal Steward, which is unusually careful about human authority — it *proposes*
-stage moves and never writes Attio, with ADR-0021/0022 governing ungameability:
+- Kalman observability or controllability;
+- Nyquist, Lyapunov, or other stability results;
+- signed system-dynamics loop polarity;
+- quantitative requisite variety;
+- probabilistic calibration quality;
+- claims about observer reflexivity or revision of distinctions beyond the declared observer,
+  purpose, and boundary.
 
-> `enrich_attio` is marked **costly** and declares no `requires_approval_from`.
-
-The spec is scrupulous about the stage field and says nothing about the enrichment path, which
-also writes to Attio. Whether that matters is the author's call — but the asymmetry was
-invisible until the two acts were given the same attribute and compared.
-
-Ralph, being fully autonomous, trips `no_escalation_path`: one party, one policy, no approval
-gate, no escalation. *It either succeeds or fails silently* — which is exactly what Ralph is,
-stated structurally rather than as folklore.
-
----
-
-## Tier 1c — resources, and the question the field does not ask
-
-Harness engineering — budgets, step ceilings, stall detection, quotas — is standard practice
-by 2026 and this linter was silent on all of it. `Resource` sat in the catalog with no check
-using it. That was a real gap, named by the conference material rather than found here.
-
-Three checks, and only the second is a contribution rather than a catch-up.
-
-### `unbounded_loop` — the field's question
-
-The loop declares nothing it can run out of. It runs until something outside reaches in and
-halts it. O'Reilly's piece names this in prose: *"a loop without its signal doesn't converge.
-It just runs until something external stops it."*
-
-### `ceiling_without_correction` — the question after it
-
-> **A ceiling is a stop, not a correction.**
-
-A loop that runs at full rate into a wall and halts has not regulated anything; it has been
-truncated. Ashby's point about variety is exactly this — **a stop absorbs no disturbance.**
-The halt is indistinguishable from failure and arrives without warning.
-
-Regulating means noticing you are running low and doing something *different*: searching
-narrower, sampling less, escalating, stopping early and saying why. Almost nothing does this.
-
-**Known limit, stated because it matters:** the check clears as soon as any rule reads the
-resource, and does not distinguish *reading-to-halt* from *reading-to-adapt*. LangGraph's
-reflection example reads its own message count and stops — which clears the check and is still
-a stop. Separating them needs the format to express "stop" as an action. A clear result means
-*something watches the budget*, which is necessary and not sufficient.
-
-### `spends_without_limit` — the slow one
-
-Consumed, no ceiling, nothing replenishes. It only ever goes down and the encoding does not say
-how far down it can go. Exhaustion is certain; only the date is unstated.
-
-### Measured
-
-| corpus | n | result |
-|---|---|---|
-| published agent loops | 10 | `ceiling_without_correction` 5, `unbounded_loop` 4, clean 1 |
-| eval harnesses | 4 | `unbounded_loop` **4/4** |
-| field loops | 4 | `unbounded_loop` 3, `spends_without_limit` 1 |
-
-**Half the published loops have a ceiling that nothing reads.** Four have no ceiling at all,
-including `lats` — an unbounded *tree search*. Every eval harness examined is unbounded.
-
-One nuance worth keeping: four of the LangGraph examples are bounded only by
-`recursion_limit`, LangGraph's **default of 25**. That is a platform backstop, not a choice the
-example made — an undeclared budget is still a budget, just one nobody chose.
+Adding the names without their mathematical objects would make the tool sound stronger and
+be less useful. Each becomes eligible when the IR can state the necessary inputs and an
+independent fixture can verify the analysis.

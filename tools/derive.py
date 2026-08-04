@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Derive claims from a canonical URAS encoding by QUERY, not by assertion.
+Derive claims from a canonical LoopSpec encoding by QUERY, not by assertion.
 
     python3 tools/derive.py benchmarks/encodings/canonical/*.yaml
 
@@ -28,9 +28,28 @@ try:
 except ImportError:
     sys.exit("needs pyyaml: pip install pyyaml")
 
+try:
+    from .runtime_paths import ROOT
+except ImportError:
+    from runtime_paths import ROOT
+
+
+ASSURANCE_LEVELS = {"structural", "qualitative-proxy", "quantitative", "empirical"}
+_CHECK_METADATA = None
+
+
+def check_metadata():
+    global _CHECK_METADATA
+    if _CHECK_METADATA is None:
+        path = os.path.join(ROOT, "docs", "checks.yaml")
+        with open(path) as source:
+            _CHECK_METADATA = yaml.safe_load(source) or {}
+    return _CHECK_METADATA
+
 
 def load(path):
-    d = yaml.safe_load(open(path))
+    with open(path) as source:
+        d = yaml.safe_load(source)
     nodes = {n["id"]: n for n in (d.get("nodes") or [])}
     edges = d.get("edges") or []
     return d, nodes, edges
@@ -44,12 +63,24 @@ def kind(nodes, k):
     return [i for i, n in nodes.items() if n.get("kind") == k]
 
 
+def loop_signals(loop):
+    """Read current plural membership and legacy singular membership."""
+    return list(loop.get("signals") or ([loop["signal"]] if loop.get("signal") else []))
+
+
+def loop_interventions(loop):
+    """Read current plural membership and legacy singular membership."""
+    return list(loop.get("interventions") or
+                ([loop["intervention"]] if loop.get("intervention") else []))
+
+
 
 # ---------------------------------------------------------------------------------------
 # PRESENTING FINDINGS.
 #
 # A flat list ranked by nothing was the output for most of this project's life, and measuring
-# it was uncomfortable: `regulator_without_model` fires on 21 of 21 specs. That is ZERO BITS.
+# it was uncomfortable: the old `regulator_without_model` check fired on 21 of 21 specs. That
+# is ZERO BITS, and its theorem-level wording exceeded what the graph represented.
 # It says nothing whatever about YOUR loop, and it was printed first, every time, in the same
 # typeface as a finding that fires on one spec in twenty.
 #
@@ -67,9 +98,9 @@ def base_rates():
     global _RATES
     if _RATES is None:
         try:
-            p = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                             "docs", "base_rates.json")
-            d = json.load(open(p))
+            p = os.path.join(ROOT, "docs", "base_rates.json")
+            with open(p) as source:
+                d = json.load(source)
             _RATES = {k: v / d["n"] for k, v in d["fires"].items()}
         except Exception:
             _RATES = {}
@@ -192,12 +223,12 @@ def q_measurement_authority_inversion(d, nodes, edges):
         owners = [p for p, n in nodes.items()
                   if n.get("kind") == "Estimate" and n.get("held_by")
                   and est and _measures_for(nodes, edges, n.get("held_by"), est)]
-        for owner in set(filter(None, (nodes[e].get("held_by") for e in nodes
-                                       if nodes[e].get("kind") == "Estimate"))):
+        for owner in sorted(set(filter(None, (nodes[e].get("held_by") for e in nodes
+                                              if nodes[e].get("kind") == "Estimate")))):
             pass
         holders = [nodes[e]["held_by"] for e in nodes
                    if nodes[e].get("kind") == "Estimate" and nodes[e].get("held_by")]
-        for h in set(holders):
+        for h in sorted(set(holders)):
             acts = authorises.get(h, [])
             if not acts:
                 continue
@@ -245,44 +276,39 @@ def q_shared_intervention_across_timescales(d, nodes, edges):
     out = []
     for i, l1 in enumerate(loops):
         for l2 in loops[i + 1:]:
-            iv1, iv2 = l1.get("intervention"), l2.get("intervention")
             t1, t2 = l1.get("timescale"), l2.get("timescale")
-            if iv1 == iv2 or t1 == t2:
+            if t1 == t2:
                 continue
-            # do they act on the same downstream object?
-            tgt1 = consumes.get(iv1) or revises.get(iv1) or closes.get(iv1)
-            tgt2 = consumes.get(iv2) or revises.get(iv2) or closes.get(iv2)
-            shared = None
-            if tgt1 and tgt1 == tgt2:
-                shared = tgt1
-            # or: one revises the policy that closes the other
-            p1 = closes.get(iv1)
-            if revises.get(iv2) and p1 and revises.get(iv2) == p1:
-                shared = p1
-            # Adjudication rejected treating `closes` and `revises` as the same kind of
-            # contact with a shared object: they are unlike roles, and a missing authorizer
-            # does not establish an unowned tradeoff. Require the SAME relation type.
-            if not shared:
-                continue
-            same_rel = ((iv1 in consumes and iv2 in consumes) or
-                        (iv1 in revises and iv2 in revises))
-            if not same_rel:
-                continue
-            owners1 = [a for a, b in rel(edges, "authorizes") if b == iv1]
-            owners2 = [a for a, b in rel(edges, "authorizes") if b == iv2]
-            if set(owners1) & set(owners2):
-                continue
-            out.append({
-                "pattern": "unowned_cross_timescale_coupling",
-                "claim": (f"Loop `{l1['id']}` ({nodes.get(t1,{}).get('period')}) and loop "
-                          f"`{l2['id']}` ({nodes.get(t2,{}).get('period')}) both act on "
-                          f"`{shared}`, and their interventions are authorised by disjoint "
-                          f"parties ({owners1 or 'none'} vs {owners2 or 'none'}). No party "
-                          f"holds authority over both, so the tradeoff between them is not "
-                          f"anyone's decision."),
-                "evidence": {"loops": [l1["id"], l2["id"]], "shared_object": shared,
-                             "authorities": [owners1, owners2]},
-            })
+            for iv1 in loop_interventions(l1):
+                for iv2 in loop_interventions(l2):
+                    if iv1 == iv2:
+                        continue
+                    # do they act on the same downstream object?
+                    tgt1 = consumes.get(iv1) or revises.get(iv1) or closes.get(iv1)
+                    tgt2 = consumes.get(iv2) or revises.get(iv2) or closes.get(iv2)
+                    shared = tgt1 if tgt1 and tgt1 == tgt2 else None
+                    # Adjudication rejected treating unlike relation types as equivalent
+                    # contact. Both actions must consume or both must revise the same object.
+                    same_rel = ((iv1 in consumes and iv2 in consumes) or
+                                (iv1 in revises and iv2 in revises))
+                    if not shared or not same_rel:
+                        continue
+                    owners1 = [a for a, b in rel(edges, "authorizes") if b == iv1]
+                    owners2 = [a for a, b in rel(edges, "authorizes") if b == iv2]
+                    if set(owners1) & set(owners2):
+                        continue
+                    out.append({
+                        "pattern": "unowned_cross_timescale_coupling",
+                        "claim": (f"Loop `{l1['id']}` ({nodes.get(t1,{}).get('period')}) and "
+                                  f"loop `{l2['id']}` ({nodes.get(t2,{}).get('period')}) both "
+                                  f"act on `{shared}`, and their actions `{iv1}` and `{iv2}` "
+                                  f"are authorised by disjoint people ({owners1 or 'none'} vs "
+                                  f"{owners2 or 'none'}). No encoded authority spans both."),
+                        "evidence": {"loops": [l1["id"], l2["id"]],
+                                     "interventions": [iv1, iv2],
+                                     "shared_object": shared,
+                                     "authorities": [owners1, owners2]},
+                    })
     return out
 
 
@@ -335,7 +361,7 @@ def q_delay_without_feedback_owner(d, nodes, edges):
     for a, b in rel(edges, "authorizes"):
         auth.setdefault(b, []).append(a)
     out = []
-    for iv in delays:
+    for iv in sorted(delays):
         owners = auth.get(iv, [])
         for p in kind(nodes, "Party"):
             if p in owners:
@@ -487,7 +513,9 @@ def q_policy_on_unmeasured_inputs(d, nodes, edges):
     for i, n in nodes.items():
         if n.get("kind") != "Policy":
             continue
-        inputs = n.get("based_on") or []
+        # `based_on` is retained for pre-v2 hand-written graphs. Mechanical v2 expansion
+        # emits `inputs` plus Policy→reads edges.
+        inputs = n.get("inputs") or n.get("based_on") or []
         blind = [x for x in inputs
                  if nodes.get(x, {}).get("kind") == "Estimand" and x not in measured]
         if blind and len(blind) < len(inputs):
@@ -559,6 +587,11 @@ def q_orphan_signal(d, nodes, edges):
     return out
 
 
+def _ir_major(document):
+    """Read the canonical LoopSpec marker or its LoopSpec-era compatibility spelling."""
+    return document.get("loopspec_version", document.get("uras_version"))
+
+
 def q_no_loop_closed(d, nodes, edges):
     """Interventions and signals exist but no loop is declared."""
     loops = d.get("loops") or []
@@ -574,6 +607,193 @@ def q_no_loop_closed(d, nodes, edges):
                   f"loop."),
         "evidence": {"signals": sigs, "interventions": ivs},
     }]
+
+
+def q_incomplete_loop(d, nodes, edges):
+    """A declared loop record missing one or more roles needed for structural control."""
+    out = []
+    for loop in d.get("loops") or []:
+        missing = []
+        if not loop.get("timescale"):
+            missing.append("cadence")
+        if not loop_signals(loop):
+            missing.append("observation")
+        if not loop_interventions(loop):
+            missing.append("action")
+        if _ir_major(d) == 2:
+            if not loop.get("estimands"):
+                missing.append("controlled quantity")
+            if not loop.get("policies"):
+                missing.append("decision rule")
+        if not missing:
+            continue
+        out.append({
+            "pattern": "incomplete_loop",
+            "claim": (f"Loop `{loop.get('id')}` is a valid partial design but lacks "
+                      f"{', '.join(missing)}. The linter can inspect the parts that exist; the "
+                      f"spec does not yet describe a structurally closed controller."),
+            "evidence": {"loop": loop.get("id"), "missing_roles": missing},
+        })
+    return out
+
+
+def q_boundary_not_declared(d, nodes, edges):
+    """Generated loop whose observer-relative system/environment distinction is absent."""
+    if not str(d.get("source_format", "")).startswith("loop-v") or _ir_major(d) != 2:
+        return []
+    out = []
+    for loop in d.get("loops") or []:
+        if loop.get("boundary"):
+            continue
+        out.append({
+            "pattern": "boundary_not_declared",
+            "claim": (f"Loop `{loop.get('id')}` declares no boundary, observer, or purpose. "
+                      f"Terms such as outside, self-produced, and disturbance are therefore "
+                      f"relative to an unstated modelling choice. Add `boundary:` with "
+                      f"`drawn_by`, `purpose`, `inside`, and `outside`."),
+            "evidence": {"loop": loop.get("id"), "boundary": None},
+        })
+    return out
+
+
+def q_incomplete_boundary(d, nodes, edges):
+    """A boundary declaration that does not state both sides of the distinction."""
+    out = []
+    for loop in d.get("loops") or []:
+        boundary_id = loop.get("boundary")
+        if not boundary_id:
+            continue
+        boundary = nodes.get(boundary_id, {})
+        missing = [field for field in ("inside", "outside") if not boundary.get(field)]
+        if not missing:
+            continue
+        out.append({
+            "pattern": "incomplete_boundary",
+            "claim": (f"Boundary `{boundary_id}` names an observer and purpose but leaves "
+                      f"{', '.join(missing)} empty. A boundary needs both sides of the "
+                      f"distinction before `outside` or `self-produced` has a checkable "
+                      f"meaning."),
+            "evidence": {"loop": loop.get("id"), "boundary": boundary_id,
+                         "missing_fields": missing},
+        })
+    return out
+
+
+def q_process_location_unspecified(d, nodes, edges):
+    """A controlled process not located relative to the declared boundary."""
+    out = []
+    for process, node in nodes.items():
+        if node.get("kind") != "System" or node.get("role") != "controlled_process":
+            continue
+        if node.get("location"):
+            continue
+        out.append({
+            "pattern": "process_location_unspecified",
+            "claim": (f"Controlled process `{process}` is part of the represented feedback "
+                      f"path but is not located `inside`, `outside`, or at the `interface` of "
+                      f"the declared boundary. Add `location:` so provenance is relative to "
+                      f"the same system distinction."),
+            "evidence": {"process": process, "location": None},
+        })
+    return out
+
+
+def q_process_path_not_declared(d, nodes, edges):
+    """An action and observation exist without an explicit world/process path joining them."""
+    if not str(d.get("source_format", "")).startswith("loop-v") or _ir_major(d) != 2:
+        return []
+    causes = {}
+    for action, process in rel(edges, "causes"):
+        if (nodes.get(action, {}).get("kind") == "Intervention" and
+                nodes.get(process, {}).get("role") == "controlled_process"):
+            causes.setdefault(action, set()).add(process)
+    emits = {}
+    for process, signal in rel(edges, "produces"):
+        if nodes.get(process, {}).get("role") == "controlled_process":
+            emits.setdefault(process, set()).add(signal)
+    measures = {}
+    for signal, quantity in rel(edges, "measures"):
+        measures.setdefault(quantity, set()).add(signal)
+
+    out = []
+    for loop in d.get("loops") or []:
+        loop_signals_set = set(loop_signals(loop))
+        for action in loop_interventions(loop):
+            for quantity in sorted(target for source, target in rel(edges, "targets")
+                                   if source == action):
+                sensed = measures.get(quantity, set()) & loop_signals_set
+                if not sensed:
+                    continue  # `unmeasured_estimand` names the earlier break in the ring.
+                paths = [
+                    {"process": process, "signal": signal}
+                    for process in sorted(causes.get(action, set()))
+                    for signal in sorted(emits.get(process, set()) & sensed)
+                ]
+                if paths:
+                    continue
+                out.append({
+                    "pattern": "process_path_not_declared",
+                    "claim": (f"Action `{action}` is intended to move `{quantity}`, and the "
+                              f"loop observes it through {sorted(sensed)}, but no declared "
+                              f"process joins the action to any of those observations. The "
+                              f"controller parts are present while the world leg of the "
+                              f"feedback ring is implicit. Add `processes:` and the action's "
+                              f"`through:`. This establishes a path, not its gain or dynamics."),
+                    "evidence": {"loop": loop.get("id"), "action": action,
+                                 "quantity": quantity, "signals": sorted(sensed),
+                                 "represented_paths": []},
+                })
+    return out
+
+
+def q_effect_direction_unspecified(d, nodes, edges):
+    """An intended effect with neither a declared sign nor explicit unknown sign."""
+    if not str(d.get("source_format", "")).startswith("loop-v") or _ir_major(d) != 2:
+        return []
+    out = []
+    for action, node in nodes.items():
+        if node.get("kind") != "Intervention" or not node.get("target"):
+            continue
+        if node.get("effect_direction") or node.get("effect_directions"):
+            continue
+        out.append({
+            "pattern": "effect_direction_unspecified",
+            "claim": (f"Action `{action}` is intended to move {node.get('target')}, but the "
+                      f"direction is omitted. Write `effect: increase`, `decrease`, or "
+                      f"`unknown`; explicit uncertainty prevents a diagram or later analyzer "
+                      f"from inventing a sign."),
+            "evidence": {"action": action, "target": node.get("target"),
+                         "effect_direction": None},
+        })
+    return out
+
+
+def q_reference_not_used(d, nodes, edges):
+    """A desired condition that no ordered decision rule explicitly compares against."""
+    if not str(d.get("source_format", "")).startswith("loop-v"):
+        return []
+    uses = {}
+    for policy, desired in rel(edges, "uses_reference"):
+        uses.setdefault(desired, set()).add(policy)
+    out = []
+    for loop in d.get("loops") or []:
+        policies = set(loop.get("policies") or [])
+        for desired in loop.get("desired_conditions") or []:
+            matching = sorted(uses.get(desired, set()) & policies)
+            if matching:
+                continue
+            quantities = sorted(target for source, target in rel(edges, "targets")
+                                if source == desired)
+            out.append({
+                "pattern": "reference_not_used",
+                "claim": (f"Desired condition `{desired}` targets {quantities}, but no ordered "
+                          f"decision rule declares `against:` for it. The target and current "
+                          f"value coexist in the graph without a represented comparison, so "
+                          f"the control diagram must not invent an error signal."),
+                "evidence": {"loop": loop.get("id"), "desired_condition": desired,
+                             "quantities": quantities, "policies_using_reference": []},
+            })
+    return out
 
 
 def q_interventions_without_policy(d, nodes, edges):
@@ -595,93 +815,95 @@ def edges_from(edges, node):
     return [(e.get("from"), e.get("to")) for e in edges if e.get("from") == node]
 
 
-def q_loop_polarity(d, nodes, edges):
-    """
-    Reinforcing loop with no balancing path.
+def endogenous_signals(nodes, edges):
+    """Signals authored by the controller, excluding observations emitted by the world path."""
+    explicit = {i for i, node in nodes.items()
+                if node.get("kind") == "Signal" and node.get("origin") == "ourselves"}
+    internal_producers = {
+        i for i, node in nodes.items()
+        if node.get("kind") == "Intervention"
+        or (node.get("kind") == "System" and node.get("role") == "controller")
+    }
+    return explicit | {signal for producer, signal in rel(edges, "produces")
+                       if producer in internal_producers}
 
-    System dynamics: a loop with an EVEN number of negative links is reinforcing (runaway);
-    odd is balancing (self-correcting). An agent loop whose signal is produced by its own
-    intervention, with no corrective link, is reinforcing by construction.
 
-    This formalises the Ralph finding. The agent -> files -> agent path carries no negative
-    link, so it is reinforcing. Tests are the only negative link — the only thing making the
-    loop balancing. Remove them and it provably diverges.
+def q_endogenous_feedback_without_crosscheck(d, nodes, edges):
     """
-    produced = {b for _, b in rel(edges, "produces")}
+    Endogenous observation with no independent observation of the same quantity.
+
+    The graph has provenance and can record an action's intended effect direction, but it has
+    no signed full-cycle influence graph, transfer functions, or gain. It can therefore
+    establish epistemic self-reference, not system-dynamics polarity or stability.
+    """
+    produced = endogenous_signals(nodes, edges)
     measured_by = {}
     for a, b in rel(edges, "measures"):
         measured_by.setdefault(b, set()).add(a)
     out = []
     for lp in d.get("loops") or []:
-        sig = lp.get("signal")
-        if sig not in produced:
-            continue                     # signal is exogenous — fine
-        # the loop's own signal is produced by the loop. Is there ANY exogenous signal
-        # measuring the same estimand?
-        ests = {b for a, b in rel(edges, "measures") if a == sig}
-        exogenous = []
-        for e in ests:
-            for other in measured_by.get(e, set()):
-                if other != sig and other not in produced:
-                    exogenous.append(other)
-        if exogenous:
-            continue                     # a balancing path exists
-        out.append({
-            "pattern": "reinforcing_loop_no_balancer",
-            "claim": (f"Loop `{lp.get('id')}` is REINFORCING: its signal `{sig}` is produced by "
-                      f"its own intervention, and no exogenous signal measures what it "
-                      f"measures. System dynamics: a loop with no negative link diverges rather "
-                      f"than self-corrects. Nothing outside the loop can contradict it."),
-            "evidence": {"loop": lp.get("id"), "endogenous_signal": sig,
-                         "exogenous_signals": []},
-        })
+        for sig in loop_signals(lp):
+            if sig not in produced:
+                continue
+            ests = {b for a, b in rel(edges, "measures") if a == sig}
+            exogenous = []
+            for e in sorted(ests):
+                for other in measured_by.get(e, set()):
+                    if other != sig and other not in produced:
+                        exogenous.append(other)
+            if exogenous:
+                continue
+            out.append({
+                "pattern": "endogenous_feedback_without_crosscheck",
+                "claim": (f"Loop `{lp.get('id')}` reads `{sig}`, which is produced inside the "
+                          f"system, and no outside observation measures the same quantity. The "
+                          f"encoding therefore contains no independent correction path for "
+                          f"this feedback. Its polarity and stability cannot be inferred "
+                          f"without signed causal links and dynamics."),
+                "evidence": {"loop": lp.get("id"), "endogenous_signal": sig,
+                             "exogenous_signals": [], "assurance": "structural"},
+            })
     return out
 
 
-def q_regulator_without_model(d, nodes, edges):
+def q_no_explicit_process_model(d, nodes, edges):
     """
-    Conant & Ashby 1970: every good regulator of a system must be a model of that system.
+    A regulated quantity with no explicit generative explanation in the specification.
 
-    A loop with a Policy and a DesiredCondition but no model of the regulated quantity — no
-    Explanation, no Estimator over it — is a reflex, not a regulator. This is a proved
-    necessary condition rather than a style preference.
+    This is relevant to model-based anticipation and inspired by Conant & Ashby, but it is not
+    a test of their theorem. The theorem's result depends on an optimal-regulation setup and a
+    mapping between system and regulator states; an `Explanation` prose node is neither
+    necessary nor sufficient for that mapping.
     """
     targets = {b for _, b in rel(edges, "targets")}
     if not targets or not [i for i, n in nodes.items() if n.get("kind") == "Policy"]:
         return []
-    modelled = set()
-    for a, b in rel(edges, "explains"):
-        modelled.add(b)
-    for a, b in rel(edges, "estimates"):
-        modelled.add(b)
-        holder = nodes.get(b, {})
-        for x, y in rel(edges, "measures"):
-            modelled.add(y)
     out = []
-    for t in targets:
+    for t in sorted(targets):
         explained = any(b == t for _, b in rel(edges, "explains"))
         if explained:
             continue
         out.append({
-            "pattern": "regulator_without_model",
-            "claim": (f"The loop regulates `{t}` but contains no MODEL of it — no Explanation "
-                      f"of what generates it. Conant & Ashby (1970): every good regulator of a "
-                      f"system must be a model of that system. Without one this is a reflex "
-                      f"against a setpoint, not a regulator, and it cannot anticipate."),
-            "evidence": {"target": t, "explanations": []},
+            "pattern": "no_explicit_process_model",
+            "claim": (f"The loop steers `{t}` but records no explanation of what generates its "
+                      f"behaviour. It may still react from observations or embody an implicit "
+                      f"model in its policy; the specification cannot show one. Add `explains:` "
+                      f"if anticipation depends on a process model."),
+            "evidence": {"target": t, "explanations": [],
+                         "does_not_establish": "a Good Regulator theorem violation"},
         })
     return out
 
 
-def q_uncontrollable_target(d, nodes, edges):
+def q_target_without_actuator(d, nodes, edges):
     """
-    Kalman controllability: a target no intervention can drive.
+    Structural actuation: a target no declared action says it moves.
 
     Two failures live here and they are NOT the same diagnosis, so they are reported
     separately. Conflating them produced a message claiming an intervention was unwired when
     the spec had wired it:
 
-      uncontrollable_target — no lever points at the estimand at all. A wish.
+      target_without_actuator — no lever points at the estimand at all. A wish.
       open_loop             — a lever and a measurement both exist, but no Loop record joins
                               them. The parts of a regulator, not assembled into one.
 
@@ -699,11 +921,12 @@ def q_uncontrollable_target(d, nodes, edges):
             continue
         if b not in movable:
             out.append({
-                "pattern": "uncontrollable_target",
+                "pattern": "target_without_actuator",
                 "claim": (f"`{a}` sets a target on `{b}`, and no intervention declares that it "
-                          f"moves `{b}`. Controllability: a target nothing can drive toward is "
-                          f"a wish, not a setpoint. The loop declares {len(ivs)} "
-                          f"intervention(s) — {ivs} — and none of them acts on this quantity."),
+                          f"moves `{b}`. Structurally this is a target without an actuator: the "
+                          f"loop declares {len(ivs)} action(s) — {ivs} — and none points at this "
+                          f"quantity. This is not a Kalman controllability test, which would "
+                          f"require a state-space model."),
                 "evidence": {"target": b, "desired_condition": a, "interventions": ivs},
             })
             continue
@@ -711,11 +934,12 @@ def q_uncontrollable_target(d, nodes, edges):
         sigs = {x for x, y in measures if y == b}
         if not sigs:
             continue          # unmeasured_estimand already says this, and says it better
-        closing = {lp.get("intervention") for lp in (d.get("loops") or [])
-                   if lp.get("signal") in sigs}
-        if not closing:
-            movers = sorted(x for x, y in rel(edges, "targets")
-                            if y == b and nodes.get(x, {}).get("kind") == "Intervention")
+        movers = sorted(x for x, y in rel(edges, "targets")
+                        if y == b and nodes.get(x, {}).get("kind") == "Intervention")
+        closes = any(sigs.intersection(loop_signals(lp)) and
+                     set(movers).intersection(loop_interventions(lp))
+                     for lp in (d.get("loops") or []))
+        if not closes:
             out.append({
                 "pattern": "open_loop",
                 "claim": (f"`{b}` is measured by {sorted(sigs)} and moved by {movers}, but no "
@@ -741,7 +965,7 @@ def _loop_of(d, nid, edges):
     """Which declared loops touch this node."""
     ls = []
     for lp in (d.get("loops") or []):
-        if nid in (lp.get("signal"), lp.get("intervention")):
+        if nid in set(loop_signals(lp) + loop_interventions(lp)):
             ls.append(lp["id"])
     return ls
 
@@ -759,19 +983,20 @@ def _loop_of(d, nid, edges):
 #
 #     A CEILING IS A STOP, NOT A CORRECTION.
 #
-# A loop that runs at full rate into a wall and halts has not regulated anything; it has been
-# truncated. Ashby's point about variety is exactly this — a stop absorbs no disturbance. The
-# regulating version notices it is running low and does something different, which is what a
-# deadband is for. Almost nothing does this.
+# A loop that runs at full rate into a wall and halts has been truncated rather than corrected.
+# The structurally adaptive version reads the remaining resource and can do something different.
+# This is resource-feedback closure, not a requisite-variety claim; the current query still
+# cannot distinguish reading-to-halt from reading-to-adapt.
 # ---------------------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------------------
 # ATTENTION.
 #
-# Every Calibration in this project scores an ESTIMATOR — was my conclusion right. Nothing
-# scored a SIGNAL — was my LOOKING right. That asymmetry was invisible until someone named it,
-# and it has three independent instances in the corpus already:
+# Before attention contracts were added, every Calibration in this project scored an
+# ESTIMATOR — was my conclusion right — and none scored a SIGNAL — was my LOOKING right. That
+# asymmetry was invisible until someone named it, and it had three independent instances in
+# the corpus already:
 #
 #   meeseeks_sourcing   `viability_review` retires a channel that finds nothing. It scores the
 #                       SOURCE, not the candidate. Flagged as "unusual" long before it had a name.
@@ -886,14 +1111,20 @@ def period_rank(text):
     return None
 
 
-def q_cascade_timescale_inversion(d, nodes, edges):
+def loop_period(loop, nodes):
+    """Resolve cadence through the TimeScale node; accept legacy inline `period`."""
+    timescale = loop.get("timescale")
+    return nodes.get(timescale, {}).get("period") or loop.get("period")
+
+
+def q_cascade_cadence_inversion(d, nodes, edges):
     """
     An inner loop running no faster than the loop setting its target.
 
-    A NECESSARY CONDITION, not a preference. In cascade control the inner loop must settle
-    before the outer loop acts again; if it does not, the outer loop corrects against a
-    response that has not arrived, and both oscillate. A daily strategy loop setting the target
-    for a weekly execution loop is inverted and will hunt.
+    Cadence is a screening proxy, not a stability proof. Conventional cascade design requires
+    inner-loop dynamics/bandwidth to be substantially faster than the outer loop. This format
+    currently records update cadence but not settling time or a plant model, so a non-faster
+    cadence can justify review while it cannot establish oscillation.
 
     Silent when either cadence cannot be ranked — a wrong claim about timing is worse than no
     claim, and cadences here are free text on purpose.
@@ -904,24 +1135,27 @@ def q_cascade_timescale_inversion(d, nodes, edges):
         outer_id = str(n.get("set_by") or "").split(".")[0]
         if n.get("kind") != "DesiredCondition" or not outer_id:
             continue
-        inner_r = period_rank(n.get("inner_period"))
-        outer_r = period_rank((loops.get(slugish(outer_id)) or {}).get("period"))
+        inner_loop = loops.get(n.get("in_loop")) or {}
+        outer_loop = loops.get(slugish(outer_id)) or {}
+        inner_period = loop_period(inner_loop, nodes) or n.get("inner_period")
+        outer_period = loop_period(outer_loop, nodes)
+        inner_r = period_rank(inner_period)
+        outer_r = period_rank(outer_period)
         if inner_r is None or outer_r is None:
             continue
         if inner_r < outer_r:
             continue                      # inner is faster: correct
         out.append({
-            "pattern": "cascade_timescale_inversion",
+            "pattern": "cascade_cadence_inversion",
             "claim": (f"`{i}` is set by the `{outer_id}` loop, and the loop that has to hit "
-                      f"that target runs every `{n.get('inner_period')}` while `{outer_id}` "
-                      f"runs every `{(loops.get(slugish(outer_id)) or {}).get('period')}`. "
-                      f"The inner loop is not faster than the loop setting its target, so the "
-                      f"outer one corrects against a response that has not arrived yet. Both "
-                      f"will hunt. In cascade control the inner loop must settle before the "
-                      f"outer acts again."),
+                      f"that target runs every `{inner_period}` while `{outer_id}` runs every "
+                      f"`{outer_period}`. The inner update cadence is not faster. Review the "
+                      f"inner loop's bandwidth and settling time before treating this as a "
+                      f"valid cascade; cadence alone does not prove instability."),
             "evidence": {"target": i, "outer": outer_id,
-                         "inner_runs": n.get("inner_period"),
-                         "outer_runs": (loops.get(slugish(outer_id)) or {}).get("period")},
+                         "inner_runs": inner_period,
+                         "outer_runs": outer_period,
+                         "assurance": "qualitative-proxy"},
         })
     return out
 
@@ -959,39 +1193,6 @@ def q_frozen_setpoint(d, nodes, edges):
             "evidence": {"target": i, "outer": n.get("set_by"), "quantity": q},
         })
     return out
-
-
-def q_insufficient_variety(d, nodes, edges):
-    """
-    Ashby 1956: only variety can destroy variety.
-
-    A regulator can absorb a disturbance only if its variety is at least as great as the
-    disturbance's. Two levers against ten failure modes cannot regulate, and no amount of
-    prompt quality fixes it.
-
-    This was listed as blocked for most of the project's life, waiting on a `Disturbance`
-    primitive the budget had no room for. It was never blocked: `not_modelling:` is the
-    disturbance list. The things you have declared you are not modelling are precisely the
-    disturbances you are not regulating against.
-
-    HONEST ABOUT THE PROXY: counting named disturbances against distinguishable actions is a
-    crude reading of variety — Ashby's is a measure over states, not a headcount, and a spec
-    that names no disturbances scores well by saying nothing. It fires only when the gap is
-    stark, and it is a prompt to think rather than a proof.
-    """
-    dz = [n.get("statement") or i for i, n in nodes.items() if n.get("kind") == "Disturbance"]
-    ivs = [i for i, n in nodes.items() if n.get("kind") == "Intervention"]
-    if not dz or not ivs or len(dz) <= len(ivs):
-        return []
-    return [{
-        "pattern": "insufficient_variety",
-        "claim": (f"The loop declares {len(ivs)} distinct action(s) — {sorted(ivs)} — and "
-                  f"{len(dz)} thing(s) it is knowingly not modelling: {sorted(dz)}. Only "
-                  f"variety can destroy variety: a regulator needs at least as many "
-                  f"distinguishable responses as the disturbance has modes. Either name more "
-                  f"levers, or accept that the loop cannot absorb what it has already listed."),
-        "evidence": {"actions": sorted(ivs), "disturbances": sorted(dz)},
-    }]
 
 
 def q_unbounded_loop(d, nodes, edges):
@@ -1098,21 +1299,104 @@ def q_belief_never_checked(d, nodes, edges):
         n = nodes.get(a, {})
         if (n.get("form") or "").lower() in ("formula", "arithmetic", "computed"):
             continue
-        q = nodes.get(b, {}).get("question")
+        estimand = nodes.get(b, {})
+        q = estimand.get("question")
+        settled_by = estimand.get("settled_by")
+        if settled_by:
+            gap = (
+                f"Individual calls can settle against `{settled_by}`, but no declared "
+                "calibration review scores those calls over a window and changes trust, "
+                "method, threshold, source, or retirement."
+            )
+        else:
+            gap = (
+                "No declared outcome settles individual calls, and no calibration review "
+                "scores past calls or changes how the belief is formed."
+            )
         out.append({
             "pattern": "belief_never_checked",
             "claim": (f"The loop forms a belief about `{b}`"
                       + (f' — "{q}" — ' if q else " ")
-                      + f"by {n.get('form') or 'unspecified means'}, and nothing ever scores "
-                        f"it against what actually happened. Add `checked_by:` naming what "
-                        f"compares past calls to outcomes. Until then its confidence is a "
-                        f"number nobody has ever been graded on, and it can be confidently "
-                        f"wrong forever."),
-            "evidence": {"belief": b, "how": n.get("form"), "checked_by": None},
+                      + f"by {n.get('form') or 'unspecified means'}. {gap} Add `checked_by:` "
+                        "only when such a review exists; `settled_by:` and calibration are "
+                        "different contracts."),
+            "evidence": {
+                "belief": b,
+                "how": n.get("form"),
+                "settled_by": settled_by,
+                "checked_by": None,
+            },
         })
     return out
 
 
+def q_incomplete_calibration_contract(d, nodes, edges):
+    """A named calibration loop without the join, loss, window, or revision target it needs."""
+    out = []
+    for calibration, node in nodes.items():
+        if node.get("kind") != "Calibration":
+            continue
+        # Observation-source reviews answer whether attention is worth its cost. Only a
+        # Calibration revising an Estimator is a prediction→outcome scoring contract.
+        revises_estimator = any(
+            source == calibration and nodes.get(target, {}).get("kind") == "Estimator"
+            for source, target in rel(edges, "revises")
+        )
+        if not revises_estimator:
+            continue
+        required = {
+            "checked_against": node.get("outcome"),
+            "scoring_rule": node.get("scoring_rule"),
+            "window": node.get("window"),
+            "adjusts": node.get("adjusts"),
+            "every": node.get("period"),
+        }
+        missing = [field for field, value in required.items() if not value]
+        if not missing:
+            continue
+        out.append({
+            "pattern": "incomplete_calibration_contract",
+            "claim": (f"Check `{calibration}` is named, but its calibration contract lacks "
+                      f"{', '.join(missing)}. A review label alone does not join a past "
+                      f"prediction to an outcome, define loss over a cohort, or say what gets "
+                      f"revised."),
+            "evidence": {"check": calibration, "missing_fields": missing,
+                         "scores": node.get("scores")},
+        })
+    return out
+
+
+def q_incomplete_attention_contract(d, nodes, edges):
+    """A named source review without a value measure, window, or attention-changing response."""
+    out = []
+    for review, node in nodes.items():
+        if node.get("kind") != "Calibration":
+            continue
+        revises_signal = any(
+            source == review and nodes.get(target, {}).get("kind") == "Signal"
+            for source, target in rel(edges, "revises")
+        )
+        if not revises_signal:
+            continue
+        required = {
+            "value_metric": node.get("value_metric"),
+            "review_window": node.get("window"),
+            "adjusts": node.get("adjusts"),
+            "review_every": node.get("period"),
+        }
+        missing = [field for field, value in required.items() if not value]
+        if not missing:
+            continue
+        out.append({
+            "pattern": "incomplete_attention_contract",
+            "claim": (f"Attention review `{review}` is named, but lacks "
+                      f"{', '.join(missing)}. A review closes an attention loop only when it "
+                      f"measures whether the signal earned its cost over a stated window and "
+                      f"can change sampling, source, routing, or retirement."),
+            "evidence": {"review": review, "missing_fields": missing,
+                         "signal": node.get("scores")},
+        })
+    return out
 
 
 def q_policy_reads_undeclared(d, nodes, edges):
@@ -1150,6 +1434,25 @@ def q_policy_reads_undeclared(d, nodes, edges):
     return out
 
 
+def q_policy_inputs_inferred(d, nodes, edges):
+    """Compatibility-mode policy inputs inferred from prose instead of declared."""
+    out = []
+    for policy, node in nodes.items():
+        if node.get("kind") != "Policy" or not node.get("inputs_inferred"):
+            continue
+        out.append({
+            "pattern": "policy_inputs_inferred",
+            "claim": (f"Policy `{policy}` has rule(s) without `reads:`. Inputs "
+                      f"{node.get('inputs') or []} were guessed from the prose in `if:`; "
+                      f"punctuation or renaming can therefore change the graph. Add explicit "
+                      f"`reads:` lists to the rule(s)."),
+            "evidence": {"policy": policy,
+                         "inferred_inputs": node.get("inputs") or [],
+                         "inferred_rule_indexes": node.get("inferred_rule_indexes") or []},
+        })
+    return out
+
+
 def q_single_point_of_grounding(d, nodes, edges):
     """
     A loop with exactly ONE exogenous input.
@@ -1159,13 +1462,12 @@ def q_single_point_of_grounding(d, nodes, edges):
     exogenous input: the tests. That firing was an artifact of the loop record naming only one
     of its two signals, and the loop format, which records them all, correctly stopped it.
 
-    The real property is narrower and more useful: everything Ralph observes is produced by
-    Ralph except the tests, so the tests are the ONLY thing that can fail in a way the agent
-    did not intend. With a strong suite Ralph is a genuine regulator; without one it is sealed.
-    That is a single point of failure in the epistemics, not the absence of grounding — and it
-    is what practitioners actually report.
+    The real property is narrower: every observation except one is causally downstream of an
+    action by the loop. This is a concentration of independent provenance, not proof of an
+    epistemically sealed system. A loop-produced experiment can still return a surprising
+    measurement from the world.
     """
-    produced = {b for a, b in rel(edges, "produces")}
+    produced = endogenous_signals(nodes, edges)
     out = []
     for lp in (d.get("loops") or []):
         mine = set(lp.get("signals") or ([lp["signal"]] if lp.get("signal") else []))
@@ -1180,10 +1482,11 @@ def q_single_point_of_grounding(d, nodes, edges):
         out.append({
             "pattern": "single_point_of_grounding",
             "claim": (f"Loop `{lp['id']}` reads {len(mine)} observations and exactly one of "
-                      f"them — `{only}` — comes from outside itself. Everything else it looks "
-                      f"at, it produced. `{only}` is therefore the only thing that can fail in "
-                      f"a way this loop did not intend, and the loop is exactly as trustworthy "
-                      f"as that one input. Weaken it and the loop is sealed."),
+                      f"them — `{only}` — is not causally downstream of its own actions. The "
+                      f"rest are produced by the loop. If `{only}` is lost or weakened, the "
+                      f"encoding contains no independent observation path. Action-produced "
+                      f"measurements may still surprise and ground the loop; this finding "
+                      f"does not establish epistemic closure."),
             "evidence": {"loop": lp["id"], "sole_exogenous": only,
                          "endogenous": sorted(mine - exo)},
         })
@@ -1227,14 +1530,14 @@ def q_shared_estimand_no_arbiter(d, nodes, edges):
 
 def q_no_exogenous_grounding(d, nodes, edges):
     """
-    A loop whose every signal is manufactured inside the group.
+    A loop whose every signal is causally downstream of an action inside the group.
 
-    This is the Ralph finding, stated generally and computed rather than intuited. A loop with
-    no exogenous input cannot be corrected by the world: it can only be consistent with itself.
-    A verifier whose sole input is the worker's own report is the multi-agent instance, and it
-    is the most common broken shape in agent groups.
+    This establishes provenance structure only. It must not infer epistemic closure: an action
+    can deliberately probe an outside process, and the resulting self-produced measurement can
+    still surprise the controller. The question is whether a causally independent observation
+    is required for this deployment, not whether endogenous measurements are automatically fake.
     """
-    produced = {b for a, b in rel(edges, "produces")}
+    produced = endogenous_signals(nodes, edges)
     out = []
     for lp in (d.get("loops") or []):
         # every signal this loop reads, not merely the one it nominally closes on
@@ -1248,9 +1551,10 @@ def q_no_exogenous_grounding(d, nodes, edges):
         out.append({
             "pattern": "no_exogenous_grounding",
             "claim": (f"Loop `{lp['id']}` reads only {sorted(mine)}, and every one of those is "
-                      f"produced by an act inside this group. Nothing it observes can surprise "
-                      f"it. It cannot be wrong in a way it did not already contain, so it will "
-                      f"converge on agreement rather than on truth."),
+                      f"causally downstream of an act inside this group. The encoding contains "
+                      f"no independent observation path. Action-produced measurements can still "
+                      f"probe outside processes and surprise the loop; this finding establishes "
+                      f"provenance concentration, not self-confirmation or epistemic closure."),
             "evidence": {"loop": lp["id"], "signals": sorted(mine)},
         })
     return out
@@ -1270,15 +1574,18 @@ def q_unowned_act(d, nodes, edges):
             continue
         selectors = sorted({a for a, b in rel(edges, "authorizes") if b == act
                             and nodes.get(a, {}).get("kind") == "Policy"})
-        if len(selectors) < 2:
+        owning_loops = sorted({loop.get("id") for loop in d.get("loops") or []
+                               if set(selectors).intersection(loop.get("policies") or [])})
+        if len(owning_loops) < 2:
             continue
         out.append({
             "pattern": "unowned_act",
             "claim": (f"Intervention `{act}` is selected by {len(selectors)} policies — "
-                      f"{selectors} — belonging to different loops. Nothing says which one "
+                      f"{selectors} — belonging to loops {owning_loops}. Nothing says which one "
                       f"owns it, so its approval rule is whichever loop reaches it first. "
                       f"Authority decided by scheduling is not authority."),
-            "evidence": {"intervention": act, "policies": selectors},
+            "evidence": {"intervention": act, "policies": selectors,
+                         "loops": owning_loops},
         })
     return out
 
@@ -1287,9 +1594,9 @@ def q_irreversible_without_approval(d, nodes, edges):
     """
     An irreversible intervention no human gates.
 
-    The central agent-deployment question — what may this thing do without approval, and
-    irreversibly — and no framework represents it. Felt symptom: "my agent did something I
-    cannot undo."
+    The central agent-deployment question is what the system may do without approval when
+    the effect is hard to reverse. Some runtimes expose execution-time approval controls;
+    this query checks whether the design contract names the gate for this action.
     """
     humans = {i for i, n in nodes.items()
               if n.get("kind") == "Party" and n.get("kind_of") != "agent"
@@ -1306,9 +1613,27 @@ def q_irreversible_without_approval(d, nodes, edges):
             "pattern": "irreversible_without_approval",
             "claim": (f"Intervention `{i}` is marked `{n.get('reversibility')}` and declares no "
                       f"`requires_approval_from`. The loop may take an act it cannot undo with "
-                      f"no human gate. This is the question every agent deployment turns on and "
-                      f"no framework represents it."),
+                      f"no human gate. Runtime approval features may exist, but this design "
+                      f"does not bind one to the action."),
             "evidence": {"intervention": i, "reversibility": n.get("reversibility")},
+        })
+    return out
+
+
+def q_reversibility_unspecified(d, nodes, edges):
+    """A generated action whose ability to be undone was never declared."""
+    if not str(d.get("source_format", "")).startswith("loop-v") or _ir_major(d) != 2:
+        return []
+    out = []
+    for action, node in nodes.items():
+        if node.get("kind") != "Intervention" or node.get("reversibility"):
+            continue
+        out.append({
+            "pattern": "reversibility_unspecified",
+            "claim": (f"Action `{action}` does not say whether it can be undone. Approval "
+                      f"requirements depend on that distinction, so omission is not treated "
+                      f"as reversible. Add `can_undo: yes`, `costly`, or `no`."),
+            "evidence": {"action": action, "reversibility": None},
         })
     return out
 
@@ -1344,7 +1669,7 @@ def q_human_without_signal(d, nodes, edges):
 
 def q_no_escalation_path(d, nodes, edges):
     """A loop with a human party and no policy that escalates to them."""
-    parties = [i for i, n in nodes.items() if n.get("kind") == "Party"]
+    parties = sorted(i for i, n in nodes.items() if n.get("kind") == "Party")
     humans = [i for i in parties
               if (nodes[i].get("party_kind") or "human") not in ("agent", "system")]
     pols = [n for i, n in nodes.items() if n.get("kind") == "Policy"]
@@ -1363,6 +1688,8 @@ def q_no_escalation_path(d, nodes, edges):
         }]
     if any(p.get("escalates") for p in pols):
         return []
+    if any(loop.get("asks_human_when") for loop in d.get("loops") or []):
+        return []
     gated = any(n.get("requires_approval_from")
                 for n in nodes.values() if n.get("kind") == "Intervention")
     if gated:
@@ -1377,30 +1704,60 @@ def q_no_escalation_path(d, nodes, edges):
     }]
 
 
+def q_escalation_target_unspecified(d, nodes, edges):
+    """Escalation conditions exist without a declared recipient."""
+    out = []
+    for loop in d.get("loops") or []:
+        conditions = loop.get("asks_human_when") or []
+        if not conditions or loop.get("escalates_to"):
+            continue
+        out.append({
+            "pattern": "escalation_target_unspecified",
+            "claim": (f"Loop `{loop.get('id')}` declares {len(conditions)} condition(s) that "
+                      f"stop and ask a human, but does not name who receives the escalation. "
+                      f"Add `asks_human:` naming a person in `people`; an unaddressed stop "
+                      f"condition is not a governance path."),
+            "evidence": {"loop": loop.get("id"), "conditions": conditions,
+                         "escalates_to": None},
+        })
+    return out
+
+
 QUERIES = [
     q_belief_never_checked,
+    q_incomplete_calibration_contract,
+    q_incomplete_attention_contract,
     q_informs_no_decision,
     q_expensive_signal_unreviewed,
-    q_cascade_timescale_inversion,
+    q_cascade_cadence_inversion,
     q_frozen_setpoint,
-    q_insufficient_variety,
     q_unbounded_loop,
     q_ceiling_without_correction,
     q_spends_without_limit,
     q_single_point_of_grounding,
     q_policy_reads_undeclared,
+    q_policy_inputs_inferred,
     q_shared_estimand_no_arbiter,
     q_no_exogenous_grounding,
     q_unowned_act,
     q_irreversible_without_approval,
+    q_reversibility_unspecified,
     q_human_without_signal,
     q_no_escalation_path,
-    q_loop_polarity,
-    q_regulator_without_model,
-    q_uncontrollable_target,
+    q_escalation_target_unspecified,
+    q_endogenous_feedback_without_crosscheck,
+    q_no_explicit_process_model,
+    q_target_without_actuator,
     q_estimand_never_estimated,
     q_orphan_signal,
     q_no_loop_closed,
+    q_incomplete_loop,
+    q_boundary_not_declared,
+    q_incomplete_boundary,
+    q_process_location_unspecified,
+    q_process_path_not_declared,
+    q_effect_direction_unspecified,
+    q_reference_not_used,
     q_interventions_without_policy,
     q_policy_on_unmeasured_inputs,
     q_invariant_on_unmeasured,
@@ -1414,6 +1771,38 @@ QUERIES = [
     q_unmeasured_estimand,
     q_delay_without_feedback_owner,
 ]
+
+
+def analyze_document(d):
+    """Run every query and make query failures explicit to callers."""
+    nodes = {n["id"]: n for n in (d.get("nodes") or [])}
+    edges = d.get("edges") or []
+    claims = []
+    failures = []
+    metadata = check_metadata()
+    for query in QUERIES:
+        try:
+            emitted = query(d, nodes, edges)
+            for claim in emitted:
+                pattern = claim.get("pattern")
+                meta = metadata.get(pattern)
+                if not meta:
+                    raise ValueError(f"undocumented finding pattern `{pattern}`")
+                assurance = meta.get("assurance")
+                if assurance not in ASSURANCE_LEVELS:
+                    raise ValueError(
+                        f"finding pattern `{pattern}` has invalid assurance `{assurance}`"
+                    )
+                claim["assurance"] = assurance
+                claim["repair"] = meta.get("fix")
+                claim["evidence_status"] = meta.get("evidence")
+                claim["concern"] = meta.get("half")
+                if meta.get("grounded"):
+                    claim["basis"] = meta["grounded"]
+            claims.extend(emitted)
+        except Exception as error:
+            failures.append((query.__name__, str(error)))
+    return claims, failures
 
 
 
@@ -1456,14 +1845,13 @@ def main():
             "benchmarks", "encodings", "canonical", "*.yaml")))
     as_json = "--json" in sys.argv
     allout = {}
+    query_failures = []
     for p in paths:
-        d, nodes, edges = load(p)
-        claims = []
-        for q in QUERIES:
-            try:
-                claims.extend(q(d, nodes, edges))
-            except Exception as e:
-                print(f"  query {q.__name__} failed: {e}", file=sys.stderr)
+        d, _nodes, _edges = load(p)
+        claims, failures = analyze_document(d)
+        for query, error in failures:
+            print(f"  query {query} failed: {error}", file=sys.stderr)
+            query_failures.append((p, query, error))
         allout[d.get("encodes")] = claims
         if not as_json:
             org = organise(d, claims)
@@ -1520,7 +1908,7 @@ def main():
                       f"justification did not.\n    A stale justification is worse than none.")
     if as_json:
         print(json.dumps(allout, indent=2))
-    return 0
+    return 2 if query_failures else 0
 
 
 if __name__ == "__main__":

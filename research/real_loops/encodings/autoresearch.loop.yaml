@@ -1,0 +1,126 @@
+# Encoded from karpathy/autoresearch at revision
+# 228791fb499afffb54b46200aca536f79142f117.
+# Evidence: program.md lines 21-39, 64-112.
+
+loop: karpathy_autoresearch_experiment
+runs: per_candidate_experiment
+
+boundary:
+  drawn_by: human_operator
+  purpose: improve one training program against a fixed evaluator on one GPU
+  inside: [research agent, train.py candidate, experiment branch, results ledger]
+  outside: [fixed prepare.py evaluator, dataset, GPU behavior]
+
+goal:
+  retained_validation_bpb:
+    keep: lower than the retained baseline
+    unit: bits per byte
+
+beliefs:
+  candidate_merit:
+    question: Will this edit improve validation bits per byte enough to justify its complexity?
+    how: LLM judgement over the current code, prior results, and research ideas
+    explains: retained_validation_bpb
+    settled_by: measured_validation_bpb
+    known_bias: novelty and small metric gains may be overweighted relative to simplicity
+
+observes:
+  measured_validation_bpb:
+    informs: [candidate_merit, retained_validation_bpb]
+    every: after each experiment
+    origin: outside
+    how: measured
+    source: fixed evaluate_bpb implementation in prepare.py
+
+  experiment_status:
+    informs: candidate_merit
+    every: after each experiment
+    origin: outside
+    how: measured
+    source: process exit and run.log
+
+  prior_experiment_ledger:
+    informs: [candidate_merit, retained_validation_bpb]
+    every: before each candidate
+    origin: ourselves
+    how: calculated
+    produced_by: record_experiment
+
+processes:
+  fixed_training_and_evaluation:
+    description: train the candidate for five minutes and evaluate it without changing prepare.py
+    location: outside
+    observed_as: [measured_validation_bpb, experiment_status]
+
+  branch_selection:
+    description: keep an improving candidate as the new incumbent or restore the previous commit
+    location: inside
+    observed_as: [prior_experiment_ledger]
+
+actions:
+  edit_train_candidate:
+    moves: retained_validation_bpb
+    through: fixed_training_and_evaluation
+    effect: unknown
+    can_undo: "yes"
+    effect_after: about 5 minutes plus startup and evaluation
+    consumes: [gpu_minutes]
+
+  record_experiment:
+    can_undo: "yes"
+
+  retain_candidate:
+    moves: retained_validation_bpb
+    through: branch_selection
+    effect: decrease
+    can_undo: "yes"
+
+  restore_incumbent:
+    moves: retained_validation_bpb
+    through: branch_selection
+    effect: unknown
+    can_undo: "yes"
+
+when:
+  - if: a new candidate idea is ready and the experiment budget remains
+    reads: [candidate_merit, gpu_minutes]
+    do: [edit_train_candidate, record_experiment]
+  - if: measured validation bits per byte is lower than the retained baseline
+    reads: [retained_validation_bpb]
+    against: [retained_validation_bpb]
+    do: retain_candidate
+  - if: measured validation bits per byte is equal, worse, crashed, or timed out
+    reads: [retained_validation_bpb, candidate_merit]
+    against: [retained_validation_bpb]
+    do: restore_incumbent
+
+asks_human_when:
+  - setup is incomplete or the fixed dataset and tokenizer are missing
+asks_human: human_operator
+
+people:
+  human_operator:
+    human: true
+    loses_if_wrong: GPU time, electricity, and confidence in the resulting research claim
+    sees: [retained_validation_bpb, candidate_merit]
+
+  research_agent:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [retained_validation_bpb, candidate_merit]
+
+spends:
+  gpu_minutes:
+    limit: 10 minutes per experiment before forced discard
+    replenished: the operator's continuing compute allocation
+    spent_by: [edit_train_candidate]
+
+never:
+  - modify prepare.py or its evaluator
+  - install dependencies outside the existing project
+  - retain a candidate whose validation bits per byte is equal or worse solely for metric performance
+
+not_modelling:
+  - comparability across different hardware
+  - whether validation bits per byte captures useful scientific progress
+  - governance of the research agenda after experimentation begins

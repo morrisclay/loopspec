@@ -1,0 +1,172 @@
+# Blinded encoding of crates/goose/src/agents/agent.rs (excerpts: 2067-2205, 2326-2428, 2845-3008, 3047-3085)
+loop: goose_agent_turn_loop
+runs: "per agent turn, looping until max_turns, an explicit stop condition, or an exit branch is hit"
+
+boundary:
+  drawn_by: operator
+  purpose: >
+    Bound how many autonomous provider/tool turns the agent takes on the
+    operator's behalf before it must stop, and decide when a candidate
+    final answer is trustworthy enough to end the turn and return control.
+  inside:
+    - turn counting and max_turns enforcement          # agent.rs:2068-2073, 2176-2183
+    - conversation/message bookkeeping                  # agent.rs:2113-2121, 3057-3080
+    - empty-turn / empty-response detection and retry    # agent.rs:2864-2881, 2960-2983
+    - goal/grind nudge composition                       # agent.rs:2908-2943
+  outside:
+    - model provider                                     # agent.rs:2196-2205
+    - tools/extensions reached by approved tool calls     # agent.rs:2408-2428
+    - stop-hook plugin(s)                                 # agent.rs:2137-2169
+    - the operator's own mid-turn steering input          # agent.rs:2097-2122
+
+goal:
+  task_goal:
+    keep: "fully met before the turn loop exits"          # agent.rs:2908-2925
+    from: [provider_response]
+  grind_goal:
+    keep: "fully done; rechecked on every empty turn until satisfied"  # agent.rs:2927-2943
+    from: [provider_response]
+
+beliefs:
+  goal_satisfied:
+    question: "Has the operator's stated task goal been fully met?"
+    how: "judgement — the same model is re-prompted with a 'check whether the goal has been fully met' nudge"  # agent.rs:2908-2925
+    explains: task_goal
+    settled_by: provider_response
+    # No scoring of this self-report against a later-verified outcome, and no
+    # revision of future trust in it, appears in this excerpt; checked_by is
+    # left unset rather than inferred.
+  grind_satisfied:
+    question: "Is the grind goal fully done?"
+    how: "judgement — the same model is re-prompted with a 'keep working, the grind goal is not yet complete' nudge"  # agent.rs:2927-2943
+    explains: grind_goal
+    settled_by: provider_response
+  final_output_trustworthy:
+    question: "Should this candidate final assistant output actually end the turn, or does the stop-hook policy object?"
+    how: "external stop-hook plugin evaluation of the candidate final text"  # agent.rs:2137-2169
+    explains: task_goal
+    settled_by: stop_hook_decision
+    # A per-request Allow/Deny; consecutive_stop_hook_blocks only counts
+    # denials toward a hard cap (see spends.stop_hook_denials) — the excerpt
+    # shows no scoring of the plugin's past decisions against outcomes, so
+    # this is a per-call gate, not longitudinal calibration.
+
+observes:
+  provider_response:
+    origin: outside
+    how: reported
+    reported_by: provider
+    informs: [task_goal, grind_goal, goal_satisfied, grind_satisfied]
+    every: "each turn"
+    source: "model provider via stream_response_from_provider"   # agent.rs:2196-2205, 2326-2333
+  tool_results:
+    origin: outside
+    how: measured
+    produced_by: run_tool
+    informs: task_goal
+    every: "per approved tool call"                              # agent.rs:2373-2428
+  stop_hook_decision:
+    origin: outside
+    how: reported
+    reported_by: hook_plugin
+    produced_by: emit_stop_hook
+    informs: final_output_trustworthy
+    every: "once per candidate final_output"                     # agent.rs:2137-2169
+  pending_steers:
+    origin: outside
+    how: reported
+    reported_by: operator
+    informs: task_goal
+    every: "drained once per loop iteration, after the first pass (can_drain_pending_steers)"  # agent.rs:2097-2122, 2845
+
+actions:
+  run_tool:
+    moves: task_goal
+    effect: unknown
+    through: tool_execution
+    needs_approval: operator     # permission_check_result.needs_approval, agent.rs:2383-2396
+    # can_undo intentionally omitted: reversibility depends on which concrete
+    # tool/extension runs, not stated in this excerpt (see not_modelling).
+  query_provider:
+    moves: task_goal
+    effect: unknown
+    through: provider_call
+    can_undo: yes                # a provider query has no external side effect of its own; agent.rs:2196-2205
+  emit_stop_hook:
+    moves: final_output_trustworthy
+    effect: unknown
+    through: stop_hook_evaluation
+    can_undo: yes                 # a re-askable check, not a destructive act; agent.rs:2137-2169
+
+processes:
+  tool_execution:
+    location: outside
+    description: "Approved tool requests run against external systems/extensions; their results return as tool_results."  # agent.rs:2408-2428
+    observed_as: [tool_results]
+  provider_call:
+    location: outside
+    description: "Conversation, tools, and system prompt are sent to the model provider, which streams back assistant text and/or tool call requests."  # agent.rs:2196-2205
+    observed_as: [provider_response]
+  stop_hook_evaluation:
+    location: interface
+    description: "A configured stop-hook plugin inspects the candidate final assistant text and returns Allow or Deny-with-reason."  # agent.rs:2137-2169
+    observed_as: [stop_hook_decision]
+
+spends:
+  turns:
+    limit: "max_turns (session_config.max_turns, else GOOSE_MAX_TURNS config, else DEFAULT_MAX_TURNS)"  # agent.rs:2069-2073
+    spent_by: [query_provider]
+    # turns_taken increments each pass except when retrying after a stop-hook
+    # denial or an empty-turn retry; agent.rs:2172-2183
+  empty_turn_retries:
+    limit: "MAX_EMPTY_TURN_RETRIES"                       # agent.rs:2960-2983
+    spent_by: [query_provider]
+    replenished: "reset to 0 whenever a turn is not empty"  # agent.rs:2877-2881
+  stop_hook_denials:
+    limit: "stop_hook_block_cap (self.stop_hook_block_cap())"  # agent.rs:2084, 2145-2157
+    spent_by: [emit_stop_hook]
+
+when:
+  - if: "a final_output value is ready from the final-output tool"
+    reads: [final_output_trustworthy]
+    do: emit_stop_hook                                    # agent.rs:2124-2169
+  - if: "no tool calls were requested this turn, and a task goal is set and not yet nudge-checked this pass"
+    reads: [task_goal]
+    against: [task_goal]
+    do: query_provider                                    # agent.rs:2908-2925
+  - if: "no tool calls were requested this turn, and a grind goal is set"
+    reads: [grind_goal]
+    against: [grind_goal]
+    do: query_provider                                    # agent.rs:2927-2943
+  - if: "tool calls were requested and the mode is not Chat"
+    reads: [task_goal]
+    do: run_tool                                          # agent.rs:2372-2428
+
+never:
+  - "Persist an assistant turn to the conversation that has no text and no tool calls — strict providers reject an empty assistant turn."  # agent.rs:2864-2875
+
+asks_human_when:
+  - "turns_taken exceeds max_turns (turn budget exhausted)"                          # agent.rs:2179-2183
+  - "consecutive stop-hook denials exceed stop_hook_block_cap"                        # agent.rs:2145-2157
+  - "the permission inspector flags a requested tool call as needing approval"        # agent.rs:2383-2396
+  - "empty-turn retries are exhausted with no recipe retry configured"                # agent.rs:2960-2983
+asks_human: operator
+
+people:
+  operator:
+    human: true
+    loses_if_wrong: "wasted turns/spend, an unwanted tool side effect run in their name, or being left without any response"
+    sees: [task_goal, grind_goal, goal_satisfied]          # messages yielded via AgentEvent::Message, agent.rs:2916-2924, 2934-2942, 2976-2981
+  provider:
+    kind: system
+    loses_if_wrong: nothing                                # agent.rs:2196-2205
+  hook_plugin:
+    kind: system
+    loses_if_wrong: nothing                                # agent.rs:2137-2169
+
+not_modelling:
+  - "Per-tool reversibility (can_undo) for run_tool: depends on which concrete tool/extension is invoked; not stated in this excerpt."
+  - "Concrete approval channel/identity for needs_approval beyond 'the operator': the approval UI/timeout mechanics are not shown here."
+  - "Whether goal_check_pending is ever cleared after being set true — this excerpt window shows it being set (agent.rs:2909) but not reset, so it's unclear whether the goal nudge is strictly one-shot per session or can recur."
+  - "Token/dollar cost of query_provider calls, and whether stop_hook_denials (consecutive_stop_hook_blocks) is ever replenished — not shown numerically in this excerpt."
+  - "GooseMode::Chat, where tool requests are answered with a fixed skip response instead of executing (agent.rs:2355-2371) — noted but not modelled as a separate action."

@@ -1,0 +1,146 @@
+# Encoded from OpenHands/software-agent-sdk revision
+# c8a65f0db7c4e5b455a124989c3a6a0a79fcd9e9.
+# Evidence: openhands-sdk/openhands/sdk/conversation/impl/local_conversation.py
+# lines 616-675 and 1826-1970; agent/base.py lines 626-666;
+# agent/agent.py lines 970-1033; agent/critic_mixin.py lines 75-142;
+# conversation/stuck_detector.py lines 17-132 and 180-238.
+
+loop: openhands_conversation
+runs: per_conversation_run
+
+boundary:
+  drawn_by: openhands_operator
+  purpose: complete a user task through bounded model and tool steps with optional confirmation, stuck detection, stop hooks, and critic refinement
+  inside: [conversation state, event log, run controller, confirmation policy, stuck detector, optional critic]
+  outside: [user, model provider, workspace, tools, remote services]
+
+goal:
+  task_completion:
+    keep: the conversation reaches FINISHED without exceeding limits or entering ERROR or STUCK
+
+beliefs:
+  next_action_useful:
+    question: Which response or tool action is most likely to advance the user's task now?
+    how: agent model judgement over the event history and tool observations
+    explains: task_completion
+    settled_by: action_observation
+
+  task_complete:
+    question: Is the task complete enough to finish the conversation?
+    how: an assistant content or FinishAction decision, optionally challenged by a critic score and stop hook
+    explains: task_completion
+    known_bias: the completion decision and optional critic are endogenous unless a concrete deployment supplies an external evaluator
+
+  action_risky:
+    question: Does the pending action's assessed security risk require user confirmation?
+    how: configured security analyzer classification followed by the configured confirmation policy, with UNKNOWN risk when no analyzer exists
+    explains: task_completion
+
+observes:
+  user_message:
+    informs: [task_completion, task_complete, next_action_useful]
+    every: at run start and on later user input
+    origin: outside
+    how: reported
+    reported_by: openhands_operator
+
+  model_response:
+    informs: [task_completion, task_complete, next_action_useful]
+    every: after each model sample
+    origin: outside
+    how: reported
+    reported_by: model_provider
+
+  action_observation:
+    informs: [task_completion, task_complete, next_action_useful]
+    every: after tool execution
+    origin: ourselves
+    how: measured
+    produced_by: execute_tool_action
+
+  pending_action_risk:
+    informs: action_risky
+    every: before a non-finish, non-think action when confirmation mode is configured
+    origin: ourselves
+    how: calculated
+    produced_by: sample_model
+
+  critic_result:
+    informs: task_complete
+    every: on a finish attempt when iterative refinement is configured
+    origin: ourselves
+    how: calculated
+    produced_by: sample_model
+
+processes:
+  model_sampling:
+    description: the model maps event history and available tools to content, reasoning, or tool calls
+    location: outside
+    observed_as: [model_response, critic_result, pending_action_risk]
+
+  tool_environment:
+    description: selected tools operate on the bound workspace or service and append their observations to the event log
+    location: outside
+    observed_as: [action_observation]
+
+actions:
+  sample_model:
+    moves: task_completion
+    through: model_sampling
+    effect: unknown
+    can_undo: "yes"
+    consumes: [iteration_budget, model_budget]
+
+  execute_tool_action:
+    moves: task_completion
+    through: tool_environment
+    effect: unknown
+
+when:
+  - if: the conversation is running and has not finished, paused, become stuck, or reached a limit
+    reads: [task_completion, task_complete, next_action_useful, iteration_budget, model_budget]
+    against: [task_completion]
+    do: sample_model
+  - if: the model requests tool actions and the confirmation policy permits their execution
+    reads: [next_action_useful, action_risky, task_completion]
+    against: [task_completion]
+    do: execute_tool_action
+  - if: a finish attempt is below the configured critic success threshold and refinement iterations remain
+    reads: [task_complete, task_completion, iteration_budget]
+    against: [task_completion]
+    do: sample_model
+
+asks_human_when:
+  - the configured confirmation policy says one or more pending actions require confirmation
+asks_human: openhands_operator
+
+people:
+  openhands_operator:
+    human: true
+    loses_if_wrong: spend, time, repository integrity, credentials, and external effects of tools
+    sees: [task_completion, task_complete, next_action_useful, action_risky]
+
+  openhands_agent:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [task_completion, task_complete, next_action_useful, action_risky]
+
+spends:
+  iteration_budget:
+    limit: max_iteration_per_run, 500 by default in LocalConversation
+    replenished: a new run
+    spent_by: [sample_model]
+
+  model_budget:
+    limit: optional max_budget_per_run across the run's LLMs
+    replenished: a new run
+    spent_by: [sample_model]
+
+never:
+  - execute a pending action that the active confirmation policy requires the user to confirm
+
+not_modelling:
+  - the reversibility of execute_tool_action, which depends on the concrete tool and target
+  - whether stuck-detector verdicts, risk classifications, critic scores, or completion judgements are calibrated against later outcomes
+  - pause, interrupt, resume, confirmation wait, stuck stop, stop-hook denial, and limit errors as first-class controller operations
+  - the final message or FinishAction as a terminal output distinct from feedback observation

@@ -1,4 +1,4 @@
-# The URAS Score — A Self-Optimization Function
+# The LoopSpec Score — A Self-Optimization Function
 
 A single number the project can be iterated against: change the ontology, rescore, keep or
 revert. This is what makes sustained autonomous work on the ontology safe, because the

@@ -1,0 +1,23 @@
+protocol_version: 1
+sample:
+  minimum_authors: 12
+  minimum_domains: 3
+  maximum_domain_fraction: 0.5
+  minimum_operating_systems: 6
+  minimum_design_systems: 4
+  minimum_encoders: 2
+thresholds:
+  minimum_high_priority_precision: 0.70
+  maximum_encoding_induced_rate_exclusive: 0.20
+  minimum_author_action_rate: 0.50
+high_priority_patterns:
+  - irreversible_without_approval
+  - reversibility_unspecified
+  - incomplete_loop
+  - open_loop
+  - target_without_actuator
+  - unmeasured_estimand
+  - process_path_not_declared
+  - reference_not_used
+  - incomplete_calibration_contract
+  - incomplete_attention_contract

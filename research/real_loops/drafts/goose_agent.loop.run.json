@@ -1,0 +1,13 @@
+{
+  "case": "goose_agent",
+  "study_role": "model_draft",
+  "encoder": "Anthropic Claude CLI",
+  "model_alias": "sonnet",
+  "tool_access": "disabled",
+  "session_persistence": "disabled",
+  "generated_at": "2026-08-04T12:17:32.272015+00:00",
+  "source_repository": "https://github.com/block/goose",
+  "source_revision": "7f62ce53e70c49e634ed9ba16a1ef8e02a2d239c",
+  "prompt_sha256": "3a74f29cc5b0a38eec95600b4edf668ad0528c2a89a209bf3d9816150b7a0b1d",
+  "output_sha256": "ed32067267b98489cf0c0cbbfe5f8b2d36dc9b7fd4f1c24b7c111e8f64665e66"
+}

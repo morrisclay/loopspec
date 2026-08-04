@@ -1,0 +1,184 @@
+---
+title: Your first loop
+description: Write, lint, repair, draw, and compare a small feedback-loop specification.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import Mermaid from '../../../components/Mermaid.astro';
+
+You will build a support-triage loop. The first version is intentionally incomplete: the point
+is to make omissions discussable, not to make a linter green on the first try.
+
+## Begin with five questions
+
+<Steps>
+1. **What condition is the loop trying to regulate?**
+2. **What information actually arrives?**
+3. **What can it do, and through what process does that matter?**
+4. **What rule connects the information to the action?**
+5. **Who drew this boundary, can interrupt the loop, and bears the loss?**
+</Steps>
+
+If nothing comes back around on a later pass, stop: you have a pipeline, not a loop.
+
+## Write the smallest honest draft
+
+Create `support.loop.yaml`:
+
+```yaml title="support.loop.yaml"
+loop: support_triage
+runs: per_ticket
+
+boundary:
+  drawn_by: support_lead
+  purpose: route urgent support work without losing customer trust
+  inside: [triage policy, support queue]
+  outside: [customer situation, product behavior]
+
+goal:
+  resolution_time:
+    keep: below 4 hours
+
+beliefs:
+  ticket_severity:
+    question: "How badly is this customer blocked?"
+    how: judgement
+
+observes:
+  ticket_text:
+    informs: ticket_severity
+    origin: outside
+    how: reported
+
+processes:
+  support_workflow:
+    location: inside
+    observed_as: []
+
+actions:
+  escalate_to_engineer:
+    moves: resolution_time
+    through: support_workflow
+    effect: decrease
+    can_undo: yes
+
+when:
+  - if: ticket_severity is high
+    reads: [ticket_severity]
+    do: escalate_to_engineer
+
+people:
+  support_lead:
+    human: yes
+    loses_if_wrong: the customer relationship
+    sees: [ticket_severity]
+```
+
+Two distinctions matter immediately:
+
+- `origin` asks whether something outside the modeled system caused the data to exist.
+- `how` asks whether the value was measured, reported, calculated, or judged.
+
+A customer ticket is both `origin: outside` and `how: reported`. An agent grading its own output
+is `origin: ourselves` and `how: reported`. Collapsing those axes hides the case that most needs
+review.
+
+## Lint it
+
+```bash
+loopspec check support.loop.yaml
+```
+
+The first findings should include these structural gaps:
+
+| Finding | Why it appears |
+|---|---|
+| `unmeasured_estimand` | the loop targets resolution time but nothing observes it |
+| `belief_never_checked` | ticket severity is judged but never scored against a later outcome |
+| `reference_not_used` | no rule compares observed resolution time with its four-hour target |
+| `no_escalation_path` | a person exists, but no condition stops and asks them |
+
+<Aside type="tip" title="Do not optimize for zero findings">
+A good result is a spec whose remaining findings have been read and decided about. A finding can
+be correct and still not justify a change in your context.
+</Aside>
+
+## Close the missing paths
+
+Add the later outcome, the calibration contract, the reference-using rule, a resource, and an
+escalation recipient:
+
+```yaml
+beliefs:
+  ticket_severity:
+    question: "How badly is this customer blocked?"
+    how: judgement
+    explains: resolution_time
+    checked_by: weekly_severity_review
+    checked_against: ticket_outcome
+    scoring_rule: severity classification error
+    window: 100 resolved tickets
+    adjusts: trust
+    every: weekly
+
+observes:
+  ticket_outcome:
+    informs: [ticket_severity, resolution_time]
+    origin: outside
+    how: measured
+
+processes:
+  support_workflow:
+    location: inside
+    observed_as: [ticket_outcome]
+
+when:
+  - if: ticket_severity is high
+    reads: [ticket_severity]
+    do: escalate_to_engineer
+  - if: resolution_time exceeds 4 hours
+    reads: [resolution_time]
+    against: [resolution_time]
+    do: escalate_to_engineer
+
+spends:
+  engineer_hours:
+    limit: 8 per week
+    spent_by: [escalate_to_engineer]
+
+asks_human_when: [severity evidence conflicts]
+asks_human: support_lead
+```
+
+<Mermaid
+	chart={`flowchart LR
+	T["resolution time target"] -->|uses reference| P{"triage policy"}
+	S[/"ticket outcome"/] --> Q["resolution time"] -->|reads| P
+	P --> A["escalate to engineer"] --> W[("support workflow")]
+	W -->|emits| S
+	H(("support lead")) -.->|sees / approves| P`}
+	caption="The revised draft makes the comparator, process leg, observation return, and human governance path explicit."
+/>
+
+## Record a deliberate exception
+
+Do not delete or suppress a finding you have consciously accepted. Record the decision:
+
+```yaml
+consider:
+  expensive_signal_unreviewed/customer_interviews:
+    because: retained for quarterly qualitative discovery, not a policy input
+    revisit: when interview hours exceed the research budget
+```
+
+The finding moves to `CONSIDERED`. If a later edit means it no longer fires, LoopSpec reports the
+stale justification.
+
+## Continue the workflow
+
+```bash
+loopspec diagram support.loop.yaml --control --markdown
+loopspec diff support.before.loop.yaml support.loop.yaml
+```
+
+Next, learn how to [read findings](/guides/findings/) and [review the diagrams](/guides/diagrams/).

@@ -1,0 +1,240 @@
+# Encoded from blinded excerpts: openhands-sdk conversation run loop, agent.step
+# dispatch, stuck detector, and critic iterative-refinement mixin.
+loop: conversation_run
+runs: per_step, until FINISHED, ERROR, STUCK, PAUSED, or WAITING_FOR_CONFIRMATION
+  # openhands-sdk/openhands/sdk/conversation/impl/local_conversation.py:1826-1965
+
+boundary:
+  drawn_by: operator
+  purpose: >
+    Bound one autonomous run of tool-executing agent steps by iteration count
+    and LLM spend, gate risky pending actions on human confirmation, and halt
+    on repetitive/unproductive patterns before further unreviewed actions run.
+  inside:
+    - agent step dispatch (LLM call + tool execution)
+    - stuck detector
+    - confirmation gate
+    - critic-based iterative refinement
+    - iteration/budget accounting
+  outside:
+    - LLM provider
+    - tool execution environment
+    - the user
+
+goal:
+  task_completion:
+    keep: "at FINISHED execution status, without exceeding iteration/budget limits or entering STUCK"
+    # local_conversation.py:1843-1965
+    from: [event_log, critic_result]
+
+beliefs:
+  is_stuck:
+    # stuck_detector.py:104-216 (is_stuck, action_observation/action_error/monologue/alternating checks)
+    question: >
+      Is the agent repeating the same action/observation, erroring repeatedly
+      on the same action, monologuing, or alternating in an unproductive
+      pattern since the last user message?
+    how: judgement
+    from: [event_log]
+    # No scoring of past is_stuck verdicts against later outcomes is shown;
+    # each check is applied fresh per iteration. Not treated as calibration.
+
+  needs_confirmation:
+    # agent/agent.py:992-1031
+    question: >
+      Does the pending action's assessed security risk require the user to
+      confirm before it executes?
+    how: >
+      security_analyzer.analyze_pending_actions risk classification
+      (UNKNOWN if no analyzer registered), passed through
+      confirmation_policy.should_confirm
+
+  needs_refinement:
+    # agent/critic_mixin.py:76-137
+    question: >
+      Is the FinishAction's critic score good enough to stop, or should the
+      agent take another refinement pass?
+    how: "critic.should_refine(critic_result) compared to config.success_threshold"
+    from: [critic_result]
+    # checked_by intentionally omitted: critic_result.score settles only THIS
+    # finish's continue/stop decision (critic_mixin.py:108-120). The excerpt
+    # shows no scoring of the critic's own calls against later outcomes and
+    # no resulting trust/method adjustment, so this is action-level settling,
+    # not longitudinal calibration.
+
+observes:
+  event_log:
+    # stuck_detector.py:66-102 (_events_since_last_user_message, windowed active_branch)
+    informs: is_stuck
+    origin: outside
+    how: measured
+    every: per_step
+
+  accumulated_cost:
+    # local_conversation.py:627-641 (_budget_exceeded_detail)
+    informs: task_completion
+    origin: outside
+    how: calculated
+    every: per_step
+
+  critic_result:
+    # agent/critic_mixin.py:108-120 (action_event.critic_result, score)
+    informs: needs_refinement
+    origin: ourselves
+    how: reported
+    reported_by: critic
+    # Self-assessment: the model's own critic scoring its own finish, not an
+    # externally measured outcome.
+
+actions:
+  execute_step:
+    # local_conversation.py:1913-1919; agent/base.py:626-648; agent/agent.py:970-991
+    moves: [task_completion]
+    through: [agent_step_process]
+    effect: unknown
+    consumes: [iterations, budget]
+    # can_undo depends on which tool the step's ActionEvent(s) invoke, which
+    # is not shown in these excerpts -> see not_modelling.
+
+  request_confirmation:
+    # agent/agent.py:1026-1031
+    moves: [task_completion]
+    through: [confirmation_gate_process]
+    needs_approval: user
+    can_undo: yes
+
+  nudge_on_error_streak:
+    # stuck_detector.py:218-238; local_conversation.py:659-667
+    moves: [is_stuck]
+    can_undo: yes
+
+  mark_stuck:
+    # local_conversation.py:669-672
+    moves: [is_stuck]
+    can_undo: yes
+
+  emit_run_limit_error:
+    # local_conversation.py:643-649, 1935-1965
+    moves: [task_completion]
+    can_undo: yes
+
+  continue_refinement:
+    # agent/critic_mixin.py:122-137
+    moves: [needs_refinement]
+    through: [critic_review_process]
+    can_undo: yes
+
+processes:
+  agent_step_process:
+    # agent/base.py:626-648; agent/agent.py:970-991
+    description: >
+      LLM call is classified (tool calls / content / reasoning-only-or-empty)
+      and dispatched; tool calls execute and their results are appended to
+      the event log as ActionEvent/observation pairs.
+    location: interface
+    observed_as: [event_log]
+
+  confirmation_gate_process:
+    # agent/agent.py:1014-1031
+    description: >
+      Security analyzer (if registered) scores pending actions' risk, else
+      risk is UNKNOWN; confirmation policy decides whether to pause pending
+      user confirmation.
+    location: interface
+
+  critic_review_process:
+    # agent/critic_mixin.py:75-137
+    description: >
+      Critic evaluates the FinishAction and produces a score, compared
+      against a configured success_threshold to decide whether to refine.
+    location: interface
+    observed_as: [critic_result]
+
+spends:
+  iterations:
+    # local_conversation.py:1943-1965
+    limit: "max_iteration_per_run (deployment-configured; value not given in excerpt)"
+    spent_by: [execute_step]
+
+  budget:
+    # local_conversation.py:627-641, 1935-1941
+    limit: "max_budget_per_run USD (deployment-configured; value not given in excerpt)"
+    spent_by: [execute_step]
+
+when:
+  - if: "execution_status == FINISHED and a registered stop hook denies stopping"
+    reads: [task_completion]
+    do: execute_step
+    # local_conversation.py:1866-1892
+
+  - if: "the action-error streak on the current action has just reached action_error_threshold and hasn't been nudged yet"
+    reads: [is_stuck]
+    do: nudge_on_error_streak
+    # stuck_detector.py:218-238
+
+  - if: "stuck pattern detected (repeating action/observation, repeating action/error past nudge, monologue, or alternating pattern)"
+    reads: [is_stuck]
+    do: mark_stuck
+    # local_conversation.py:669-672
+
+  - if: "confirmation policy says the pending actions' risk requires confirmation"
+    reads: [needs_confirmation]
+    do: request_confirmation
+    # agent/agent.py:1026-1031
+
+  - if: "accumulated LLM cost has reached max_budget_per_run and the run did not just finish"
+    reads: [budget]
+    do: emit_run_limit_error
+    # local_conversation.py:1935-1941
+
+  - if: "iteration count has reached max_iteration_per_run and the run did not just finish"
+    reads: [iterations]
+    do: emit_run_limit_error
+    # local_conversation.py:1943-1965
+
+  - if: "a FinishAction with a critic result is present, refinement iterations remain, and the critic's score doesn't meet the success threshold"
+    reads: [needs_refinement]
+    do: continue_refinement
+    # agent/critic_mixin.py:100-129
+
+  - if: "none of the above halts or gates the run"
+    reads: [task_completion]
+    do: execute_step
+
+asks_human_when:
+  - "the confirmation policy determines pending actions need review (execution_status -> WAITING_FOR_CONFIRMATION)"
+    # agent/agent.py:1026-1031
+  - "a stuck pattern is detected and execution_status -> STUCK"
+    # local_conversation.py:669-672
+asks_human: user
+
+people:
+  user:
+    human: true
+    loses_if_wrong: >
+      unreviewed risky actions execute, or a stuck/errored run silently
+      burns iterations and budget before anyone notices
+    sees: [needs_confirmation, is_stuck, task_completion]
+
+  operator:
+    human: true
+    loses_if_wrong: >
+      unbounded iteration count or spend if limits are misconfigured, or a
+      task left unfinished if limits are set too tight
+    sees: [task_completion]
+
+  agent:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [is_stuck, needs_confirmation, needs_refinement]
+
+never:
+  - "execute a pending action the confirmation policy flagged for confirmation without first stopping at WAITING_FOR_CONFIRMATION for an explicit re-run"
+    # local_conversation.py:1826-1832; agent/agent.py:1026-1031
+
+not_modelling:
+  - "concrete values of max_iteration_per_run and max_budget_per_run: set by deployment, not given in these excerpts"
+  - "concrete stuck-detection thresholds (action_observation, action_error, monologue, alternating_pattern counts): configured via StuckDetectionThresholds, defaults not shown in these excerpts"
+  - "which tools the agent's ActionEvents actually invoke, and their real-world reversibility: depends on the concrete tool registry, not shown here"
+  - "whether the critic's own scoring is calibrated across runs: excerpts show only a per-finish score-vs-threshold comparison (should_refine), with no cross-case scoring of the critic's accuracy or resulting trust/method adjustment"
+  - "how the security analyzer assigns risk levels: excerpts show only that it is consulted when present and defaults to UNKNOWN otherwise"

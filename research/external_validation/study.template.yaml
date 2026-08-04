@@ -1,0 +1,36 @@
+protocol_version: 1
+artifact_commit: "RECORD_BEFORE_FIRST_ENCODING"
+artifact_hashes:
+  pyproject.toml: "SHA256"
+  requirements.txt: "SHA256"
+  schema/loop.keys.yaml: "SHA256"
+  schema/semantic-map.yaml: "SHA256"
+  schema/loopspec.graph.md: "SHA256"
+  ontology/primitives.yaml: "SHA256"
+  docs/checks.yaml: "SHA256"
+  docs/base_rates.json: "SHA256"
+  tools/loop.py: "SHA256"
+  tools/validate.py: "SHA256"
+  tools/derive.py: "SHA256"
+  tools/semantic_diff.py: "SHA256"
+  tools/gen_spec.py: "SHA256"
+  tools/gen_checks.py: "SHA256"
+  tools/check_semantic_map.py: "SHA256"
+  tools/runtime_paths.py: "SHA256"
+  tools/loopspec.py: "SHA256"
+  tools/uras.py: "SHA256"
+  tests/conformance.yaml: "SHA256"
+  tests/test_semantic_pipeline.py: "SHA256"
+  research/external_validation/PREREGISTRATION.md: "SHA256"
+  research/external_validation/protocol.yaml: "SHA256"
+  research/external_validation/study.template.yaml: "SHA256"
+  research/external_validation/record.template.yaml: "SHA256"
+  tools/external_eval.py: "SHA256"
+runtime:
+  python_implementation: "RECORD_EXACT_VALUE"
+  python_version: "RECORD_EXACT_VALUE"
+  pyyaml_version: "RECORD_EXACT_VALUE"
+doctor_output: "PASTE_EXACT_OUTPUT"
+active_checks: {} # exact pattern -> assurance map from docs/checks.yaml
+mutation_safety_false_negatives: 0
+amendments: []

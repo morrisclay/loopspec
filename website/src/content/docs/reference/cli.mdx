@@ -1,0 +1,86 @@
+---
+title: Command line
+description: Complete command reference for checking, expanding, diagramming, diffing, and verifying LoopSpec.
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+The `loopspec` command has one validated semantic pipeline and several projections over its result.
+
+The deprecated `uras` alias remains available during LoopSpec 2.x so existing automation can
+migrate without an abrupt break.
+
+## `loopspec check`
+
+Validate the authoring format, expand canonical IR, validate the IR, and derive findings.
+
+```bash
+loopspec check SPEC [--json] [--fail-on-findings]
+```
+
+| Option | Behavior |
+|---|---|
+| `--json` | emit the complete machine-readable result |
+| `--fail-on-findings` | return status `2` when the valid design has findings |
+
+## `loopspec expand`
+
+Print canonical graph IR v2.1 after both authoring and semantic validation.
+
+```bash
+loopspec expand SPEC
+```
+
+Use this when building a renderer, adapter, or independent implementation test. Ordinary authors
+should not need to learn IR vocabulary.
+
+## `loopspec diagram`
+
+<Tabs>
+	<TabItem label="Dependency view">
+```bash
+loopspec diagram SPEC
+loopspec diagram SPEC --markdown
+```
+The full typed dependency, provenance, governance, resource, and boundary graph.
+	</TabItem>
+	<TabItem label="Control view">
+```bash
+loopspec diagram SPEC --control
+loopspec diagram SPEC --control --markdown
+```
+The feedback-ring projection. It shows missing process closure instead of inventing the world.
+	</TabItem>
+</Tabs>
+
+## `loopspec diff`
+
+```bash
+loopspec diff BEFORE AFTER [--json] [--fail-on-change]
+```
+
+Compares validated canonical semantics and finding sets. `--fail-on-change` returns status `3`.
+YAML map order and unordered canonical collections do not create a change.
+
+## `loopspec doctor`
+
+```bash
+loopspec doctor
+```
+
+In a source checkout this runs the semantic tests plus generated-grammar, semantic-map, and check
+catalog gates. From an installed wheel it checks packaged runtime resources and a smoke spec.
+
+## Focused repository tools
+
+| Command | Purpose | Status |
+|---|---|---|
+| `python3 tools/compare.py SPECS...` | side-by-side corpus comparison | supported projection |
+| `python3 tools/verify.py SPEC TARGET/` | scan generated code for omitted declarations | experimental text heuristic |
+| `python3 tools/external_eval.py --freeze` | freeze a committed external-study artifact | research release gate |
+
+<Aside type="note" title="Compilation is not a release claim">
+The repository contains compilation experiments, but LoopSpec v1.1 is a specification and structural
+review tool. A generated implementation needs target-specific preservation evidence before a
+safety claim can be made.
+</Aside>

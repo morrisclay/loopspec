@@ -1,0 +1,19 @@
+{
+  "cycle": 3,
+  "outcome": "local-release-candidate-verified",
+  "findings": {
+    "errors": 0,
+    "working_tests": 38,
+    "accepted_authoring_fields": 79,
+    "documented_checks": 50,
+    "authoring_checks": 38,
+    "compatibility_checks": 12,
+    "corpus_specs": 23,
+    "legacy_held_out": 8,
+    "baseline_failures": 6
+  },
+  "predicate_met": true,
+  "pending_verify": false,
+  "external_evidence_pending": true,
+  "next_hop": "commit/freeze release candidate, then external-author evaluation (both require user authority)"
+}

@@ -18,10 +18,15 @@ the linter's vocabulary can still see the hole.
 Layout is derived, never authored — the loop format carries no coordinates. That is what makes
 the diagram trustworthy: it cannot be drawn to flatter the spec.
 """
-import sys, os, subprocess, json
+import sys, os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from loop import expand  # noqa: E402
+try:  # package import
+    from .loop import expand  # noqa: E402
+    from .derive import analyze_document  # noqa: E402
+except ImportError:  # direct script
+    from loop import expand  # noqa: E402
+    from derive import analyze_document  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -40,6 +45,8 @@ SHAPES = {
     "Explanation":      ('("', '")'),
     "Delay":            ('["', '"]'),
     "Resource":         ('[("', '")]'),
+    "Boundary":         ('[["', '"]]'),
+    "System":           ('[("', '")]'),
 }
 
 REL_STYLE = {
@@ -55,6 +62,14 @@ REL_STYLE = {
     "delays":     "-->|after|",
     "consumes":   "-->|consumes|",
     "constrains": "-.->|forbids|",
+    "reads":      "-->|reads|",
+    "compares":   "-->|outcome|",
+    "causes":     "-->|through|",
+    "produces":   "-->|emits|",
+    "frames":     "-.->|frames|",
+    "bounds":     "-.->|bounds|",
+    "sets":       "-->|sets target|",
+    "uses_reference": "-->|uses reference|",
 }
 
 # Which node kinds a defect should mark, so the finding lands on the right shape.
@@ -67,24 +82,23 @@ DEFECT_ANCHOR = {
     "irreversible_without_approval": "Intervention",
     "accountable_but_blind": "Party",
     "no_escalation_path": "Policy",
-    "uncontrollable_target": "DesiredCondition",
-    "regulator_without_model": "Policy",
+    "target_without_actuator": "DesiredCondition",
+    "no_explicit_process_model": "Policy",
+    "process_path_not_declared": "Intervention",
+    "effect_direction_unspecified": "Intervention",
+    "boundary_not_declared": "Boundary",
+    "incomplete_attention_contract": "Calibration",
 }
 
-SKIP = {"System", "TimeScale"}   # cadence is a label, not a box
+SKIP = {"TimeScale"}   # cadence is a label, not a box
 
 
 def lint(doc):
     """Run the real linter over the expanded graph so the diagram cannot drift from it."""
-    import yaml
-    tmp = "/tmp/_uras_diagram.yaml"
-    open(tmp, "w").write(yaml.safe_dump(doc, sort_keys=False))
-    try:
-        out = subprocess.run(["python3", os.path.join(ROOT, "tools", "derive.py"), tmp,
-                              "--json"], capture_output=True, text=True, timeout=120).stdout
-        return [c for cs in json.loads(out).values() for c in cs]
-    except Exception:
-        return []
+    findings, failures = analyze_document(doc)
+    if failures:
+        raise RuntimeError(f"diagram analysis failed: {failures}")
+    return findings
 
 
 def node_label(n):
@@ -101,6 +115,12 @@ def node_label(n):
         lab = f"{lab}{mark}"
     elif k == "Party":
         lab = f"{'🧑 ' if n.get('party_kind') == 'human' else ''}{lab}"
+    elif k == "Boundary":
+        lab = f"boundary<br/><i>{n.get('purpose', 'purpose unstated')}</i>"
+    elif k == "System" and n.get("role") == "controlled_process":
+        lab = f"{lab}<br/><i>{n.get('location', 'location unstated')}</i>"
+    elif k == "Calibration" and n.get("review"):
+        lab = f"{n['review']}<br/><i>{n.get('calibration_kind', 'review')}</i>"
     return lab.replace('"', "'")
 
 
@@ -121,7 +141,8 @@ def render(path):
     L = ["flowchart LR"]
     groups = doc.get("group") or [doc["encodes"]]
 
-    for kind_group, title in [(("Signal",), "observed"),
+    for kind_group, title in [(("Boundary", "System"), "world and boundary"),
+                              (("Signal",), "observed"),
                               (("Estimand", "Estimator", "Calibration", "Explanation"),
                                "believed"),
                               (("DesiredCondition", "Policy", "Intervention", "Delay"),
@@ -137,6 +158,9 @@ def render(path):
             o, c = SHAPES.get(n["kind"], ('["', '"]'))
             L.append(f'    {n["id"]}{o}{node_label(n)}{c}')
         L.append("  end")
+
+    if any(f.get("pattern") == "boundary_not_declared" for f in findings):
+        L.append('  missing_boundary[["⚠ boundary / observer / purpose missing"]]:::defect')
 
     for e in doc["edges"]:
         if nodes.get(e["from"], {}).get("kind") in SKIP: continue
@@ -159,10 +183,14 @@ def render(path):
 
     # A loop that never closes gets an arrow into nothing — the point of §5.
     for lp in doc.get("loops") or []:
-        if not lp.get("intervention"):
+        interventions = lp.get("interventions") or (
+            [lp["intervention"]] if lp.get("intervention") else []
+        )
+        signals = lp.get("signals") or ([lp["signal"]] if lp.get("signal") else [])
+        if not interventions:
             L.append(f'  {lp["id"]}_open[" "]:::defect')
-            if lp.get("signal"):
-                L.append(f'  {lp["signal"]} -.->|loop does not close| {lp["id"]}_open')
+            for signal in signals:
+                L.append(f'  {signal} -.->|loop does not close| {lp["id"]}_open')
 
     return "\n".join(L), findings
 

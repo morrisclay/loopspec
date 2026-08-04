@@ -11,10 +11,10 @@ to be true. They are the two halves of the same thing and neither works alone.
 > **Calibration** asks *has this thing's confidence historically tracked reality?* — score past
 > predictions against what actually happened.
 
-The field has built the first thoroughly. The second has no name in it. LangChain's *Art of
-Loop Engineering* — the canonical statement — has a verification loop with rubric grading and
-human touchpoints, and **no discussion of confidence calibration or whether agent confidence
-aligns with correctness.**
+Agent frameworks commonly foreground the first. The measured reference corpus does not make
+the second a first-class loop contract. LangChain's *Art of Loop Engineering* has a
+verification loop with rubric grading and human touchpoints, and **no discussion of confidence
+calibration or whether agent confidence aligns with correctness.**
 
 An agent that is verified but uncalibrated **passes every rubric and still cannot tell you how
 much to trust it next time.** That sentence is the whole gap.
@@ -78,32 +78,44 @@ beliefs:
     question: "If we keep buying customers like this month's, will they stay?"
     how: bayesian
     checked_by: quarterly_cohort_review     # ← what scores it
-    every: quarterly                        # ← over what window
+    checked_against: six_month_retention    # ← the later outcome observation
+    scoring_rule: Brier score               # ← how prediction and outcome are compared
+    window: 200 cohorts                     # ← the cohort over which loss is interpreted
+    adjusts: trust                          # ← what changes when performance is poor
+    every: quarterly                        # ← how often the review runs
     settled_by: "a cohort retains above 80% at month 6"   # ← what would decide it
     known_bias: "reads high when volume is low"           # ← which way it is wrong
 ```
 
 - **`checked_by`** — the check. Its absence trips `belief_never_checked`.
+- **`checked_against`, `scoring_rule`, `window`, and `adjusts`** — the structural contract
+  joining past calls to later outcomes and closing a revision path. Missing parts trip
+  `incomplete_calibration_contract`.
 - **`settled_by`** — what makes the belief refutable at all. A belief with no settling
   condition cannot be calibrated even in principle.
 - **`known_bias`** — the direction it is expected to be wrong in. Cheap to write, and it is the
   thing a reader most wants and most rarely gets.
-- **`observes.*.checked_by`** — the attention counterpart: what reviews whether *looking here*
-  earned its cost. Every `Calibration` in this project scored an estimator until this was
-  added; nothing scored a signal.
+- **`observes.*.checked_by`, `value_metric`, `review_window`, `review_every`, and `adjusts`** — the attention
+  counterpart: what reviews whether *looking here* earned its cost, over what cohort, and what
+  changes when it did not. Missing parts trip `incomplete_attention_contract`.
 
-## The gap in the format, named
+## The result boundary
 
-**The format can say that a belief is checked. It cannot say what the check found.**
+**The design format says how a belief will be checked. It does not store what a runtime check
+found.**
 
 `checked_by: quarterly_cohort_review` records that a check exists. There is nowhere to record
 that the review found the estimator overconfident by 0.2, or that it has been right 6 of the
 last 8 quarters, or that its Brier score is drifting. Calibration is a *result*, and this
 notation currently only carries the *intent*.
 
-That is a real hole and it is the most defensible next addition, because it has the same shape
-as every other admission here: three independent instances would need to demand it first. It is
-recorded rather than built.
+That separation is intentional in v1.1. A design spec is versioned intent; calibration results
+are time-indexed operational evidence. Putting the latest score into the spec would turn a
+stable design contract into a mutable monitoring record and make semantic diffs mix design
+changes with new observations. A future evidence artifact may reference the spec, frozen
+predictions, outcomes, and scoring results, but it belongs beside the language rather than as
+another authoring key. It should be admitted only with executable scoring semantics and real
+cases that require it.
 
 ## Why attention and calibration are the same project
 
@@ -120,14 +132,18 @@ They are duals, and each is unusable alone:
 moved a belief that turned out to matter was not worth watching — and you cannot know that
 without scoring the beliefs. Conversely, **attention determines what you can calibrate
 against**: a belief about something you never observe has no outcome to be scored on. That is
-`unmeasured_estimand`, and it is why observability is a precondition rather than a nicety.
+`unmeasured_estimand`, and it is why a declared observation path is a prerequisite rather than
+a nicety. This is structural sensing, not a Kalman observability result.
 
-Both are **second-order**. The first-order loop observes, believes, decides, acts. Attention
-and calibration are loops *about* that loop — regulating the observing and the believing rather
-than the world.
+Both are **meta-control**. The operating loop observes, believes, decides, and acts. Attention
+and calibration are loops *about parts of that loop* — regulating the observing and the
+believing rather than directly regulating the world.
 
-> **The first-order loop is what every agent framework builds. The second-order loops are what
-> none of them has, and what this notation is for.**
+> **The operating loop is what agent frameworks foreground. Attention and calibration loops
+> are omitted by most examples in the measured corpus, and this notation makes them
+> discussable.**
 
-That is applied cybernetics stated plainly: second-order cybernetics puts the observer inside
-the system, and these are the two places the observer's own performance becomes checkable.
+This is cybernetically useful without exhausting second-order cybernetics. LoopSpec now records
+who draws the system boundary, for what purpose, and what they place inside and outside. A
+fuller second-order account must also represent how observing changes the system and how the
+observer's distinctions, purpose, and boundary are themselves revised.

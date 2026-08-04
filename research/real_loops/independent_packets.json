@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "reference": "REFERENCE.md",
+  "cases": {
+    "swe_agent_default": {
+      "repository": "https://github.com/SWE-agent/SWE-agent",
+      "revision": "3ea751c087f32b16e039a2233dd6eefecef325d5",
+      "files": [
+        {
+          "path": "sweagent/agent/agents.py",
+          "ranges": [[1062, 1215], [1235, 1294]]
+        }
+      ]
+    },
+    "browser_use": {
+      "repository": "https://github.com/browser-use/browser-use",
+      "revision": "c561b1f514f1e197580e0c4b75a5bfbc3f1e61f2",
+      "files": [
+        {
+          "path": "browser_use/agent/service.py",
+          "ranges": [[1205, 1246], [1458, 1545], [2575, 2655]]
+        },
+        {
+          "path": "browser_use/agent/views.py",
+          "ranges": [[200, 315]]
+        }
+      ]
+    },
+    "codex_turn": {
+      "repository": "https://github.com/openai/codex",
+      "revision": "2a16af823456712e3dbb030ecf29fb727c2cde66",
+      "files": [
+        {
+          "path": "codex-rs/core/src/session/turn.rs",
+          "ranges": [[140, 185], [260, 505]]
+        },
+        {
+          "path": "codex-rs/core/src/session/mod.rs",
+          "ranges": [[4024, 4030]]
+        },
+        {
+          "path": "codex-rs/core/src/tools/sandboxing.rs",
+          "ranges": [[194, 234]]
+        },
+        {
+          "path": "codex-rs/core/src/tools/runtimes/shell.rs",
+          "ranges": [[139, 178]]
+        }
+      ]
+    },
+    "goose_agent": {
+      "repository": "https://github.com/block/goose",
+      "revision": "7f62ce53e70c49e634ed9ba16a1ef8e02a2d239c",
+      "files": [
+        {
+          "path": "crates/goose/src/agents/agent.rs",
+          "ranges": [[2067, 2205], [2326, 2428], [2845, 3008], [3047, 3085]]
+        }
+      ]
+    },
+    "openhands_sdk": {
+      "repository": "https://github.com/OpenHands/software-agent-sdk",
+      "revision": "c8a65f0db7c4e5b455a124989c3a6a0a79fcd9e9",
+      "files": [
+        {
+          "path": "openhands-sdk/openhands/sdk/conversation/impl/local_conversation.py",
+          "ranges": [[616, 675], [1826, 1970]]
+        },
+        {
+          "path": "openhands-sdk/openhands/sdk/agent/base.py",
+          "ranges": [[626, 666]]
+        },
+        {
+          "path": "openhands-sdk/openhands/sdk/agent/agent.py",
+          "ranges": [[970, 1033]]
+        },
+        {
+          "path": "openhands-sdk/openhands/sdk/agent/critic_mixin.py",
+          "ranges": [[75, 142]]
+        },
+        {
+          "path": "openhands-sdk/openhands/sdk/conversation/stuck_detector.py",
+          "ranges": [[17, 132], [180, 238]]
+        }
+      ]
+    },
+    "ai_scientist_v2": {
+      "repository": "https://github.com/SakanaAI/AI-Scientist-v2",
+      "revision": "96bd51617cfdbb494a9fc283af00fe090edfae48",
+      "files": [
+        {
+          "path": "ai_scientist/treesearch/agent_manager.py",
+          "ranges": [[343, 536], [692, 827]]
+        },
+        {
+          "path": "ai_scientist/treesearch/parallel_agent.py",
+          "ranges": [[1921, 2190]]
+        },
+        {
+          "path": "ai_scientist/treesearch/journal.py",
+          "ranges": [[374, 455]]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+---
+import DefaultHead from '@astrojs/starlight/components/Head.astro';
+---
+
+<DefaultHead {...Astro.props} />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="LoopSpec documentation" />
+<meta property="og:image" content={new URL('/og.png', Astro.url).href} />
+<meta property="og:image:alt" content="LoopSpec — specify feedback before it becomes behavior" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content={new URL('/og.png', Astro.url).href} />

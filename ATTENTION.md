@@ -24,9 +24,10 @@ the syntax without seeing this one and **3/3 rejected every jargon word** — `r
 `estimates`, `calibrated_by`, `acts`. A notation nobody will read directs nobody's attention.
 Legibility is not polish here; it is the mechanism.
 
-And it is why *"any LLM can compile it"* matters: a notation that costs a compiler to adopt
-will not be adopted, and one that does not survive contact with the frameworks people already
-use is a private language.
+And it is why compilation legibility matters: a notation that requires a bespoke compiler to
+try will be harder to adopt, and one that does not survive contact with the frameworks people
+already use is a private language. The exploratory compile study measured element preservation,
+not executable correctness, and found target API documentation was the decisive missing input.
 
 ## L2 — the spec describes the *loop's* attention
 
@@ -34,9 +35,10 @@ use is a private language.
 (`cost`), where it came from (`origin: outside | ourselves`), and how it was obtained
 (`how: measured | reported | calculated`).
 
-Here is the asymmetry that was invisible until someone named it:
+Here is the historical asymmetry that was invisible until someone named it:
 
-> **Every `Calibration` in this project scored an `Estimator`. Nothing scored a `Signal`.**
+> **Before the attention contract, every `Calibration` scored an `Estimator`. Nothing scored
+> a `Signal`.**
 >
 > The whole apparatus asks *was my conclusion right*. It never asks *was my looking right*.
 
@@ -49,13 +51,29 @@ project's own bar for admitting a concept:
 | `conviction_termination` | the stop rule reads `expected_info_gain` — *is more looking worth it?* — and **nothing computes it** |
 | `customer_acquisition` | `customer_interviews` is `cost: high` and nothing reviews whether it earns that |
 
-Two checks follow, and `observes.*.checked_by` was added to the format so the meeseeks pattern
-is first-class rather than accidental:
+The authoring language now makes that review a small structural contract rather than only a
+label:
+
+```yaml
+observes:
+  customer_interviews:
+    cost: high
+    checked_by: quarterly_source_review
+    value_metric: decisions changed per interview-hour
+    review_window: one quarter
+    review_every: quarterly
+    adjusts: retirement
+```
+
+Three checks follow, so the meeseeks pattern is first-class rather than accidental:
 
 - **`expensive_signal_unreviewed`** — a costly source nothing ever asks was worth it.
 - **`informs_no_decision`** — sharper than `orphan_signal`, which catches a signal informing
   *nothing*. This catches a signal that informs a belief **no rule reads**. The loop is not
   wrong about anything. It is spending attention it will not get back.
+- **`incomplete_attention_contract`** — a review name with no value metric, review window,
+  review cadence, or ability to alter sampling, source, routing, or retirement. A label alone
+  is not closure.
 
 `informs_no_decision` found a hole in this project's own flagship example on its first run:
 `channel_saturation` is modelled from a daily feed and no decision depends on it.
@@ -67,9 +85,11 @@ means these checks are *motivated* by three real instances and **not yet evidenc
 Low firing is at least evidence they do not fire spuriously; it is not evidence of a widespread
 defect, and this document does not claim one.
 
-**This is value-of-information, which decision theory has had for decades and agent frameworks
-have not.** Calibrating the estimator tells you how much to trust the answer. Calibrating the
-*signal* tells you whether the question was worth asking.
+**This is motivated by value-of-information, which decision theory has had for decades.** LoopSpec
+does not calculate counterfactual information value; it checks whether a loop has declared how
+signal value will be assessed and how attention can change. Calibrating the estimator tells
+you how much to trust the answer. Reviewing the *signal* asks whether the question was worth
+asking.
 
 ## L3 — the spec allocates *human* attention across loops
 

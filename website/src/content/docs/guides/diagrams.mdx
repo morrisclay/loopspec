@@ -1,0 +1,84 @@
+---
+title: Draw diagrams
+description: Render dependency, governance, and feedback-ring views without letting layout invent missing closure.
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+import Mermaid from '../../../components/Mermaid.astro';
+
+LoopSpec has two diagram projections. Both are derived from validated canonical IR; neither accepts
+hand-authored coordinates or edges.
+
+<Tabs>
+	<TabItem label="Dependency and governance">
+Shows the full typed graph: what is observed, believed, decided, changed, bounded, approved,
+consumed, and borne by people.
+
+```bash
+loopspec diagram system.loop.yaml --markdown
+```
+	</TabItem>
+	<TabItem label="Control loop">
+Shows the familiar reference → policy → action → process → observation return path. A missing
+process or reference-use edge remains visibly missing.
+
+```bash
+loopspec diagram system.loop.yaml --control --markdown
+```
+	</TabItem>
+</Tabs>
+
+## Dependency and governance view
+
+<Mermaid
+	chart={`flowchart LR
+	subgraph boundary["boundary · drawn by support lead"]
+	  T["resolution time target"]
+	  Q(["resolution time"])
+	  B["severity estimator"]
+	  P{"triage policy"}
+	  A["escalate"]
+	  W[("support workflow")]
+	end
+	S[/"ticket outcome"/] -->|measures| Q
+	S --> B -->|estimates| Q
+	Q -->|reads| P
+	T -.->|targets| Q
+	P -->|uses reference| T
+	P -->|selects| A
+	A -->|through| W
+	W -->|emits| S
+	H(("support lead")) -.->|frames| boundary
+	H -.->|sees| Q`}
+	caption="The dependency view preserves typed relations and the observer-relative boundary."
+/>
+
+## Control-loop view
+
+<Mermaid
+	chart={`flowchart LR
+	R["reference"] --> C["comparison"]
+	E["estimate"] --> C
+	C --> P{"policy"} --> A["action"] --> W[("process")]
+	W --> S[/"observation"/] --> E`}
+	caption="The displayed comparison is a projection convention backed by an explicit uses_reference edge. It is not an executable numeric error function."
+/>
+
+## Read absence as part of the diagram
+
+| What you see | What it means |
+|---|---|
+| observation with no outgoing relation | collected but informs nothing |
+| quantity with nothing measuring it | the loop claims to track something it does not observe |
+| target with no action path | desired, but no declared lever can move it |
+| action jumping directly to observation | the process/world leg is implicit |
+| irreversible action with no party attached | no named approval gate |
+| target with no policy reference edge | target and current value coexist without a represented comparator |
+
+<Aside type="note" title="A projection must name what it loses">
+The control view hides much of governance, provenance, and cross-loop sharing to make closure
+legible. The dependency view retains those relations but is less immediately recognizable as a
+feedback ring. Use both during consequential reviews.
+</Aside>
+
+The stable shape and arrow vocabulary is defined in the [diagram notation](/reference/diagram-notation/).

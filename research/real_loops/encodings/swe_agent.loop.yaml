@@ -1,0 +1,93 @@
+# Encoded from SWE-agent DefaultAgent at revision
+# 3ea751c087f32b16e039a2233dd6eefecef325d5.
+# Evidence: sweagent/agent/agents.py lines 1062-1215 and 1235-1294.
+
+loop: swe_agent_default
+runs: per_problem_instance
+
+boundary:
+  drawn_by: framework_operator
+  purpose: turn a repository problem statement into a patch submission
+  inside: [language model agent, message history, parser, trajectory, patch collector]
+  outside: [problem statement author, repository execution environment, later benchmark grader]
+
+goal:
+  issue_resolution:
+    keep: a submitted patch that resolves the stated repository problem
+
+beliefs:
+  solution_ready:
+    question: Is the current repository state ready to submit as the solution?
+    how: LLM judgement from the problem statement and accumulated action observations
+    explains: issue_resolution
+    known_bias: the in-run submission decision is not the later benchmark grader's verdict
+
+observes:
+  problem_statement:
+    informs: solution_ready
+    every: once per instance
+    origin: outside
+    how: reported
+    reported_by: framework_operator
+
+  command_observation:
+    informs: solution_ready
+    every: after each executed step
+    origin: outside
+    how: measured
+    source: SWEEnv command execution
+
+  patch_submission:
+    informs: issue_resolution
+    every: on submit or autosubmit
+    origin: ourselves
+    how: calculated
+    produced_by: submit_patch
+
+processes:
+  repository_execution:
+    description: execute the model-selected shell or editing action in the repository environment
+    location: outside
+    observed_as: [command_observation]
+
+actions:
+  choose_and_execute_step:
+    moves: issue_resolution
+    through: repository_execution
+    effect: unknown
+    consumes: [model_cost]
+
+  submit_patch:
+    can_undo: "yes"
+
+when:
+  - if: the previous step is not done and model cost remains
+    reads: [solution_ready, model_cost]
+    do: choose_and_execute_step
+  - if: the model emits a submission command or execution fails beyond its bounded retries
+    reads: [solution_ready, issue_resolution]
+    against: [issue_resolution]
+    do: submit_patch
+
+people:
+  framework_operator:
+    human: true
+    loses_if_wrong: model spend and reviewer time on an incorrect patch
+    sees: [solution_ready, issue_resolution]
+
+  coding_agent:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [solution_ready, issue_resolution]
+
+spends:
+  model_cost:
+    limit: the configured per-instance cost limit
+    replenished: a new problem-instance allocation
+    spent_by: [choose_and_execute_step]
+
+not_modelling:
+  - the external benchmark grader that runs after patch submission
+  - repository-specific test quality
+  - operator review or merge policy after the trajectory ends
+  - which configured shell actions are reversible

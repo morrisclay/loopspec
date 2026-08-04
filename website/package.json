@@ -1,0 +1,23 @@
+{
+  "name": "website",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "brand:assets": "node scripts/generate-brand-assets.mjs",
+    "sync:docs": "node scripts/sync-content.mjs",
+    "dev": "npm run brand:assets && npm run sync:docs && astro dev",
+    "start": "npm run brand:assets && npm run sync:docs && astro dev",
+    "build": "npm run brand:assets && npm run sync:docs && astro build && node scripts/write-worker.mjs",
+    "check": "npm run build && node scripts/check-build.mjs",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.41.6",
+    "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "astro": "^7.0.2",
+    "mermaid": "^11.16.0",
+    "sharp": "^0.35.3"
+  }
+}

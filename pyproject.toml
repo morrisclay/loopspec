@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loopspec"
+version = "2.0.0"
+description = "A cybernetic loop specification language and structural design analyzer"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["PyYAML>=6.0,<7"]
+
+[project.scripts]
+loopspec = "loopspec.loopspec:main"
+uras = "loopspec.uras:legacy_main"
+
+[tool.setuptools]
+packages = ["loopspec", "loopspec.schema", "loopspec.ontology", "loopspec.docs"]
+
+[tool.setuptools.package-dir]
+loopspec = "tools"
+"loopspec.schema" = "schema"
+"loopspec.ontology" = "ontology"
+"loopspec.docs" = "docs"
+
+[tool.setuptools.package-data]
+"loopspec.schema" = ["*.yaml", "*.json", "*.md"]
+"loopspec.ontology" = ["*.yaml"]
+"loopspec.docs" = ["checks.yaml", "base_rates.json"]

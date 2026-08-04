@@ -1,0 +1,9 @@
+{
+  "source": "browser_use.raw.yaml",
+  "output": "browser_use.loop.yaml",
+  "transform": [
+    "remove only the goal., beliefs., observes., and spends. namespace prefixes from references"
+  ],
+  "semantic_edits": false,
+  "reason": "LoopSpec references are unqualified; the raw encoder output is retained unchanged."
+}

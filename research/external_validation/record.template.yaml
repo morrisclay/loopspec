@@ -1,0 +1,20 @@
+system_id: "DEIDENTIFIED_UNIQUE_ID"
+author_id: "DEIDENTIFIED_UNIQUE_AUTHOR_ID"
+domain: "DOMAIN"
+stage: operating # operating | design
+source_kind: mixed # code | diagram | prompt | runbook | prose | mixed
+encoder_id: "DEIDENTIFIED_ENCODER_ID"
+loopspec_contributor: false
+spec_path: "path/to/deidentified-frozen.loop.yaml"
+spec_sha256: "SHA256"
+encoding_minutes: 0
+author_corrections: []
+findings:
+  - pattern: "CHECK_NAME"
+    assurance: structural
+    presentation_bucket: specific
+    initial_verdict: changes_spec
+    adjudicated_correct: true
+    action_promised: "DEIDENTIFIED_ACTION_OR_NULL"
+    action_observed_at_followup: null
+    notes: null

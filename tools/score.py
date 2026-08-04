@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-URAS score — the self-optimization function defined in ontology/score.md
+LoopSpec score — the self-optimization function defined in ontology/score.md
 
     python3 tools/score.py            # score + coverage report
     python3 tools/score.py --check    # exit nonzero on any hard violation (CI use)
@@ -673,7 +673,7 @@ def main():
         return 1 if (check and hard) else 0
 
     print("=" * 68)
-    print("URAS SCORE")
+    print("LoopSpec SCORE")
     print("=" * 68)
     for k, (v, d) in terms.items():
         if v is None:

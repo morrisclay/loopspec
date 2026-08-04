@@ -43,10 +43,13 @@ acts:
 
 when:
   - if: "cac < 400 and product_market_fit above 0.6"
+    reads: [cac, product_market_fit]
     do: increase_budget
   - if: "payback_months > 12"
+    reads: [payback_months]
     do: change_pricing
   - if: "product_market_fit below 0.4"
+    reads: [product_market_fit]
     escalate: founder
 
 parties:

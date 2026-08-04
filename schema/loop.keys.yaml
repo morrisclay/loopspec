@@ -27,7 +27,7 @@
 # `wipe_production` once parsed clean and produced no finding. The most dangerous
 # declaration is the easiest to lose, and this format is written mostly by LLMs.
 
-version: 1
+version: "1.1"
 
 # ---------------------------------------------------------------------------------------
 top_level:
@@ -42,6 +42,13 @@ top_level:
       How often the loop runs — `weekly`, `every 6 hours`, `per_question`. Free text, since
       cadence is domain-specific; the linter checks that one exists, not its units.
     aliases: [every]
+  boundary:
+    type: map
+    of: boundary_entry
+    doc: >
+      The observer-relative system boundary: who drew it, for what purpose, and what is
+      treated as inside or outside. Cybernetic claims are meaningless without a declared
+      system/environment distinction; this block makes that modelling choice reviewable.
   goal:
     type: map
     of: goal_entry
@@ -61,6 +68,13 @@ top_level:
     of: actions_entry
     doc: The levers it may pull.
     aliases: [acts]
+  processes:
+    type: map
+    of: processes_entry
+    doc: >
+      Parts of the world or system through which actions become later observations. A process
+      closes the represented effect path `action -> process -> observation`; it is not a
+      transfer function or a claim about stability.
   when:
     type: list
     of: when_entry
@@ -74,6 +88,12 @@ top_level:
       The conditions under which the loop stops and asks a person. Top-level and on its own,
       because burying escalation inside the decision rule is how it goes missing — this is
       the list a reader scans first to find out whether the thing can run away.
+  asks_human:
+    type: str
+    doc: >
+      The person who receives the escalation described by `asks_human_when`. Must name an
+      entry in `people`. Conditions without a recipient remain accepted as a partial design
+      and produce `escalation_target_unspecified`.
   people:
     type: map
     of: people_entry
@@ -111,6 +131,27 @@ top_level:
     aliases: [ignoring]
 
 # ---------------------------------------------------------------------------------------
+boundary_entry:
+  drawn_by:
+    type: str
+    required: true
+    doc: The person or agent whose distinctions define inside and outside. Must name `people`.
+  purpose:
+    type: str
+    required: true
+    doc: >
+      Why this boundary and these variables were chosen. This records the observer's purpose;
+      it does not imply a stronger second-order analysis of how that purpose was formed.
+  inside:
+    type: list
+    of: str
+    doc: Components treated as part of the regulated system for this purpose.
+  outside:
+    type: list
+    of: str
+    doc: Environmental components treated as outside the system for this purpose.
+
+# ---------------------------------------------------------------------------------------
 goal_entry:
   keep:
     type: str
@@ -132,11 +173,14 @@ goal_entry:
       structural — otherwise "set by the strategy loop" is a comment, and nothing can check
       whether that loop is able to move the number it is nominally responsible for. Naming it is what stops an outer loop's target from quietly becoming
       an inner loop's unexamined constant, which is how layered agent systems actually fail.
-      CASCADE HAS A HARD REQUIREMENT: the inner loop must run FASTER than the loop setting its
-      target. If it does not, the outer loop's corrections arrive before the inner one has
-      settled, and both oscillate. That is checkable and is checked.
+      Conventional cascade design requires the inner loop's DYNAMICS to be substantially faster
+      than the loop setting its target. This format records update cadence, not bandwidth or
+      settling time, so the linter uses a non-faster inner cadence only as a review signal. It
+      does not prove oscillation.
   confidence:
     type: number
+    minimum: 0
+    maximum: 1
     doc: >
       How firmly the goal ITSELF is held, 0–1 — uncertainty about what you want, as distinct
       from uncertainty about the world. Optional, and deliberately not a primitive: it enters
@@ -172,6 +216,32 @@ beliefs_entry:
       most common defect in real loops — found in three independent systems by three careful
       authors. A belief nothing checks cannot be shown to track anything.
     aliases: [calibrated_by, how_checked]
+  checked_against:
+    type: str
+    doc: >
+      The observation that later carries the outcome used to score this belief. Must name an
+      entry in `observes`. Without a prediction→outcome join, `checked_by:` is only a review
+      label and cannot establish calibration.
+    aliases: [outcome]
+  scoring_rule:
+    type: str
+    doc: >
+      How predictions are scored against outcomes — for example Brier score, log loss,
+      calibration error, or a domain rubric. Free text because belief types differ; absence is
+      reported as an incomplete calibration contract.
+    aliases: [score]
+  window:
+    type: str
+    doc: >
+      The cohort or time window over which the score is interpreted, such as 90 days or 200
+      predictions. Distinct from `every:`, which says how often the review runs.
+    aliases: [calibration_window]
+  adjusts:
+    type: str
+    enum: [trust, method, threshold, source, retirement]
+    doc: >
+      What the check changes when performance is poor. Scoring without a revision target is
+      evaluation, not a closed calibration loop.
   every: {type: str, doc: How often the check runs.}
   explains:
     type: str
@@ -233,10 +303,29 @@ observes_entry:
     type: str
     doc: >
       What reviews whether this observation is worth what it costs — whether looking here
-      earned the attention. Distinct from calibrating a belief. Every Calibration in this
-      project scored an ESTIMATOR: was my conclusion right. Nothing scored a SIGNAL: was my
-      LOOKING right. A loop that keeps paying for a source that never changed a decision is
-      not wrong about anything; it is spending attention it will not get back.
+      earned the attention. Distinct from calibrating a belief: belief calibration asks
+      whether a conclusion was right, while this attention review asks whether looking at
+      this signal was worthwhile. A loop that keeps paying for a source that never changed a
+      decision is not wrong about anything; it is spending attention it will not get back.
+  value_metric:
+    type: str
+    doc: >
+      How the review judges this observation's decision value relative to its cost — for
+      example decisions changed, information gain, or avoided review time.
+  review_window:
+    type: str
+    doc: The cohort or period over which the observation's value metric is assessed.
+  review_every:
+    type: str
+    doc: >
+      How often the attention review runs. Distinct from `review_window`, which says which
+      observations are included in the assessment.
+  adjusts:
+    type: str
+    enum: [sampling, source, routing, retirement]
+    doc: >
+      What changes when this observation does not earn its cost. A review that cannot alter
+      attention is evaluation, not a closed attention-control contract.
 
 actions_entry:
   moves:
@@ -264,9 +353,59 @@ actions_entry:
     aliases: [delay, effect_shows_after, effect_shows_in]
   damping: {type: str, doc: Deadband, cooldown or rate limit that stops it oscillating.}
   consumes: {type: list, of: str, doc: Finite things this draws down.}
+  through:
+    type: [str, list]
+    doc: >
+      The declared process or processes through which this action's effect becomes observable.
+      Must name entries in `processes`. Without it, `moves:` states intended influence but not
+      a represented feedback path.
+  effect:
+    type: str
+    enum: [increase, decrease, unknown]
+    doc: >
+      The believed direction of this action's effect on every quantity in `moves`.
+      Write `unknown` when the sign is not known; omission and explicit uncertainty are
+      different. Direction alone is insufficient for stability or gain analysis.
+  effects:
+    type: map
+    values_enum: [increase, decrease, unknown]
+    doc: >
+      Per-quantity effect directions when one action moves several quantities in different
+      directions. Keys must exactly name quantities in `moves`. Use either `effect:` for one
+      shared direction or `effects:`, never both.
+
+processes_entry:
+  observed_as:
+    type: list
+    of: str
+    doc: >
+      Observations produced by this process. Each must name an entry in `observes`; together
+      with an action's `through:` this closes the represented world path.
+  location:
+    type: str
+    enum: [inside, outside, interface]
+    doc: Where this process lies relative to the declared boundary.
+  description:
+    type: str
+    doc: What transforms the action into a later observable consequence.
 
 when_entry:
   if:       {type: str, doc: The condition.}
+  reads:
+    type: list
+    of: str
+    doc: >
+      The goal, belief, or resource names this rule actually reads. This is the semantic input;
+      `if:` is the human-readable expression. Older specs may omit it and the expander will
+      infer likely inputs from `if:`, marking the result `inputs_inferred: true`. New specs
+      should declare it so punctuation and prose wording cannot change the graph.
+  against:
+    type: list
+    of: str
+    doc: >
+      Goal quantities whose declared `keep:` conditions this rule compares its inputs against.
+      Each name must be a goal with a target and, when `reads:` is explicit, must also appear
+      there. This is the semantic comparator; `if:` remains the human-readable expression.
   do:       {type: [str, list], doc: Action(s) to take. Must name entries in `actions`.}
   escalate:
     type: str

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-URAS Semantic Validator — the Phase 5 deliverable.
+LoopSpec Semantic Validator — the Phase 5 deliverable.
 
     python3 tools/validate.py                  # validate everything
     python3 tools/validate.py <file.yaml>...    # validate specific encodings
@@ -29,13 +29,17 @@ try:
 except ImportError:
     sys.exit("needs pyyaml: pip install pyyaml")
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+try:
+    from .runtime_paths import ROOT
+except ImportError:
+    from runtime_paths import ROOT
 
 # YAML 1.1 reads these as booleans, so using them as keys silently produces a non-string key.
 # Banned outright rather than papered over: the canonical serialization must be unambiguous.
 YAML11_RESERVED = {"on", "off", "yes", "no", "true", "false", "y", "n", "null", "~"}
 
-REQUIRED_TOP = ["encodes", "set", "domain", "encoded_by", "uses"]
+REQUIRED_DOCUMENT = ["encodes", "set"]
+RESEARCH_METADATA = ["domain", "encoded_by"]
 
 
 class Report:
@@ -55,7 +59,8 @@ class Report:
 
 
 def load_catalog():
-    d = yaml.safe_load(open(os.path.join(ROOT, "ontology", "primitives.yaml")))
+    with open(os.path.join(ROOT, "ontology", "primitives.yaml")) as source:
+        d = yaml.safe_load(source)
     core = {p["name"] for p in d["primitives"] if p.get("tier") == "core"}
     allp = {p["name"] for p in d["primitives"]}
     fields = {f["name"] for f in (d.get("fields") or [])}
@@ -111,11 +116,44 @@ CANONICAL_RELS = {"measures", "estimates", "holds", "targets", "closes", "delays
                   # added after the held-out set demanded them — relations, not primitives
                   "asserts", "replenishes", "produces",
                   # causal: the vocabulary previously could not say what causes what
-                  "explains", "causes"}
+                  "explains", "causes", "reads", "compares", "frames", "bounds",
+                  "samples_at", "reviews_at", "sets", "uses_reference"}
+
+IR2_REL_SIGNATURES = {
+    "measures": {("Signal", "Estimand")},
+    "estimates": {("Estimator", "Estimand")},
+    "holds": {("Party", "Estimand"), ("Party", "Estimate")},
+    "targets": {("DesiredCondition", "Estimand"), ("Intervention", "Estimand")},
+    "delays": {("Intervention", "Delay")},
+    "constrains": {("Constraint", "System")},
+    "authorizes": {("Party", "Intervention"), ("Policy", "Intervention")},
+    "consumes": {("Intervention", "Resource")},
+    "revises": {("Calibration", "Estimator"), ("Calibration", "Signal")},
+    "bears": {("Party", "Consequence")},
+    "asserts": {("Party", "Signal"), ("Estimand", "Explanation")},
+    "replenishes": {("System", "Resource"), ("Intervention", "Resource"),
+                    ("Signal", "Resource")},
+    "produces": {("System", "Signal"), ("Intervention", "Signal")},
+    "explains": {("Explanation", "Estimand")},
+    "reads": {("Policy", "Estimand"), ("Policy", "Resource")},
+    "compares": {("Calibration", "Signal")},
+    "causes": {("Intervention", "System")},
+    "frames": {("Party", "Boundary")},
+    "bounds": {("Boundary", "System")},
+    "samples_at": {("Signal", "TimeScale")},
+    "reviews_at": {("Calibration", "TimeScale")},
+    "sets": {("Estimand", "DesiredCondition")},
+    "uses_reference": {("Policy", "DesiredCondition")},
+}
+
+
+def _ir_major(doc):
+    """Read the canonical LoopSpec marker or its LoopSpec-era compatibility spelling."""
+    return doc.get("loopspec_version", doc.get("uras_version"))
 
 
 def check_canonical(path, doc, allp, rep):
-    """Validate a flat node/edge document against schema/uras.graph.md."""
+    """Validate a flat node/edge document against schema/loopspec.graph.md."""
     where = os.path.basename(path)
     nodes = doc.get("nodes") or []
     edges = doc.get("edges") or []
@@ -170,33 +208,80 @@ def check_canonical(path, doc, allp, rep):
             v = e.get(end)
             if v not in ids:
                 rep.err(where, f"edge {end} `{v}` references no declared node")
+        if (_ir_major(doc) == 2 and r in IR2_REL_SIGNATURES and
+                e.get("from") in ids and e.get("to") in ids):
+            actual = (ids[e["from"]].get("kind"), ids[e["to"]].get("kind"))
+            if actual not in IR2_REL_SIGNATURES[r]:
+                rep.err(where, f"edge `{e.get('from')} -{r}-> {e.get('to')}` has kind "
+                               f"signature {actual}, expected one of "
+                               f"{sorted(IR2_REL_SIGNATURES[r])}")
 
-    # loops must close, name real nodes, and be distinct
-    seen = {}
+    # A loop refers to SETS of observations and actions. Earlier IR revisions selected the
+    # first item in YAML order as a privileged signal/intervention, making findings change
+    # when a mapping was reordered. Singular fields remain readable for legacy encodings.
+    seen_ids = set()
     for lp in maps(doc.get("loops")):
-        for field, want in (("timescale", "TimeScale"), ("signal", "Signal"),
-                            ("intervention", "Intervention")):
-            v = lp.get(field)
-            if not v:
-                rep.err(where, f"loop `{lp.get('id')}` does not close: missing {field}")
-            elif v not in ids:
-                rep.err(where, f"loop `{lp.get('id')}` {field} `{v}` references no node")
-            elif ids[v].get("kind") != want:
-                rep.err(where, f"loop `{lp.get('id')}` {field} `{v}` is kind "
-                               f"`{ids[v].get('kind')}`, expected `{want}`")
-        key = (lp.get("timescale"), lp.get("intervention"))
-        if key in seen:
-            rep.err(where, f"loops `{seen[key]}` and `{lp.get('id')}` share timescale and "
-                           f"closing intervention — under the identity rule they are one loop")
-        seen[key] = lp.get("id")
+        loop_id = lp.get("id")
+        if not loop_id:
+            rep.err(where, "loop record has no id")
+        elif loop_id in seen_ids:
+            rep.err(where, f"duplicate loop id `{loop_id}`")
+        seen_ids.add(loop_id)
 
-    # every Party bears a Consequence (edge rel: bears)
+        timescale = lp.get("timescale")
+        if timescale and timescale not in ids:
+            rep.err(where, f"loop `{loop_id}` timescale `{timescale}` references no node")
+        elif timescale and ids[timescale].get("kind") != "TimeScale":
+            rep.err(where, f"loop `{loop_id}` timescale `{timescale}` is kind "
+                           f"`{ids[timescale].get('kind')}`, expected `TimeScale`")
+
+        for plural, singular, want in (("signals", "signal", "Signal"),
+                                       ("interventions", "intervention", "Intervention")):
+            values = lp.get(plural)
+            if values is None:
+                values = [lp[singular]] if lp.get(singular) else []
+            if not isinstance(values, list):
+                rep.err(where, f"loop `{loop_id}` `{plural}` must be a list")
+                continue
+            if lp.get(singular) and lp[singular] not in values:
+                rep.err(where, f"loop `{loop_id}` legacy `{singular}` is not in `{plural}`")
+            for value in values:
+                if value not in ids:
+                    rep.err(where, f"loop `{loop_id}` {singular} `{value}` references no node")
+                elif ids[value].get("kind") != want:
+                    rep.err(where, f"loop `{loop_id}` {singular} `{value}` is kind "
+                                   f"`{ids[value].get('kind')}`, expected `{want}`")
+
+        for plural, want in (("estimands", "Estimand"),
+                             ("desired_conditions", "DesiredCondition"),
+                             ("policies", "Policy"),
+                             ("processes", "System")):
+            values = lp.get(plural, [])
+            if not isinstance(values, list):
+                rep.err(where, f"loop `{loop_id}` `{plural}` must be a list")
+                continue
+            for value in values:
+                if value not in ids:
+                    rep.err(where, f"loop `{loop_id}` {plural} member `{value}` references no node")
+                elif ids[value].get("kind") != want:
+                    rep.err(where, f"loop `{loop_id}` {plural} member `{value}` is kind "
+                                   f"`{ids[value].get('kind')}`, expected `{want}`")
+
+        boundary = lp.get("boundary")
+        if boundary:
+            if boundary not in ids:
+                rep.err(where, f"loop `{loop_id}` boundary `{boundary}` references no node")
+            elif ids[boundary].get("kind") != "Boundary":
+                rep.err(where, f"loop `{loop_id}` boundary `{boundary}` is kind "
+                               f"`{ids[boundary].get('kind')}`, expected `Boundary`")
+
+    # Every Party declares its exposure: either a bears edge or explicit no consequence.
     bears = {e["from"] for e in edges if e.get("rel") == "bears"}
     for pid in kinds.get("Party", []):
-        if pid not in bears:
-            rep.warn(where, f"party `{pid}` bears no Consequence. Consequence is an EXTENSION "
-                            f"in the agent-loop scope, so this is advisory — but if the loop "
-                            f"has stakes worth modelling, name who carries them")
+        if pid not in bears and ids[pid].get("consequence_status") != "none":
+            rep.warn(where, f"party `{pid}` does not declare whether it bears a consequence. "
+                            f"Name the exposure, or author `loses_if_wrong: nothing` when the "
+                            f"absence of stake is intentional")
 
     # every Estimator declares an idempotency basis
     for eid in kinds.get("Estimator", []):
@@ -231,7 +316,12 @@ def check_encoding(path, doc, core, allp, rep):
                               if n.get("kind")})
         doc["_uses_derived"] = True
 
-    for k in REQUIRED_TOP:
+    required = list(REQUIRED_DOCUMENT)
+    if not (canonical and str(doc.get("source_format", "")).startswith("loop-v")):
+        required += RESEARCH_METADATA
+    if not canonical:
+        required.append("uses")
+    for k in required:
         if k not in doc:
             rep.err(where, f"missing required top-level key `{k}`")
 
@@ -405,6 +495,17 @@ def check_encoding(path, doc, core, allp, rep):
     return rep
 
 
+def validate_document(doc, path="<memory>"):
+    """Validate one already-loaded document through the same semantic path as the CLI."""
+    _, core, allp, _fields = load_catalog()
+    rep = Report()
+    if not isinstance(doc, dict):
+        rep.err(os.path.basename(path), "document root must be a mapping")
+        return rep
+    check_encoding(path, doc, core, allp, rep)
+    return rep
+
+
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     as_json = "--json" in sys.argv
@@ -416,7 +517,8 @@ def main():
     checked = 0
     for p in paths:
         try:
-            doc = yaml.safe_load(open(p))
+            with open(p) as source:
+                doc = yaml.safe_load(source)
         except yaml.YAMLError as e:
             first = str(e).strip().splitlines()[0]
             rep.err(os.path.basename(p), f"YAML parse failure — {first}")
@@ -432,7 +534,7 @@ def main():
         return 0 if rep.ok else 1
 
     print("=" * 70)
-    print(f"URAS SEMANTIC VALIDATOR — {checked} encoding(s)")
+    print(f"LoopSpec SEMANTIC VALIDATOR — {checked} encoding(s)")
     print("=" * 70)
     if rep.errors:
         print(f"\nERRORS ({len(rep.errors)}) — these block\n")

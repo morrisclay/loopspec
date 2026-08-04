@@ -1,0 +1,120 @@
+# Encoded from openai/codex revision
+# 2a16af823456712e3dbb030ecf29fb727c2cde66.
+# Evidence: codex-rs/core/src/session/turn.rs lines 140-505;
+# codex-rs/core/src/session/mod.rs lines 4024-4030;
+# codex-rs/core/src/tools/sandboxing.rs lines 194-234;
+# codex-rs/core/src/tools/runtimes/shell.rs lines 139-178.
+
+loop: codex_turn
+runs: per_user_turn
+
+boundary:
+  drawn_by: codex_operator
+  purpose: respond to a user request by alternating model sampling and tool execution until the turn can return a final response
+  inside: [conversation history, turn controller, pending input queue, compaction controller, approval policy]
+  outside: [user, model service, filesystem, processes, network services, MCP servers]
+
+goal:
+  user_task_progress:
+    keep: the requested task is completed far enough for the turn to return a final assistant response
+
+beliefs:
+  next_step_useful:
+    question: Which response or tool call is most likely to advance the user's task now?
+    how: model judgement over user input, conversation history, world state, and prior tool results
+    explains: user_task_progress
+    settled_by: tool_result
+    known_bias: a successful tool call does not establish that the user's overall task is correct or complete
+
+observes:
+  user_input:
+    informs: [user_task_progress, next_step_useful]
+    every: at turn start and when pending steering input is drained
+    origin: outside
+    how: reported
+    reported_by: codex_operator
+
+  model_response:
+    informs: [user_task_progress, next_step_useful]
+    every: after each sampling request
+    origin: outside
+    how: reported
+    reported_by: model_service
+
+  tool_result:
+    informs: [user_task_progress, next_step_useful]
+    every: after each requested tool call
+    origin: ourselves
+    how: measured
+    produced_by: execute_tool_call
+
+processes:
+  model_sampling:
+    description: the model service maps the current conversation and advertised tools to assistant content or requested function calls
+    location: outside
+    observed_as: [model_response]
+
+  workspace_interaction:
+    description: an approved or policy-permitted tool call reads or changes the bound filesystem, process, network, or service and returns a result
+    location: outside
+    observed_as: [tool_result]
+
+actions:
+  sample_model:
+    moves: user_task_progress
+    through: model_sampling
+    effect: unknown
+    can_undo: "yes"
+    consumes: [context_budget]
+
+  execute_tool_call:
+    moves: user_task_progress
+    through: workspace_interaction
+    effect: unknown
+
+  compact_context:
+    can_undo: "yes"
+
+when:
+  - if: the turn is incomplete and initial, pending, or tool-result input is available
+    reads: [user_task_progress, next_step_useful, context_budget]
+    against: [user_task_progress]
+    do: sample_model
+  - if: the model response requests a function call
+    reads: [next_step_useful, user_task_progress]
+    against: [user_task_progress]
+    do: execute_tool_call
+  - if: another sampling step is needed and the context token limit is reached
+    reads: [context_budget, user_task_progress]
+    do: compact_context
+
+asks_human_when:
+  - a configured approval policy classifies a requested shell or tool execution as requiring operator approval
+asks_human: codex_operator
+
+people:
+  codex_operator:
+    human: true
+    loses_if_wrong: time, money, privacy, repository integrity, and external state affected by the turn
+    sees: [user_task_progress, next_step_useful]
+
+  codex_agent:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [user_task_progress, next_step_useful]
+
+spends:
+  context_budget:
+    limit: the active model context-window limit
+    replenished: compaction or a new turn context
+    spent_by: [sample_model]
+
+never:
+  - execute a request that a granular policy marks forbidden because sandbox approval prompts are disabled
+
+not_modelling:
+  - whether the final response actually satisfies tests, reviewers, or the user after the turn ends
+  - the reversibility of execute_tool_call, which depends on the concrete tool, arguments, sandbox, and external service
+  - conditional approval as an action property; the runtime binds it per request and policy, while needs_approval would make it unconditional
+  - operator start, steering, interruption, and stop authority as first-class control rights
+  - compact_context and the final assistant response as controller operation and terminal output rather than world interventions

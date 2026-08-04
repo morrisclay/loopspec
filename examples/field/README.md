@@ -46,7 +46,7 @@ comparing against noise. Inputs are now the intersection with declared names.
 
 **`estimand_never_estimated` no longer fires from the authoring path.** Every `beliefs:` entry
 gets an estimator by construction, so it is unreachable — but the case it covered is caught,
-by `uncontrollable_target` and `unmeasured_estimand` together. Verified with a spec declaring
+by `target_without_actuator` and `unmeasured_estimand` together. Verified with a spec declaring
 a goal nothing tracks. It remains live for hand-written graph encodings.
 
 ## The one that is not a defect

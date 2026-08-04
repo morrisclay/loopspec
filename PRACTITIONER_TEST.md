@@ -4,7 +4,7 @@
 a real operator something they did not already know. A model can catch restatement — and does,
 reproducibly — but it cannot judge news. This is the instrument for that.
 
-**How to use it:** send the section below to a founder or operator. Do not explain URAS, do not
+**How to use it:** send the section below to a founder or operator. Do not explain LoopSpec, do not
 explain the score, do not say what you are hoping to hear. It takes about four minutes.
 
 ---

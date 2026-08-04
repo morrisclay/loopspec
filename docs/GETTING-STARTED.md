@@ -3,18 +3,22 @@
 Ten minutes. You will end up with a file you can lint, draw, compare against published loops,
 and hand to any LLM to compile.
 
-**Requirements:** Python 3 and `pyyaml`. That is all — there is no framework to install,
-because the spec is the artifact and every tool just reads it.
+**Requirements:** Python 3.11 or newer. For a clean local command, run
+`python3 -m venv .venv`, then `.venv/bin/pip install .`; the command is `.venv/bin/loopspec`.
+You can also work directly from the repository with `python3 tools/loopspec.py`. The spec remains
+the artifact: installation only supplies the command and its PyYAML dependency.
 
 ---
 
-## 1. Start with the two questions that matter
+## 1. Start with four questions that matter
 
 Before any syntax. Most loops are badly built because nobody wrote these down, not because
 anyone lacked the skill.
 
 > **What quantity is this loop trying to move?**
 > **What does it believe that it cannot see directly?**
+> **Who drew the system boundary, and for what purpose?**
+> **Through what process does an action become a later observation?**
 
 If you cannot answer the first, you have a script, not a loop. If you cannot answer the
 second, you have a thermostat — which is fine, and means most of this is unnecessary.
@@ -27,6 +31,12 @@ Create `myloop.loop.yaml`. Every key is a plain English word doing one job.
 loop: support_triage
 runs: per_ticket
 
+boundary:
+  drawn_by: support_lead
+  purpose: route urgent support work without losing customer trust
+  inside: [triage policy, support queue, engineering escalation]
+  outside: [customer situation, product behavior]
+
 goal:
   resolution_time:
     keep: below 4 hours
@@ -34,7 +44,6 @@ goal:
 beliefs:
   ticket_severity:
     question: "How badly is this customer blocked?"
-    from: [ticket_text]
     how: judgement
 
 observes:
@@ -43,13 +52,21 @@ observes:
     origin: outside
     how: reported          # the customer's account, not a measurement
 
+processes:
+  support_workflow:
+    location: inside
+    observed_as: []        # incomplete until ticket outcomes are added below
+
 actions:
   escalate_to_engineer:
     moves: resolution_time
+    through: support_workflow
+    effect: decrease
     can_undo: yes
 
 when:
   - if: "ticket_severity is high"
+    reads: [ticket_severity]
     do: escalate_to_engineer
 
 people:
@@ -57,6 +74,7 @@ people:
     human: yes
     loses_if_wrong: "the customer relationship"
     sees: [ticket_severity]
+
 ```
 
 Two things there are worth pausing on, because they are the parts people skip:
@@ -68,46 +86,52 @@ Two things there are worth pausing on, because they are the parts people skip:
   `origin: ourselves` + `how: reported` is an agent grading its own homework.
 - **`question:` is optional and worth writing.** It is the line a human reads first, and the
   one that exposes a belief nobody can actually state.
+- **`boundary:` records a perspective, not objective truth.** `drawn_by` and `purpose` make
+  clear whose distinctions define “inside,” “outside,” and success. `processes:` then records
+  the world/system leg that later carries an action's effect back as an observation.
 
 ## 3. Lint it
 
 ```bash
-python3 tools/loop.py myloop.loop.yaml --lint
+python3 tools/loopspec.py check myloop.loop.yaml
 ```
 
 You will get findings immediately. **That is normal and is the point** — the reference
 examples published by framework authors average five each. A first draft with findings is a
 first draft that told you something.
 
-The spec above produces **six**. Three you can act on straight away:
+The spec above intentionally produces several findings. Three you can act on straight away:
 
 | finding | what to do |
 |---|---|
 | `belief_never_checked` | add `checked_by:` naming what scores the belief against outcomes — **or accept it, knowingly** |
 | `unbounded_loop` | add `spends:` with a ceiling, even a generous one |
-| `regulator_without_model` | add `explains:` to the belief that accounts for your goal |
+| `no_explicit_process_model` | add `explains:` when the loop depends on an explicit account of what generates the goal quantity |
 
-And three that are worth reading before you touch anything:
+And four that are worth reading before you touch anything:
 
 | finding | what it is telling you |
 |---|---|
 | `unmeasured_estimand` | `resolution_time` is the goal and **nothing observes it**. The loop steers toward a number it never sees. This is a real hole in the spec above, left in deliberately — it is the most common thing a first draft gets wrong |
 | `no_escalation_path` | a human is declared and there is no condition under which the loop stops and asks them |
 | `consequence_without_authority` | `support_lead` carries the customer relationship and approves nothing |
+| `reference_not_used` | `resolution_time` has a target, but no rule declares that it compares the observed value with that target |
 
-### The output is ranked, and two of the checks are deliberately not findings
+### The output is ranked, and universal patterns are deliberately context
 
 Findings are ordered by how **unusual** they are, measured against a reference corpus:
 
 - **SPECIFIC TO THIS LOOP** — rare. Most loops do not have these. Read these first.
 - **COMMON** — seen in a fair number of loops. Still worth deciding about.
-- **UNIVERSAL** — context, not a finding. `regulator_without_model` fires on **21 of 21**
+- **UNIVERSAL** — context, not a finding. `no_explicit_process_model` fires on **22 of 23**
   specs in the corpus, including every framework's own best-practice example. A check that
   fires on everything carries **zero bits** about *your* loop, so it is reported as background
   rather than printed first in the same typeface as something rare.
 
-Both things are true at once: *"100% of published loops lack calibration"* is the strongest
-claim this project has **about the field**, and useless **as a lint on your spec**.
+Both things are true at once: a universal pattern can matter **about the corpus** and carry
+almost no information **about your spec**. Also note the assurance boundary: this finding says
+no explicit `explains` relation was encoded; it does not establish a Good Regulator theorem
+violation.
 
 ### Recording a decision — `consider:`
 
@@ -134,16 +158,44 @@ finding no longer fires, the linter says so — *a stale justification is worse 
 beliefs:
   ticket_severity:
     question: "How badly is this customer blocked?"
-    from: [ticket_text]
     how: judgement
-    explains: resolution_time                  # ← the model
-    checked_by: weekly_severity_review         # ← what scores it
+    explains: resolution_time
+    checked_by: weekly_severity_review
+    checked_against: ticket_outcome
+    scoring_rule: severity classification error
+    window: 100 resolved tickets
+    adjusts: trust
+    every: weekly
     settled_by: "the ticket closed without re-opening"
+
+observes:
+  ticket_outcome:
+    informs: [ticket_severity, resolution_time]
+    origin: outside
+    how: measured
+
+processes:
+  support_workflow:
+    location: inside
+    observed_as: [ticket_outcome]
+    description: routing and engineering work that produce the resolved-ticket outcome
+
+when:
+  - if: "ticket_severity is high"
+    reads: [ticket_severity]
+    do: escalate_to_engineer
+  - if: "resolution_time exceeds 4 hours"
+    reads: [resolution_time]
+    against: [resolution_time]
+    do: escalate_to_engineer
 
 spends:
   engineer_hours:
     limit: "8 per week"
     spent_by: [escalate_to_engineer]
+
+asks_human_when: ["severity evidence conflicts"]
+asks_human: support_lead
 ```
 
 `checked_by` is the one people leave out, and leaving it out is the single most common defect
@@ -167,20 +219,38 @@ The spec still trips `unmeasured_estimand`, because `resolution_time` is genuine
 **This tutorial does not end at zero findings, and no honest one would.** The goal is a spec
 whose remaining findings you have read and decided about.
 
-## 5. Draw it
+## 5. Review what changed
+
+Keep the previous spec and compare it with the revision by meaning rather than text:
 
 ```bash
-python3 tools/diagram.py myloop.loop.yaml --md > myloop.md
+python3 tools/loopspec.py diff before.loop.yaml myloop.loop.yaml
 ```
 
-Mermaid, renders in GitHub. Four bands in the order a loop runs — **observed → believed →
-decided → accountable** — and **defects are drawn, not appended**. A hexagon with no flag
-pointing at it is a target nothing can move; you can see it without reading a word.
+The result is computed from both validated IR documents. It reports changed node fields,
+relations, loop membership, exclusions, recorded decisions, and findings; reordering YAML maps
+produces no semantic change. Use `--json` for review automation and `--fail-on-change` when a
+pipeline should return status 3 on any semantic delta.
+
+This is different from a line diff. Changing `effect: decrease` to `effect: increase` is shown
+as an intervention-direction change; removing `against:` is shown as a lost reference edge and
+the newly introduced `reference_not_used` finding.
+
+## 6. Draw it
+
+```bash
+python3 tools/loopspec.py diagram myloop.loop.yaml --markdown > myloop.md
+python3 tools/loopspec.py diagram myloop.loop.yaml --control --markdown > control.md
+```
+
+Both are Mermaid and render in GitHub. The dependency/governance view shows the boundary,
+process, observed, believed, decided, and accountable structures. The control projection shows
+the feedback ring and leaves the process leg visibly broken when it was not declared.
 
 Layout is derived: the format carries no coordinates, so a diagram cannot be drawn to flatter
 its spec.
 
-## 6. Compare it to published loops
+## 7. Compare it to published loops
 
 ```bash
 python3 tools/compare.py myloop.loop.yaml research/published_study/encodings/*.loop.yaml
@@ -190,27 +260,31 @@ This is the part that tends to change people's minds. Your loop next to LangGrap
 tutorial and CrewAI's self-evaluation flow, on the columns that matter. **You cannot diff two
 blog posts. You can diff two specs.**
 
-## 7. Compile it
+## 8. Compile it
 
-There is no compiler, deliberately. Hand the spec to any LLM:
+Compilation is experimental and is not part of the v1.1 release claim. If you use an LLM as an
+adapter, give it the spec and the target's actual API:
 
 > Here is a loop spec. Emit a working implementation for **LangGraph**.
 > Report anything the target cannot express rather than dropping it: end with a section
 > `## did not survive`.
 
-Fidelity is flat from 8B models to frontier ones — the format does not need a clever reader.
-**If your target is newer than the model, paste one page of its API alongside**: Flue went from
-18% to 100% correct-API output on that alone.
+In a one-spec study, element-preservation scores ranged from 0.898 for 8B models to 0.993 for
+frontier models. That grader did not establish executable or semantically correct target code.
+Target knowledge was the actual bottleneck: Flue correct-API use was 18% without documentation
+and 100% across six scored outputs when a one-page API reference travelled with the spec.
 
-Then check what was lost:
+Then run the heuristic loss scan:
 
 ```bash
 python3 tools/verify.py myloop.loop.yaml ./generated/
 ```
 
-This exists because the most-dropped element in a 43-compilation study was **the irreversible
-act with no approval gate** — and two of those drops went unreported by the model that made
-them. A compiler that silently drops the dangerous act is worse than no compiler.
+This exists because the most-dropped element in a 43-compilation archive was **the irreversible
+act with no approval gate** — and two drops went unreported by the model that made them. The
+scanner is text-based and cannot prove semantic preservation; treat a clean result as review
+support, not certification. [`../research/llm_as_compiler.md`](../research/llm_as_compiler.md)
+contains the complete correction and limits.
 
 ## Where to go next
 

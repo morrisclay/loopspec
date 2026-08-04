@@ -1,0 +1,12 @@
+{
+  "case": "swe_agent_default",
+  "encoder": "Anthropic Claude CLI",
+  "model_alias": "sonnet",
+  "tool_access": "disabled",
+  "session_persistence": "disabled",
+  "generated_at": "2026-08-04T12:09:35.507871+00:00",
+  "source_repository": "https://github.com/SWE-agent/SWE-agent",
+  "source_revision": "3ea751c087f32b16e039a2233dd6eefecef325d5",
+  "prompt_sha256": "25d28bd21971031429fb9cfe409f5ffef47a8300a290efb3e1a7547a3c0d3296",
+  "output_sha256": "46d08a536837c0ac8c09f5592e420b7af8a5b817e52107f1541466275d21f76e"
+}

@@ -14,12 +14,17 @@ Two things it guarantees, both of which have already gone wrong here once:
    corpus, produced by running the linter, not written by hand. Hand-written examples drift
    from the checker the moment the checker improves.
 """
-import sys, os, re, io, json, glob, subprocess, collections
+import sys, os, re, io, json, glob, collections
 
 import yaml
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-META = yaml.safe_load(open(os.path.join(ROOT, "docs", "checks.yaml")))
+with open(os.path.join(ROOT, "docs", "checks.yaml")) as source:
+    META = yaml.safe_load(source)
+
+sys.path.insert(0, os.path.join(ROOT, "tools"))
+from loop import expand, SpecError  # noqa: E402
+from derive import analyze_document, ASSURANCE_LEVELS  # noqa: E402
 
 CORPUS = (sorted(glob.glob(os.path.join(ROOT, "examples", "**", "*.loop.yaml"), recursive=True))
           + sorted(glob.glob(os.path.join(ROOT, "research", "published_study",
@@ -39,18 +44,13 @@ def run_corpus():
     """One real finding per pattern, and how many specs each fires on."""
     example, count = {}, collections.Counter()
     for f in CORPUS:
-        exp = subprocess.run(["python3", os.path.join(ROOT, "tools", "loop.py"), f],
-                             capture_output=True, text=True)
-        if exp.returncode:
-            continue
-        tmp = "/tmp/_gc.yaml"
-        open(tmp, "w").write(exp.stdout)
-        out = subprocess.run(["python3", os.path.join(ROOT, "tools", "derive.py"), tmp,
-                              "--json"], capture_output=True, text=True).stdout
         try:
-            claims = [c for cs in json.loads(out).values() for c in cs]
-        except json.JSONDecodeError:
+            doc, _warnings = expand(f)
+        except (SpecError, yaml.YAMLError, OSError):
             continue
+        claims, failures = analyze_document(doc)
+        if failures:
+            raise RuntimeError(f"analysis failed for {f}: {failures}")
         seen = set()
         for c in claims:
             p = c["pattern"]
@@ -61,8 +61,8 @@ def run_corpus():
 
 
 def emitted():
-    return set(re.findall(r'"pattern": "(\w+)"',
-                          open(os.path.join(ROOT, "tools", "derive.py")).read()))
+    with open(os.path.join(ROOT, "tools", "derive.py")) as source:
+        return set(re.findall(r'"pattern": "(\w+)"', source.read()))
 
 
 def markdown(example, count):
@@ -78,14 +78,19 @@ def markdown(example, count):
     o.write("\n> Only two checks are `robust`. Everything else measured the person doing the "
             "encoding\n> as much as it measured the corpus. That is the honest ceiling on "
             "current evidence, and\n> it is why this is a notation first and a linter second.\n\n")
+    o.write("**Assurance says what a finding can establish:** `structural` means a direct fact "
+            "about the encoded graph; `qualitative-proxy` is a screening signal that requires "
+            "domain analysis; `quantitative` and `empirical` require numeric or observed "
+            "evidence. No current check claims the last two.\n\n")
 
     live = [(p, m) for p, m in META.items() if m.get("evidence") != "legacy"]
     live.sort(key=lambda x: (-count.get(x[0], 0), x[0]))
 
-    o.write("| check | fires on | half | felt symptom |\n|---|---|---|---|\n")
+    o.write("| check | fires on | assurance | half | felt symptom |\n|---|---|---|---|---|\n")
     for p, m in live:
         half = {"attention": "attention", "calibration": "calibration"}.get(m.get("half"), "—")
-        o.write(f"| [`{p}`](#{p.replace('_','-')}) | {count.get(p,0)}/{len(CORPUS)} | {half} "
+        o.write(f"| [`{p}`](#{p.replace('_','-')}) | {count.get(p,0)}/{len(CORPUS)} | "
+                f"{m['assurance']} | {half} "
                 f"| *\"{m['symptom']}\"* |\n")
     o.write("\n---\n\n")
 
@@ -95,7 +100,8 @@ def markdown(example, count):
         o.write(f"**What it looked at.** {m['means']}\n\n")
         o.write(f"**How to fix it.** {m['fix']}\n\n")
         bits = [f"fires on **{count.get(p,0)} of {len(CORPUS)}** specs here",
-                EVIDENCE[m.get('evidence','corpus')][0]]
+                EVIDENCE[m.get('evidence','corpus')][0],
+                f"**{m['assurance']} assurance**"]
         if m.get("half") in ("attention", "calibration"):
             bits.append(f"the *{m['half']}* half")
         o.write(f"**Status.** " + " · ".join(bits) + ".")
@@ -119,6 +125,11 @@ def markdown(example, count):
 
 
 if __name__ == "__main__":
+    invalid_assurance = {p: m.get("assurance") for p, m in META.items()
+                         if m.get("assurance") not in ASSURANCE_LEVELS}
+    if invalid_assurance:
+        sys.exit("INVALID OR MISSING ASSURANCE:\n" +
+                 "\n".join(f"  {p}: {a}" for p, a in sorted(invalid_assurance.items())))
     undoc = emitted() - set(META)
     if undoc:
         sys.exit("UNDOCUMENTED CHECK(S) — add to docs/checks.yaml:\n" +
@@ -130,11 +141,20 @@ if __name__ == "__main__":
     ex, cnt = run_corpus()
     md = markdown(ex, cnt)
     path = os.path.join(ROOT, "docs", "CHECKS.md")
+    rates_path = os.path.join(ROOT, "docs", "base_rates.json")
+    rates = json.dumps({"fires": dict(sorted(cnt.items())), "n": len(CORPUS)}, indent=2) + "\n"
     if "--check" in sys.argv:
+        stale = []
         if not os.path.exists(path) or open(path).read() != md:
-            sys.exit("docs/CHECKS.md is stale — regenerate with tools/gen_checks.py")
-        print("checks doc is current")
+            stale.append("docs/CHECKS.md")
+        if not os.path.exists(rates_path) or open(rates_path).read() != rates:
+            stale.append("docs/base_rates.json")
+        if stale:
+            sys.exit("generated check artifacts are stale — regenerate with tools/gen_checks.py: "
+                     + ", ".join(stale))
+        print("checks doc and base rates are current")
     else:
         open(path, "w").write(md)
+        open(rates_path, "w").write(rates)
         print(f"wrote docs/CHECKS.md — {len(META)} checks, {sum(cnt.values())} findings "
               f"across {len(CORPUS)} specs")

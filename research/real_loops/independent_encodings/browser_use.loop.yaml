@@ -1,0 +1,177 @@
+# loop: browser_use agent step-execution and stall/loop-detection controller
+# sources:
+#   browser_use/agent/service.py lines 1205-1246 (execute/post-process actions, failure counting)
+#   browser_use/agent/service.py lines 1458-1545 (replan/exploration/loop/budget nudges)
+#   browser_use/agent/service.py lines 2575-2655 (main step loop, stop conditions)
+#   browser_use/agent/views.py lines 200-315 (loop detector nudge thresholds, AgentState fields)
+loop: agent_step_controller
+runs: per_step  # invoked once per iteration of the while loop, service.py:2603-2636
+
+boundary:
+  drawn_by: operator
+  purpose: >
+    Separate the controller's own bookkeeping (step/failure counters, action-
+    repetition and page-stagnation hashes, plan state, message context) from
+    the two things it cannot directly read or control: the live browser/page
+    and the LLM producing the next model output. That split is what makes
+    "nudging" legible as feedback into an external decision-maker rather than
+    just more control state. (service.py:251-275 AgentState; 1502-1534 loop
+    detector recording)
+  inside:
+    - n_steps / consecutive_failures counters (views.py:257-258)
+    - loop_detector state (views.py:275, 200-248)
+    - plan / current_plan_item_index (views.py:260-261)
+    - message_manager context (service.py:1472, 1488, 1500)
+  outside:
+    - browser session / page via CDP
+    - LLM completions (last_model_output)
+
+goal:
+  task_completion:
+    keep: "reach done (success) within max_steps steps"  # service.py:2603,2629,2637-2653
+    from: [action_result, last_model_output]
+
+beliefs:
+  approach_is_failing:
+    question: "Is the current step-by-step approach repeatedly producing errored results?"
+    how: >
+      Counts consecutive single-action steps whose last result carries an
+      error; resets to 0 the first time a step's last result is not an error.
+      (service.py:1227-1236)
+    explains: task_completion
+    settled_by: action_result
+    # each new step's result directly increments or resets the counter -
+    # this is action-level settlement, not a scored, trust-adjusting calibration
+  behavioral_loop:
+    question: "Is the agent repeating near-identical actions, or stuck on an unchanging page?"
+    how: >
+      Hashes each non-exempt action (excludes wait/done/go_back) and tracks
+      the largest repeat count over a recent window; separately fingerprints
+      url + DOM text + element count across consecutive steps to count
+      stagnant pages. (service.py:1502-1534; views.py:200-209)
+    explains: task_completion
+    # not_modelling: no later observation in these excerpts confirms whether
+    # a flagged loop/stagnation was a real problem, so no settled_by/checked_by is claimed
+
+observes:
+  action_result:
+    informs: [approach_is_failing, task_completion]
+    origin: outside
+    how: measured
+    source: "per-action ActionResult returned by multi_act against the browser session"
+    every: per_step  # service.py:1210-1211, 1229
+  browser_state_summary:
+    informs: [behavioral_loop]
+    origin: outside
+    how: measured
+    source: "CDP-derived page url / DOM text / element count"
+    every: per_step  # service.py:1521-1534
+  last_model_output:
+    informs: [task_completion]
+    origin: outside
+    how: reported
+    reported_by: llm
+    every: per_step  # service.py:1207-1211, 1221-1225
+
+actions:
+  execute_actions:
+    moves: task_completion
+    through: browser_interaction
+    effect: unknown  # content of multi_act is LLM-selected; direction not stated in excerpt
+    # can_undo intentionally omitted: multi_act bundles arbitrary tool calls
+    # (click/type/navigate/submit/done/...); reversibility depends on which
+    # concrete actions the LLM chose, not shown in this excerpt (service.py:1210)
+  inject_replan_nudge:
+    moves: task_completion
+    through: llm_context_injection
+    can_undo: yes  # appends a UserMessage to context; no external side effect (service.py:1465-1472)
+    effect: increase
+    effect_after: next step
+  inject_exploration_nudge:
+    moves: task_completion
+    through: llm_context_injection
+    can_undo: yes  # service.py:1481-1488
+    effect: increase
+    effect_after: next step
+  inject_loop_detection_nudge:
+    moves: task_completion
+    through: llm_context_injection
+    can_undo: yes  # service.py:1494-1500
+    effect: increase
+    effect_after: next step
+  inject_budget_warning:
+    moves: task_completion
+    through: llm_context_injection
+    can_undo: yes  # service.py:1536-1545
+    effect: increase
+    effect_after: next step
+  abort_run:
+    moves: task_completion
+    can_undo: no  # loop is broken out of / falls to the while-else with no resume path shown (service.py:2613-2653)
+    effect: decrease
+    effect_after: immediate
+
+processes:
+  browser_interaction:
+    location: outside
+    observed_as: [action_result, browser_state_summary]
+    description: >
+      Browser session executes the LLM-selected tool calls via CDP against
+      the live page, producing a per-action ActionResult and updated
+      DOM/page state. (service.py:1210, 1521-1534)
+  llm_context_injection:
+    location: interface
+    observed_as: [last_model_output]
+    description: >
+      Injected UserMessage nudges are appended to the conversation the LLM
+      sees on its next call, intended to shift its next plan_update/action
+      choice. (service.py:1472, 1488, 1500)
+
+spends:
+  step_budget:
+    limit: "max_steps steps"  # service.py:2603, 2637
+    spent_by: [execute_actions]
+  failure_budget:
+    limit: "max_failures + (1 if final_response_after_failure else 0) consecutive failures"  # service.py:2613-2615
+    spent_by: [execute_actions]
+    replenished: "reset to 0 on the first subsequent step whose last result is not a single-action error"  # service.py:1234-1236
+
+when:
+  - if: "consecutive_failures >= max_failures + (final_response_after_failure ? 1 : 0)"
+    reads: [failure_budget]
+    do: abort_run  # service.py:2613-2618
+  - if: "state.stopped is set"
+    do: abort_run  # service.py:2621-2624
+  - if: "n_steps exceeds max_steps without the last step's result marking is_done"
+    reads: [step_budget]
+    do: abort_run  # service.py:2637-2653
+  - if: "planning enabled, a plan exists, and consecutive_failures >= planning_replan_on_stall"
+    reads: [failure_budget, approach_is_failing]
+    do: inject_replan_nudge  # service.py:1458-1472
+  - if: "planning enabled, no plan yet, and n_steps >= planning_exploration_limit"
+    reads: [step_budget]
+    do: inject_exploration_nudge  # service.py:1474-1488
+  - if: "loop_detector.max_repetition_count >= 5 or consecutive_stagnant_pages >= 5"
+    reads: [behavioral_loop]
+    do: inject_loop_detection_nudge  # service.py:1490-1500; views.py:211-248
+  - if: "steps_used (1-indexed) >= 75% of max_steps"
+    reads: [step_budget]
+    do: inject_budget_warning  # service.py:1536-1545
+
+people:
+  operator:
+    human: true
+    loses_if_wrong: "wasted run time/cost if the agent stalls, loops, or fails to complete the task"
+    sees: [task_completion]  # logged final result, service.py:1239-1246
+  llm:
+    agent: true
+    loses_if_wrong: "nothing"  # not stated as bearing any cost in these excerpts
+    sees: [approach_is_failing, behavioral_loop, task_completion]
+
+not_modelling:
+  - "Reversibility of individual browser actions inside execute_actions (click/type/navigate/submit/etc.) — depends on which concrete site/action the LLM chose, not fixed by this controller code."
+  - "Pause/resume control flow (state.paused, external pause event) — present in the main loop (service.py:2606-2610) but not a lever with reversibility/effect semantics."
+  - "Whether a flagged behavioral_loop or approach_is_failing episode was ever actually correct — no settling/outcome observation is shown for these beliefs."
+  - "Skill registration, download tracking, demo-mode logging (service.py:2576, 1218, 2631-2633) — mentioned but not detailed enough to model as actions/observations."
+  - "Exact call-site interleaving of the four nudge-injection checks relative to the main while loop — each function's own trigger condition is shown, but not a single ordered call sequence."
+  - "Human escalation path — no asks_human_when trigger is evidenced in these excerpts."

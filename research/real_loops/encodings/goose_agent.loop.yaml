@@ -1,0 +1,121 @@
+# Encoded from block/goose revision
+# 7f62ce53e70c49e634ed9ba16a1ef8e02a2d239c.
+# Evidence: crates/goose/src/agents/agent.rs lines 2067-2205,
+# 2326-2428, 2845-3008, and 3047-3085.
+
+loop: goose_agent_turn
+runs: per_user_turn
+
+boundary:
+  drawn_by: goose_operator
+  purpose: complete a user request by alternating provider responses and inspected tool calls within bounded turns
+  inside: [conversation, turn controller, permission inspector, stop hooks, retry controller, pending steering queue]
+  outside: [user, model provider, extensions, tool targets, stop-hook plugins]
+
+goal:
+  task_completion:
+    keep: the user's task or configured grind goal is fully done before the turn exits
+
+beliefs:
+  task_complete:
+    question: Has the requested task or grind goal been fully completed?
+    how: provider judgement over the conversation, tool results, and an optional explicit goal-check nudge
+    explains: task_completion
+    known_bias: the same provider that acts also judges whether it should stop
+
+  next_action_useful:
+    question: Which provider response or tool call is most likely to make progress now?
+    how: provider judgement over conversation history, goal nudges, pending steers, and tool results
+    explains: task_completion
+    settled_by: tool_result
+
+observes:
+  user_request:
+    informs: [task_completion, task_complete, next_action_useful]
+    every: once per turn plus pending mid-turn steers
+    origin: outside
+    how: reported
+    reported_by: goose_operator
+
+  provider_response:
+    informs: [task_completion, task_complete, next_action_useful]
+    every: once per provider turn
+    origin: outside
+    how: reported
+    reported_by: model_provider
+
+  tool_result:
+    informs: [task_completion, task_complete, next_action_useful]
+    every: after each executed tool request
+    origin: ourselves
+    how: measured
+    produced_by: execute_tool_call
+
+processes:
+  provider_sampling:
+    description: the configured model provider maps the conversation, tools, and system prompt to assistant text or tool requests
+    location: outside
+    observed_as: [provider_response]
+
+  extension_execution:
+    description: inspected and permitted tool requests operate through extensions or external targets and return tool results
+    location: outside
+    observed_as: [tool_result]
+
+actions:
+  query_provider:
+    moves: task_completion
+    through: provider_sampling
+    effect: unknown
+    can_undo: "yes"
+    consumes: [turn_budget]
+
+  execute_tool_call:
+    moves: task_completion
+    through: extension_execution
+    effect: unknown
+
+when:
+  - if: the turn is active and a provider response is needed
+    reads: [task_completion, task_complete, next_action_useful, turn_budget]
+    against: [task_completion]
+    do: query_provider
+  - if: the provider requests a tool and the request is approved or policy-permitted
+    reads: [next_action_useful, task_completion]
+    against: [task_completion]
+    do: execute_tool_call
+  - if: the provider returns no tool call while a configured goal has not yet received its final check
+    reads: [task_complete, task_completion, turn_budget]
+    against: [task_completion]
+    do: query_provider
+
+asks_human_when:
+  - the permission inspector classifies a concrete tool request as needing approval
+asks_human: goose_operator
+
+people:
+  goose_operator:
+    human: true
+    loses_if_wrong: model spend, time, and external effects of tool calls made on the operator's behalf
+    sees: [task_completion, task_complete, next_action_useful]
+
+  goose_agent:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [task_completion, task_complete, next_action_useful]
+
+spends:
+  turn_budget:
+    limit: session max_turns, GOOSE_MAX_TURNS, or DEFAULT_MAX_TURNS
+    replenished: a new user turn
+    spent_by: [query_provider]
+
+never:
+  - persist an empty assistant turn with neither text nor tool calls
+
+not_modelling:
+  - whether the returned final text corresponds to task success outside the conversation
+  - the reversibility of execute_tool_call, which depends on the concrete extension, target, and arguments
+  - conditional approval as an unconditional needs_approval property
+  - stop-hook allow or deny, maximum-turn exit, retry exhaustion, and final output as controller or terminal operations rather than world interventions
+  - operator steering and cancellation as first-class loop-level authority

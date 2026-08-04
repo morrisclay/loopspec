@@ -1,0 +1,13 @@
+{
+  "case": "openhands_sdk",
+  "study_role": "model_draft",
+  "encoder": "Anthropic Claude CLI",
+  "model_alias": "sonnet",
+  "tool_access": "disabled",
+  "session_persistence": "disabled",
+  "generated_at": "2026-08-04T12:16:51.369128+00:00",
+  "source_repository": "https://github.com/OpenHands/software-agent-sdk",
+  "source_revision": "c8a65f0db7c4e5b455a124989c3a6a0a79fcd9e9",
+  "prompt_sha256": "9fcbf6beb0e06598acd079db87ab64dfcfa7da49dd9f6c3567c349bde292f434",
+  "output_sha256": "a57a6401cc8ef54b422434d4befd9aa6b5568ae8a5097add4ddd78c6156596a9"
+}

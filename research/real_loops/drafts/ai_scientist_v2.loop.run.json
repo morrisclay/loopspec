@@ -1,0 +1,13 @@
+{
+  "case": "ai_scientist_v2",
+  "study_role": "model_draft",
+  "encoder": "Anthropic Claude CLI",
+  "model_alias": "sonnet",
+  "tool_access": "disabled",
+  "session_persistence": "disabled",
+  "generated_at": "2026-08-04T12:16:27.916219+00:00",
+  "source_repository": "https://github.com/SakanaAI/AI-Scientist-v2",
+  "source_revision": "96bd51617cfdbb494a9fc283af00fe090edfae48",
+  "prompt_sha256": "69baf813b1b3162b2f9aa12b0d017c4b86f0052855d7ee5fafb99f7dccb5af6e",
+  "output_sha256": "fdd8bc8a92be883453e85edd6df020650347eba618a11b9c5e908c2daf307bdc"
+}

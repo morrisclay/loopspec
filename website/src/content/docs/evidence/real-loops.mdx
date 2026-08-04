@@ -1,0 +1,111 @@
+---
+title: Real-loop study
+description: What source-pinned Codex, Goose, OpenHands, AI Scientist, SWE-agent, Browser Use, autoresearch, and Ralph reveal about LoopSpec.
+---
+
+import { Aside, Card, CardGrid } from '@astrojs/starlight/components';
+import Mermaid from '../../../components/Mermaid.astro';
+
+This is the brownfield reality check: encode loops that already operate, cite the exact source,
+lint them, and then separate a system property from an encoder choice, a language gap, and check
+behavior.
+
+The current gate covers **25 valid encodings**, including **7 cases pinned to exact upstream Git
+revisions**. It is evidence about expressiveness and review behavior. It is not a defect-rate
+study.
+
+<Mermaid
+	chart={`flowchart LR
+	S["pinned source"] --> B["blind source packet"]
+	B --> E["independent encoding"]
+	S --> P["primary encoding"]
+	E --> V["validate and lint"]
+	P --> V
+	V --> A{"source adjudication"}
+	A --> SP["system property"]
+	A --> EN["encoding choice"]
+	A --> LG["language gap"]
+	A --> CK["check behavior"]
+	LG --> H["held-out prototype test"]`}
+	caption="A finding is an input to source adjudication, not a verdict about the upstream system."
+/>
+
+## The 2026 runtime tranche
+
+| system | control mechanisms visible in source | strongest unresolved boundary |
+|---|---|---|
+| [Codex](https://github.com/openai/codex/tree/2a16af823456712e3dbb030ecf29fb727c2cde66) | tool-result sampling loop, pending steering, interrupt, compaction, stop hooks, sandbox approval | approval and reversibility depend on the concrete request and deployment |
+| [Goose](https://github.com/block/goose/tree/7f62ce53e70c49e634ed9ba16a1ef8e02a2d239c) | permission inspection, approval, cancellation, bounded turns and retries, goal nudges | provider completion is endogenous; tool profiles are unbound |
+| [OpenHands SDK](https://github.com/OpenHands/software-agent-sdk/tree/c8a65f0db7c4e5b455a124989c3a6a0a79fcd9e9) | pause/interrupt, security-risk confirmation, stuck detection, budgets, stop hooks, critic refinement | critic/risk judgements are local gates, not cross-run calibration |
+| [AI Scientist v2](https://github.com/SakanaAI/AI-Scientist-v2/tree/96bd51617cfdbb494a9fc283af00fe090edfae48) | experiment execution, measured metrics, best-first search, stage criteria, multi-seed evaluation | later paper review does not revise experiment-search stages |
+
+These systems are not naive. Their cybernetic mechanisms are simply scattered across controllers,
+policies, hooks, configuration, evaluators, and UI controls. LoopSpec’s useful role is to make the
+bound control contract reviewable in one place.
+
+## The independent check
+
+SWE-agent and Browser Use were re-encoded by a different model in a fresh, tool-disabled,
+non-persistent session. It received the language reference and source slices only.
+
+| case | exact shared categories | Jaccard | primary recall |
+|---|---|---:|---:|
+| SWE-agent | authority, reversibility | 0.167 | 0.333 |
+| Browser Use | calibration, authority, reversibility | 0.333 | 1.000 |
+
+<Aside type="caution" title="The rate claim failed">
+SWE-agent recovered fewer than half of the primary finding categories. Both encoders agreed on
+the causal omissions, but different boundary and node choices projected them into different
+checks. Raw finding counts are therefore not defensible defect counts.
+</Aside>
+
+## Four conclusions that survived source adjudication
+
+<CardGrid>
+	<Card title="Operations need their own place">
+Pause, interrupt, compact, retry, stop, submit, and final output are control operations or terminal
+events. Treating them as world actions creates false process and reversibility findings.
+	</Card>
+	<Card title="Authority is conditional">
+Real runtimes gate individual requests from policy, sandbox, risk, and arguments. A universal
+`needs_approval` value is too coarse for a generic tool action.
+	</Card>
+	<Card title="Runtime is not deployment">
+The framework may support approval and interruption while a concrete application binds neither.
+The spec must distinguish available capability from selected policy.
+	</Card>
+	<Card title="Endogenous can still surprise">
+An agent can cause an experiment whose measured result surprises it. Causal provenance and
+epistemic independence are related, but they are not the same axis.
+	</Card>
+</CardGrid>
+
+## Reproduce it
+
+```bash
+python3 research/real_loops/validate_corpus.py
+
+python3 research/real_loops/compare_findings.py \
+  research/real_loops/encodings/browser_use.loop.yaml \
+  research/real_loops/independent_encodings/browser_use.loop.yaml
+
+python3 tools/loopspec.py check \
+  research/real_loops/encodings/openhands_sdk.loop.yaml
+```
+
+The source registry, evidence anchors, raw model drafts, blind packet recipe, normalized holdout,
+and full adjudication are all in `research/real_loops/`.
+
+## What changes next
+
+The next language increment is gated, not assumed. A prototype must improve blind agreement on a
+held-out coding loop and browser loop before it becomes normative. The candidates are:
+
+1. controller operations and terminal outputs separate from world interventions;
+2. loop-level and conditional authority;
+3. deployment-bound action profiles;
+4. a provenance refinement that preserves causal origin without denying active experiments their
+   epistemic value.
+
+Until the external-author study passes, the release claim remains: a structural specification,
+diagram, comparison, and review tool for agent loops.

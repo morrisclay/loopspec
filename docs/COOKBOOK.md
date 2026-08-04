@@ -135,9 +135,10 @@ observes:
   step_results: { informs: objective_met, origin: outside, how: measured }
 ```
 
-**What it costs you:** `regulator_without_model`. The loop steers toward *objective met* and
-has no model of what produces it — it re-plans by asking the model to look at the transcript
-again. That is a reflex against a setpoint. It corrects, and it cannot anticipate.
+**What it costs you:** `no_explicit_process_model`. The loop steers toward *objective met* and
+records no explicit explanation of what produces it — it re-plans by asking the model to look
+at the transcript again. The policy may still embody an implicit model; the spec cannot inspect
+or compare one.
 
 **Worth knowing:** in the LangGraph example this is bounded only by `recursion_limit`,
 LangGraph's **default of 25**. That is a platform backstop, not a choice — an undeclared budget

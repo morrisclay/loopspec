@@ -1,0 +1,70 @@
+---
+title: What LoopSpec is
+description: A precise introduction to the language, analyzer, and the claims they are designed to support.
+---
+
+import { Aside, Card, CardGrid } from '@astrojs/starlight/components';
+import Mermaid from '../../../components/Mermaid.astro';
+
+LoopSpec is a human-readable specification language for repeated agent feedback loops. A loop file
+captures design intent; the tool expands it into a typed graph, validates that graph, and asks
+structural questions before the system runs.
+
+<Mermaid
+	chart={`flowchart LR
+	R["reference"] --> P{"policy"}
+	O[/"observation"/] --> E["estimate"] --> P
+	P --> A["action"] --> W[("process / world")]
+	W --> O`}
+	caption="The minimum control path: a rule compares what is perceived with what is wanted, acts through a process, and observes what happens next."
+/>
+
+## The product has four layers
+
+<CardGrid>
+	<Card title="1. Authoring language">
+		Plain YAML for the things a designer can reasonably declare: goals, beliefs, observations,
+		actions, processes, policies, people, resources, and boundaries.
+	</Card>
+	<Card title="2. Canonical meaning">
+		A typed, order-independent graph IR. Every accepted field has one documented semantic effect
+		or the file is rejected.
+	</Card>
+	<Card title="3. Design analyzer">
+		Fail-closed structural checks with an assurance level, evidence status, concrete claim, and
+		repair for each finding.
+	</Card>
+	<Card title="4. Projections">
+		Dependency and control diagrams, semantic diffs, comparisons, and experimental adoption
+		adapters all read the same validated IR.
+	</Card>
+</CardGrid>
+
+## What makes a loop
+
+A pipeline transforms an input once. A loop allows consequences to return as later information
+and alter what happens next. LoopSpec expects five roles:
+
+1. a **reference** or desired condition;
+2. an **observation** of a relevant quantity;
+3. a **policy** that reads the quantity and, when relevant, its reference;
+4. an **action** intended to move the quantity;
+5. a **process path** through which action becomes a later observation.
+
+Governance, viability, attention, and calibration sit around that operating loop. They are not
+decorations: they determine whether the loop can be interrupted, remain viable, notice the right
+things, and revise beliefs that do not survive contact with outcomes.
+
+<Aside type="caution" title="The assurance boundary">
+LoopSpec can show that a sensing or actuation path is absent from the specification. It does not run
+Kalman observability or controllability tests. It records intended effect direction, but it does
+not prove polarity or stability. Those claims require dynamics the current language deliberately
+does not invent.
+</Aside>
+
+## Choose your route
+
+- If you have a design, [write your first loop](/start/first-loop/).
+- If you have a running system, [lint it from source](/guides/linting-existing/).
+- If you want the theory, begin with [the control-loop kernel](/concepts/control-loop-kernel/).
+- If you need exact syntax, use the generated [language reference](/reference/language/).

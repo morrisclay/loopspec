@@ -14,21 +14,20 @@ This projection puts that back. Per regulated quantity it draws the canonical lo
 
     setpoint ─┐
               ▼
-          (comparator) ──error──▶ [policy] ──▶ ⟨action⟩ ──delay──▶ ((the world))
+          (comparator) ──error──▶ [policy] ──▶ ⟨action⟩ ──delay──▶ ((process))
               ▲                                                          │
               │                                                          ▼
           [estimate] ◀── {estimator} ◀── /signal/ ◀───────────────────────┘
-                                             ▲
-                                        ⟨disturbance⟩
 
-Nothing new is asked of the author. The comparator is DERIVED: a goal targets a quantity, a
-belief estimates that quantity, so the error is the difference and its existence follows.
-Drawing it is what makes the loop legible as a loop — and drawing it exposes the loops where
-there is nothing to compare against, which no dependency graph makes visible.
+The comparator is drawn only when an ordered rule declares `against:` for the target; the
+error value remains a PROJECTION convention rather than a runtime or stability claim. The
+action→process→signal leg is drawn
+only when `actions.*.through` and `processes.*.observed_as` declare it; otherwise the break is
+shown rather than replaced by an invented "world" node.
 
-Disturbances come from `not_modelling:`, which turns out to be exactly the right list: the
-things you have declared you are not modelling are precisely the disturbances you are not
-regulating against.
+`not_modelling:` is shown as a model-boundary note. Exclusion does not imply disturbance:
+something can be out of scope without perturbing the regulated quantity, and an explicitly
+modelled variable can be a disturbance.
 """
 import sys, os, re
 
@@ -38,7 +37,10 @@ except ImportError:
     sys.exit("needs pyyaml")
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from loop import normalize  # noqa: E402
+try:
+    from .loop import normalize  # noqa: E402
+except ImportError:
+    from loop import normalize  # noqa: E402
 
 
 def sid(*parts):
@@ -60,8 +62,10 @@ def render(path):
         beliefs = d.get("beliefs") or {}
         observes = d.get("observes") or {}
         actions = d.get("actions") or {}
+        processes = d.get("processes") or {}
+        boundary = d.get("boundary") or {}
         rules = d.get("when") or []
-        disturbances = [x for x in (d.get("not_modelling") or [])]
+        exclusions = [x for x in (d.get("not_modelling") or [])]
 
         # what informs what, from the canonical direction
         informs = {}
@@ -77,6 +81,11 @@ def render(path):
                                else ((ab or {}).get("moves") or []))]
             sensors = informs.get(q, [])
             believed = q in beliefs
+            comparators = [rule for rule in rules if q in (rule.get("against") or [])]
+            path_processes = sorted({p for a in movers
+                                     for p in ([(actions[a] or {}).get("through")]
+                                               if isinstance((actions[a] or {}).get("through"), str)
+                                               else ((actions[a] or {}).get("through") or []))})
 
             g = sid(loop, q)
             L.append(f'  subgraph {g}["{esc(loop)} · regulating {esc(q)}"]')
@@ -84,7 +93,10 @@ def render(path):
 
             sb = gb.get("set_by")
             L.append(f'    {g}_sp{{{{"setpoint<br/>{esc(gb.get("keep","—"))}"}}}}')
-            L.append(f'    {g}_cmp(("Σ<br/>error"))')
+            if comparators:
+                L.append(f'    {g}_cmp(("Σ<br/>error"))')
+            else:
+                L.append(f'    {g}_cmp(("comparison not declared")):::gap')
             L.append(f'    {g}_pol{{"decide"}}')
 
             if movers:
@@ -97,7 +109,13 @@ def render(path):
             else:
                 L.append(f'    {g}_none>"no action moves this"]:::gap')
 
-            L.append(f'    {g}_world[("the world<br/>{esc(q)}")]')
+            if path_processes:
+                for process in path_processes:
+                    pb = processes.get(process) or {}
+                    location = f" · {pb.get('location')}" if pb.get("location") else ""
+                    L.append(f'    {g}_proc_{sid(process)}[("{esc(process)}{esc(location)}")]')
+            else:
+                L.append(f'    {g}_implicit[("unrepresented process")]:::gap')
 
             if sensors:
                 for s in sensors:
@@ -118,51 +136,82 @@ def render(path):
             if movers:
                 for a in movers:
                     ab = actions[a] or {}
-                    tgt = f"{g}_lag_{sid(a)}" if ab.get("effect_after") else f"{g}_world"
+                    through = ([ab.get("through")] if isinstance(ab.get("through"), str)
+                               else (ab.get("through") or []))
+                    first = (f"{g}_lag_{sid(a)}" if ab.get("effect_after") else
+                             (f"{g}_proc_{sid(through[0])}" if through else f"{g}_implicit"))
                     L.append(f"  {g}_pol --> {g}_act_{sid(a)}")
-                    L.append(f"  {g}_act_{sid(a)} --> {tgt}")
+                    direction = ((ab.get("effects") or {}).get(q)
+                                 or ab.get("effect") or "sign unspecified")
+                    L.append(f"  {g}_act_{sid(a)} -->|{esc(direction)}| {first}")
                     if ab.get("effect_after"):
-                        L.append(f"  {g}_lag_{sid(a)} --> {g}_world")
+                        for process in through:
+                            L.append(f"  {g}_lag_{sid(a)} --> {g}_proc_{sid(process)}")
+                        if not through:
+                            L.append(f"  {g}_lag_{sid(a)} --> {g}_implicit")
+                    elif len(through) > 1:
+                        for process in through[1:]:
+                            L.append(f"  {g}_act_{sid(a)} -->|{esc(direction)}| "
+                                     f"{g}_proc_{sid(process)}")
                     if ab.get("needs_approval"):
                         L.append(f'  {g}_appr_{sid(a)}(("{esc(ab["needs_approval"])}"))')
                         L.append(f"  {g}_appr_{sid(a)} -.->|approves| {g}_act_{sid(a)}")
             else:
                 L.append(f"  {g}_pol --> {g}_none")
-                L.append(f"  {g}_none -.-> {g}_world")
+                L.append(f"  {g}_none -.-> {g}_implicit")
 
             if sensors:
                 for s in sensors:
-                    L.append(f"  {g}_world --> {g}_sen_{sid(s)}")
+                    producers = [p for p in path_processes
+                                 if s in ((processes.get(p) or {}).get("observed_as") or [])]
+                    for process in producers:
+                        L.append(f"  {g}_proc_{sid(process)} --> {g}_sen_{sid(s)}")
                     L.append(f"  {g}_sen_{sid(s)} --> {g}_est")
             else:
-                L.append(f"  {g}_world -.-> {g}_nosen")
+                source = (f"{g}_proc_{sid(path_processes[0])}"
+                          if path_processes else f"{g}_implicit")
+                L.append(f"  {source} -.-> {g}_nosen")
                 L.append(f"  {g}_nosen -.-> {g}_est")
             # THE line that makes it a loop
             L.append(f"  {g}_est ==>|feedback| {g}_cmp")
 
-            for i, dz in enumerate(disturbances):
-                L.append(f'  {g}_dz{i}["{esc(dz)}"]:::dist')
-                L.append(f"  {g}_dz{i} -.->|unmodelled| {g}_world")
+            for i, excluded in enumerate(exclusions):
+                L.append(f'  {g}_excluded{i}["outside model: {esc(excluded)}"]:::excluded')
+
+            if boundary:
+                notes.append(f"`{q}` — boundary drawn by `{boundary.get('drawn_by')}` for "
+                             f"{boundary.get('purpose')}. This makes the perspective explicit; "
+                             f"it does not make it uniquely correct.")
 
             if not movers:
                 notes.append(f"`{q}` — the ring is open: nothing acts on it.")
             if not sensors:
                 notes.append(f"`{q}` — the ring is open: nothing measures it, so the "
                              f"comparator has no second input and there is no error to act on.")
-            if movers and len(disturbances) > len(movers):
-                notes.append(f"`{q}` — {len(movers)} lever(s) against {len(disturbances)} "
-                             f"declared unmodelled disturbance(s). Ashby: only variety "
-                             f"destroys variety.")
             if not rules:
                 notes.append(f"`{q}` — no decision rule; the comparator drives nothing.")
+            elif not comparators:
+                notes.append(f"`{q}` — no rule declares `against: [{q}]`; target and current "
+                             f"value coexist without a represented comparison.")
+            if not path_processes:
+                notes.append(f"`{q}` — the action-to-observation world path is not represented; "
+                             f"add `processes:` and `through:`. No dynamics are inferred.")
+            else:
+                disconnected = [s for s in sensors if not any(
+                    s in ((processes.get(p) or {}).get("observed_as") or [])
+                    for p in path_processes)]
+                if disconnected:
+                    notes.append(f"`{q}` — no declared process produces observation(s) "
+                                 f"{disconnected}; the feedback ring remains open there.")
             if sb:
-                notes.append(f"`{q}` — cascade: its setpoint is `{sb}`. The inner loop must "
-                             f"settle before the outer one acts again, or both hunt.")
+                notes.append(f"`{q}` — cascade candidate: its setpoint is `{sb}`. Compare "
+                             f"inner-loop bandwidth and settling time with the outer loop; "
+                             f"cadence alone is only a screen.")
 
     L += ["",
           "  classDef gap fill:#fff0f0,stroke:#c00,stroke-width:1px,color:#900,"
           "stroke-dasharray:4 3;",
-          "  classDef dist fill:#f5f5f5,stroke:#999,color:#555,stroke-dasharray:2 2;"]
+          "  classDef excluded fill:#f5f5f5,stroke:#999,color:#555,stroke-dasharray:2 2;"]
     return "\n".join(L), notes
 
 

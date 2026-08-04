@@ -1,0 +1,51 @@
+# Normative release fixtures for LoopSpec authoring v1.1 and canonical IR v2.1.
+# Hashes are over normalized semantic values, not YAML serialization order.
+manifest_version: 1
+authoring_version: "1.1"
+ir_revision: "2.1"
+fixtures:
+  examples/cascade.loop.yaml:
+    encodes: cascade
+    semantic_hash: 1c59bdb29f80f41fdd35e68ef8427ce152f9482f8096fc5d43070c9d3f4160a6
+    findings_hash: f23243fd7c1befaff2cf64a970b561d1d2a18b03cf072e13177f3efb4ac54b33
+    finding_count: 12
+  examples/complete.loop.yaml:
+    encodes: support_triage
+    semantic_hash: c20813d4c954669243fd6a20dbc15a4274b0e5d68a4541420f65d49e78a10ec1
+    findings_hash: 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945
+    finding_count: 0
+  examples/customer_acquisition.loop.yaml:
+    encodes: customer_acquisition
+    semantic_hash: 2a26ae7c4462bfcc3d8e7cb280b5a318c3dfbfe41220039c6b3adf5313190ad9
+    findings_hash: 4bb6a7f7dddabeec9fe6575eb1f140795dc03270450af190e2ac81012c484af2
+    finding_count: 18
+  examples/customer_acquisition.v1.loop.yaml:
+    encodes: customer_acquisition
+    semantic_hash: 06798d370bb4d7f951c498d0865ad361ce441bd5005834f961d982d6b7c021cb
+    findings_hash: 072c911795547124a65e85aff614a659e9e164ec4caf82b0654eeed8cfd7260e
+    finding_count: 21
+  examples/field/conviction_termination.loop.yaml:
+    encodes: conviction_termination
+    semantic_hash: 89fee935ae26550d1b7f25f2fa308e609f432103753d611e7ce3b47d4cd3afe8
+    findings_hash: 1df73c138e8af3f6c9ad02fccb706aa98f5e9bf1bd92c07d1a4297a72f3d2834
+    finding_count: 19
+  examples/field/deal_steward.loop.yaml:
+    encodes: deal_steward
+    semantic_hash: ae910ed7b2a9cd3acb42751e1e1b2cf48bbe0f4ccbe1e292177b4df414c8ef51
+    findings_hash: 02f6dfbd0705951b7eba7049eb2a7f6d86739633666cb86159d1021225e1db0e
+    finding_count: 13
+  examples/field/meeseeks_sourcing.loop.yaml:
+    encodes: meeseeks_sourcing
+    semantic_hash: c7e810a647ce503b5326f2d4a66d0b61787457dc05e76eab623acdf573fa8c1c
+    findings_hash: a7c9f8faddff4ae79148e10562518f30e1c23e8f6672f25385d30ee24cf19bc7
+    finding_count: 16
+  examples/field/ralph.loop.yaml:
+    encodes: ralph
+    semantic_hash: 308f87d066cb7cc2d6991b8143813bba462ca2ca6448321802507afb9c397254
+    findings_hash: 758ef8db90f43e39613264c035c7245d75126496b021b9ea87793d08a20d1b28
+    finding_count: 15
+  examples/research_group.loop.yaml:
+    encodes: research_group
+    semantic_hash: a1861d732832a41de9706c93619da579d849430a0797c3336cb8815772c93a99
+    findings_hash: 4f9a509a547b42175f4a0dc70927aaa34b434b737104d96f4d252f9079458ae4
+    finding_count: 38

@@ -1,0 +1,65 @@
+---
+title: Validation protocol
+description: How the external-author study freezes the language, corrects encodings, adjudicates findings, and decides whether usefulness is supported.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+The external study asks a specific question: after encoding errors are corrected, do external
+authors judge LoopSpec findings accurate and actionable enough to change a specification, decision,
+or implementation?
+
+It does not test stability, runtime correctness, or incident prevention.
+
+## Freeze before recruitment
+
+```bash
+python3 tools/external_eval.py --freeze > study.yaml
+```
+
+The command refuses uncommitted semantic artifacts or a failing source doctor. The manifest
+records exact artifact hashes, Python and PyYAML versions, active pattern-to-assurance metadata,
+the conformance target, and the doctor output.
+
+## Procedure
+
+<Steps>
+1. Collect the author's existing code, diagram, prompt, runbook, or prose.
+2. A researcher writes a draft spec without seeing findings.
+3. The author corrects the draft until it matches intended design. Every correction remains an
+   encoding-error record.
+4. Freeze the corrected spec and run the analyzer once.
+5. Present findings with assurance and evidence paths, without theorem embellishment.
+6. The author classifies each finding as wrong, encoding error, known/no action, changes
+   understanding, changes the design, or changes implementation.
+7. A second reviewer adjudicates disputed correctness from the frozen source and spec.
+8. Recontact acted-on cases after 30–90 days without turning uncontrolled follow-up into a causal
+   claim.
+</Steps>
+
+## Minimum sample
+
+| Constraint | Frozen minimum |
+|---|---:|
+| external authors | 12 |
+| domains | 3 |
+| operating systems | 6 |
+| systems in design | 4 |
+| independent encoders | 2 |
+
+No domain may contribute more than half the sample. The primary analysis uses one loop per
+author.
+
+## Release thresholds
+
+- at least 70% precision on high-priority findings;
+- fewer than 20% encoding-induced findings after author correction;
+- at least 50% of authors receiving a finding change a spec, decision, or implementation;
+- no safety-relevant mutation false negative;
+- all three rate thresholds still pass after removing each domain and each encoder in turn.
+
+<Aside type="note" title="Failure is an informative result">
+If precision or action rate fails, the project narrows its claim to a loop specification and
+reasoning notation. Thresholds are frozen specifically so release pressure cannot redefine
+success after outcomes are visible.
+</Aside>

@@ -1,0 +1,30 @@
+{
+  "goal": "Converge URAS into a coherent, internally complete, useful cybernetic loop specification language and design-analysis tool.",
+  "archetype": "build-feature",
+  "mode": "orchestration-loop",
+  "terminal_choice": "stop-at-verified",
+  "predicate": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 tools/uras.py doctor",
+    "expected": "exit 0; 38 tests report OK; grammar, semantic map, check catalog, conformance manifest, and generated artifacts report current"
+  },
+  "cycle": 3,
+  "units_remaining": [
+    6,
+    0,
+    0
+  ],
+  "pending_verify": false,
+  "pipeline": [
+    "acceptance-test",
+    "debug",
+    "fix",
+    "regression",
+    "held-out-verify"
+  ],
+  "status": "local-release-candidate-verified",
+  "external_evidence_pending": true,
+  "open_evidence_gates": [
+    "independent implementation conformance",
+    "preregistered external-author usefulness study"
+  ]
+}

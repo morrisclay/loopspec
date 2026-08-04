@@ -1,0 +1,97 @@
+# Encoded from SakanaAI/AI-Scientist-v2 revision
+# 96bd51617cfdbb494a9fc283af00fe090edfae48.
+# Evidence: ai_scientist/treesearch/agent_manager.py lines 343-536 and 692-827;
+# ai_scientist/treesearch/parallel_agent.py lines 1921-2190;
+# ai_scientist/treesearch/journal.py lines 374-455;
+# launch_scientist_bfts.py lines 180-319.
+
+loop: ai_scientist_experiment_search
+runs: per_research_idea
+
+boundary:
+  drawn_by: research_operator
+  purpose: build scientific evidence by drafting, debugging, improving, tuning, and ablating executable experiment candidates across staged tree search
+  inside: [agent manager, stage controller, search tree, journals, candidate selector, completion evaluator]
+  outside: [research brief author, model providers, worker processes, GPU hardware, datasets, later paper review]
+
+goal:
+  evidence_quality:
+    keep: a non-buggy implementation with strong measured results satisfies the current stage goals and supports the research idea
+
+beliefs:
+  candidate_merit:
+    question: Which non-buggy candidate is the best one to extend or carry into the next stage?
+    how: validation metric comparison or LLM comparison over candidate reports, depending on configuration
+    explains: evidence_quality
+    settled_by: experiment_result
+    known_bias: selection reuses metrics and summaries generated inside the same search process
+
+  stage_complete:
+    question: Has the current stage or substage met its stated goals well enough to progress?
+    how: fixed structural conditions plus LLM judgement over VLM feedback, dataset coverage, plots, and stage criteria
+    explains: evidence_quality
+    known_bias: a later paper review does not feed back into the experiment-search stages in the encoded run
+
+observes:
+  research_brief:
+    informs: [evidence_quality, candidate_merit, stage_complete]
+    every: once per research idea
+    origin: outside
+    how: reported
+    reported_by: research_operator
+
+  experiment_result:
+    informs: [evidence_quality, candidate_merit, stage_complete]
+    every: after each candidate worker completes
+    origin: ourselves
+    how: measured
+    produced_by: run_candidate_experiment
+
+processes:
+  experimental_execution:
+    description: a worker runs generated candidate code on configured data and compute, returning metrics, failures, plots, and execution time
+    location: outside
+    observed_as: [experiment_result]
+
+actions:
+  run_candidate_experiment:
+    moves: evidence_quality
+    through: experimental_execution
+    effect: unknown
+    can_undo: "yes"
+    consumes: [stage_iterations, worker_time]
+
+when:
+  - if: the current stage is incomplete and another draft, debug, improvement, tuning, or ablation candidate is selected
+    reads: [evidence_quality, candidate_merit, stage_complete, stage_iterations, worker_time]
+    against: [evidence_quality]
+    do: run_candidate_experiment
+
+people:
+  research_operator:
+    human: true
+    loses_if_wrong: compute spend, researcher time, and scientific validity of the resulting evidence and paper
+    sees: [evidence_quality, candidate_merit, stage_complete]
+
+  scientist_agent:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [evidence_quality, candidate_merit, stage_complete]
+
+spends:
+  stage_iterations:
+    limit: the configured maximum iterations for the current stage
+    replenished: a new stage or substage journal
+    spent_by: [run_candidate_experiment]
+
+  worker_time:
+    limit: the configured timeout for each worker future
+    replenished: each submitted candidate
+    spent_by: [run_candidate_experiment]
+
+not_modelling:
+  - paper writing and the downstream text and vision paper reviews, which occur after experiment search and do not revise the encoded stages
+  - node generation prompts, metric parser internals, VLM analysis internals, and multi-seed aggregation bodies outside the pinned excerpts
+  - operator interruption via Ctrl+C as first-class stop authority
+  - stage transitions and experiment termination as controller operations rather than world interventions
+  - calibration of candidate selection, stage completion, parsed metrics, or paper review judgements across research runs

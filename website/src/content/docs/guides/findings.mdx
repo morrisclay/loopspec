@@ -1,0 +1,94 @@
+---
+title: Read and resolve findings
+description: Interpret ranking, assurance, evidence, repair paths, and deliberate exceptions without treating the analyzer as an oracle.
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+A LoopSpec finding is a review object, not a verdict on the real system. It says what follows from
+the encoded structure, how strong that inference is, what evidence supports shipping the check,
+and what declaration would make the structure reviewable.
+
+## Read the output in this order
+
+```text
+SPECIFIC
+  [irreversible_without_approval] structural
+    Action `publish_refund` cannot be undone and has no approval gate.
+    repair: Add `needs_approval:` naming the person who must say yes.
+```
+
+<Steps>
+1. **Pattern** — the stable machine identity, such as `irreversible_without_approval`.
+2. **Assurance** — what kind of inference the represented data permits.
+3. **Claim** — the exact structural fact found in this spec.
+4. **Repair** — how to make the missing design decision explicit.
+5. **Evidence status** — in JSON and the catalog, how well the check has survived corpus or
+   independent-encoding scrutiny.
+</Steps>
+
+## Ranking is information, not severity
+
+Findings are organized by how unusual they are in the repository corpus:
+
+| Bucket | Meaning |
+|---|---|
+| `SPECIFIC` | rare in the current corpus; inspect first |
+| `COMMON` | seen in a meaningful minority of loops |
+| `UNIVERSAL CONTEXT` | widespread enough to carry little information about this individual loop |
+| `CONSIDERED` | still present, with an explicit design decision attached |
+
+A universal pattern may matter greatly about the field while distinguishing your loop hardly at
+all. Base-rate ranking prevents common omissions from drowning out unusual ones; it does not say
+rare means dangerous.
+
+## Assurance and evidence answer different questions
+
+<Tabs>
+	<TabItem label="Assurance">
+**What can this finding establish?** Current authoring checks are structural or qualitative
+proxies. Quantitative and empirical labels are reserved for represented models or observed
+outcomes that do not yet exist in v1.1.
+	</TabItem>
+	<TabItem label="Evidence status">
+**Why is this check shipped?** `robust` survived independent encoding, `corpus` is measured in
+the repository corpus, `motivated` has concrete cases but no stable prevalence estimate, and
+`legacy` is compatibility-only.
+	</TabItem>
+</Tabs>
+
+<Aside type="caution" title="A theorem citation is not a theorem result">
+`no_explicit_process_model` is motivated by the Good Regulator theorem but establishes only that
+no explicit explanatory relation was encoded. `unmeasured_estimand` is a sensing-path check, not
+Kalman observability. `target_without_actuator` is an actuation-path check, not controllability.
+</Aside>
+
+## The resolution loop
+
+For every finding:
+
+1. Return to the source or designer and verify that the encoding is faithful.
+2. Decide whether the structural omission is real.
+3. Repair the spec if the design contains the missing semantics.
+4. Repair the design if the omission is consequential.
+5. Record `consider:` when the finding is correct but deliberately accepted.
+
+```yaml
+consider:
+  belief_never_checked/product_market_fit:
+    because: no outcome arrives before the current design decision must be made
+    revisit: after the first six-month retention cohort resolves
+```
+
+The complete generated [check catalog](/reference/checks/) gives the felt symptom, inspection,
+repair, assurance, evidence status, and a real corpus example for every check.
+
+## Machine-readable review
+
+```bash
+loopspec check system.loop.yaml --json > review.json
+```
+
+JSON includes the exact finding records and is the correct surface for automation. Use
+`--fail-on-findings` only after your team has defined what unresolved findings are allowed to
+cross a review boundary.

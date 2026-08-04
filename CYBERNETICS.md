@@ -1,144 +1,177 @@
-# How cybernetic is this, actually?
+# Cybernetic contract
 
-Asked directly, and the honest answer as of this writing is: **cybernetic in its checks, and
-until recently not in its object.**
+LoopSpec is a **cybernetically informed specification and structural analysis tool for agent
+loops**. It is not yet a control-systems solver, and it does not turn a qualitative agent
+description into a proof of stability, observability, controllability, or requisite variety.
 
-The checks cite Conant & Ashby, Kalman, Forrester. But the thing being drawn was a *dependency
-graph*, and a control engineer looking at it would ask the first question they always ask —
-**where is the error signal?** — and there was no answer. The word "setpoint" appeared in this
-project only inside a prose docstring. There was no comparator, no error, no gain.
+That boundary is part of the design. A useful formal tool says both what follows from its
+representation and what additional structure would be required to say more.
 
-That is worth saying plainly because it is the difference between a field's vocabulary and its
-method.
+## The object LoopSpec represents
 
----
+The authoring language records a loop's declared control purpose and operating envelope:
 
-## What was genuinely cybernetic
+| Cybernetic role | LoopSpec v1 surface | Canonical IR |
+|---|---|---|
+| observer-relative boundary | `boundary.drawn_by`, `purpose`, `inside`, `outside` | `Party →frames→ Boundary →bounds→ System` |
+| regulated quantity | `goal:` / `beliefs:` | `Estimand` |
+| reference condition | `goal.<q>.keep` | `DesiredCondition →targets→ Estimand` |
+| observation | `observes:` | `Signal →measures→ Estimand` |
+| estimation | `beliefs.<q>.how` | `Estimator →estimates→ Estimand` |
+| calibration contract | `checked_against`, `scoring_rule`, `window`, `adjusts` | `Calibration →compares→ Signal`, `Calibration →revises→ Estimator` |
+| comparison/reference use | `when[].against` | `Policy →uses_reference→ DesiredCondition` |
+| selection rule | ordered `when:` entries | one priority-indexed `Policy` per rule, with `reads` and `authorizes` edges |
+| actuation | `actions.<a>.moves` | `Intervention →targets→ Estimand` |
+| world/process path | `actions.<a>.through`, `processes.*.observed_as` | `Intervention →causes→ System →produces→ Signal` |
+| intended effect direction | `actions.<a>.effect` | `Intervention.effect_direction`, including explicit `unknown` |
+| cadence and lag | `runs`, `every`, `effect_after` | `TimeScale`, `Delay` |
+| hard boundary | `never:` | `Constraint` |
+| resource boundary | `spends:` | `Resource` and `consumes` |
+| authority and exposure | `people:`, `needs_approval` | `Party.consequence_status`, `Party →bears→ Consequence` |
+| epistemic provenance | `origin`, `how`, `reported_by` | fields plus `produces`/`asserts` |
+| model boundary | `not_modelling:` | `excluded_variables` |
+| attention contract | `observes.*.value_metric`, `review_window`, `review_every`, `adjusts` | `Calibration →revises→ Signal`, `Calibration →reviews_at→ TimeScale` |
 
-| claim | from |
-|---|---|
-| a loop steering something it has no model of is a **reflex, not a regulator** | Conant & Ashby 1970 |
-| a quantity nothing observes cannot be regulated | Kalman observability |
-| a target nothing can drive is a wish | Kalman controllability |
-| a loop with no balancing path diverges | Forrester / Sterman polarity |
-| **a ceiling is a stop, not a correction** — a stop absorbs no disturbance | Ashby |
-| attention and calibration are *second-order* loops — loops about the loop | second-order cybernetics |
+A canonical loop record contains its complete sets of signals and interventions. No signal or
+action becomes privileged because it appeared first in YAML.
 
-Those are necessary conditions from proved results, not style opinions, and they are what lets
-the linter say *"your loop violates the Good Regulator theorem, and here is the line"* rather
-than *"here are some things I noticed."*
+This is enough to ask structural questions such as:
 
-## What was missing, and is now there
+- Is a target connected to any declared actuator?
+- Does an observation inform a quantity used by a policy?
+- Can an irreversible act occur without a named approval gate?
+- Does a belief have a declared outcome-scoring process?
+- Is all feedback produced inside the system itself?
+- Is the action-to-observation process path explicit?
+- Is the observer and purpose behind the boundary declared?
 
-### 1. The error signal — `tools/control.py`
+It is not enough to calculate dynamic behaviour.
 
-The central object of any control loop is **the difference between what you want and what you
-believe**. Nothing named it.
+## Assurance levels
 
-The control projection draws the canonical ring per regulated quantity:
+Every finding carries an assurance label in machine output and generated documentation.
 
+| Level | What LoopSpec may say | What it may not imply |
+|---|---|---|
+| `structural` | a fact follows directly from declared nodes, fields, and edges | that the declaration matches runtime reality |
+| `qualitative-proxy` | a represented pattern warrants domain review | a theorem's quantitative conditions hold |
+| `quantitative` | a result follows from explicit numeric dynamics and assumptions | empirical performance outside those assumptions |
+| `empirical` | observed outcomes support a claim over a stated cohort/window | universal validity |
+
+The current linter emits structural findings and one qualitative proxy. It emits no
+quantitative or empirical control claims. Corpus prevalence is tracked separately as evidence
+about how often checks fire; prevalence does not raise a finding's assurance level.
+
+## The theorem boundary
+
+Several earlier LoopSpec check names borrowed more authority from cybernetics than the encoded
+structure justified. They are now narrowed.
+
+| Earlier claim | Current check | What is actually established |
+|---|---|---|
+| `regulator_without_model` violated Conant & Ashby | `no_explicit_process_model` | no explicit `explains` relation is encoded; an implicit policy model may exist |
+| `unmeasured_estimand` was Kalman observability | `unmeasured_estimand` | no declared signal informs the quantity |
+| `uncontrollable_target` was Kalman controllability | `target_without_actuator` | no declared action says it moves the quantity |
+| self-produced feedback was reinforcing and divergent | `endogenous_feedback_without_crosscheck` | no independent observation of the same quantity is encoded |
+| cadence inversion proved a cascade would hunt | `cascade_cadence_inversion` | the inner update cadence is not faster; dynamics need review |
+| exclusions outnumbering actions violated requisite variety | withdrawn | exclusions are not disturbances, and headcounts are not state variety |
+
+### Good Regulator theorem
+
+Conant and Ashby's theorem concerns an optimal regulator under stated assumptions and a
+mapping between regulator and system states. A prose `Explanation` node is neither necessary
+nor sufficient for that mapping. LoopSpec can reveal the absence of an **explicit process model**;
+it cannot certify or refute the theorem's conditions.
+
+### Observability and controllability
+
+Kalman observability and controllability are properties of a specified state-space model. A
+missing sensor edge or actuator edge is a useful structural defect and only a precondition.
+LoopSpec v1 has no state-transition or observation matrices, so it does not run Kalman tests.
+
+### Loop polarity and stability
+
+Polarity needs signed causal links around the complete cycle. LoopSpec records the intended sign
+of an intervention's effect, including explicit `unknown`, but does not assign signs to all
+process and observation transformations. Stability additionally needs dynamics: gain, delay,
+operating point, and usually a plant model. LoopSpec v1 records qualitative delay and damping
+descriptions but cannot infer polarity or stability. Self-produced feedback without an
+outside cross-check is an epistemic grounding problem, not proof of positive feedback.
+
+### Requisite variety
+
+Ashby's variety is over distinguishable states and responses. `not_modelling:` declares a
+boundary; it is not a disturbance list. A variable can be excluded without perturbing the
+system, and a modelled variable can be a disturbance. A future variety analysis needs explicit
+disturbance modes, response partitions, and the channel connecting them.
+
+### Cascade control
+
+Conventional cascade design requires inner-loop dynamics or bandwidth to be substantially
+faster than the outer loop. Update cadence is only a proxy for that relationship. LoopSpec flags
+a non-faster inner cadence for review and remains silent when free-text periods cannot be
+ranked. It does not claim the loops will oscillate.
+
+## The control projection
+
+`tools/control.py` renders each target as a familiar feedback ring:
+
+```text
+reference ─┐
+           ▼
+       (difference) ─▶ policy ─▶ action ─▶ process
+           ▲                                  │
+           └──── estimate ◀── observation ◀───┘
 ```
-setpoint ─┐
-          ▼
-      (Σ error) ──▶ decide ──▶ ⟨action⟩ ──delay──▶ ((the world))
-          ▲                                              │
-          └──── feedback ──── believed ◀── /signal/ ◀─────┘
-                                              ▲
-                                        ⟨disturbance⟩
-```
 
-**Nothing new is asked of the author.** The comparator is *derived*: a goal targets a
-quantity, something estimates that quantity, so the error exists and follows. Drawing it is
-what makes a loop legible **as a loop** — and it immediately produces readings the dependency
-graph could not:
+The comparator path is drawn only from `uses_reference`; its displayed error value remains a
+**projection convention** rather than an executable calculation. The process box and its connections are now
+drawn only from canonical `causes` and `produces` edges; when those are absent, the renderer
+shows an unrepresented process rather than inventing “the world.” Neither path nor comparator
+proves that a runtime implements the architecture or that it is stable. Exclusions are shown
+as detached model-boundary notes, never fabricated as disturbances.
 
-> `payback_months` — the ring is open: nothing measures it, so **the comparator has no second
-> input and there is no error to act on**.
+## Meta-control and second-order cybernetics
 
-That is the same fact `unmeasured_estimand` reports, stated in control terms, and it is
-sharper. "A quantity has no signal" is a schema complaint. "The comparator has no second
-input" tells you the loop cannot function.
+LoopSpec represents two useful loops about a loop:
 
-### 2. Requisite variety — and it was never actually blocked
+- **calibration** joins past beliefs to later outcomes, scores them over a window, and names
+  what poor performance adjusts;
+- **attention review** names a decision-value measure, review window, and what changes in
+  sampling, source, routing, or retirement when an observation does not earn its cost.
 
-`insufficient_variety` sat listed as *blocked on a missing `Disturbance` primitive* for most of
-this project, with the core budget full at 18. That was wrong. **`not_modelling:` is the
-disturbance list.**
+These are meta-control mechanisms. Calling them second-order cybernetics without qualification
+would still be too broad. LoopSpec now makes the observer, purpose, and boundary explicit. A
+stronger second-order representation must additionally show how observing changes the system
+and how the observer's distinctions, purpose, and boundary can themselves be revised.
 
-> The things you have declared you are not modelling are precisely the disturbances you are not
-> regulating against.
+## The contribution, stated narrowly
 
-No new primitive, no budget fight. The check compares distinguishable actions to named
-unmodelled disturbances:
+LoopSpec's credible contribution is the integration of:
 
-> The loop declares **1** action — `send_winback_email` — and **4** things it is knowingly not
-> modelling: a support outage, competitor pricing, seasonality, the product getting worse.
-> Only variety can destroy variety.
+1. a human-readable authoring language for agent-loop intent;
+2. a deterministic, typed, order-independent graph IR;
+3. fail-closed structural diagnostics with explicit assurance boundaries;
+4. governance, reversibility, resource, provenance, attention, and calibration concerns in
+   the same analysable artifact;
+5. an empirical workflow that preserves preregistration, independent encodings, adjudication,
+   negative results, and historical invalid artifacts.
 
-**Honest about the proxy:** counting names is a crude reading of variety. Ashby's is a measure
-over *states*, not a headcount, and a spec that names no disturbances scores well by saying
-nothing. It fires only when the gap is stark. It is a prompt to think, not a proof.
+The contribution is not a new theorem. It is an executable specification discipline that
+makes consequential omissions visible before implementation, while refusing to describe
+structural proxies as control-theoretic proofs.
 
-## Is it a loop design tool?
+## What would justify stronger analysis
 
-**It is becoming one.** The honest state, split:
+Stronger future IR revisions should add structure only with an executable analysis attached:
 
-**Design-tool behaviour it has.** You can write a loop before building it, see the ring, and
-find that it does not close. `tools/control.py` will show you an open ring before any code
-exists. The cookbook says what each common shape structurally costs. `consider:` records the
-decisions you made and why.
+- explicit process state and typed environment transitions beyond the current structural path;
+- executable error functions and typed comparison operators beyond structural reference use;
+- signed influence around the full cycle beyond the current intervention-effect direction;
+- gain, units, delay distributions, and saturation/deadband;
+- disturbance modes and response partitions for variety analysis;
+- stored prediction/outcome records and executable scoring over declared calibration contracts;
+- distinction and boundary revision for stronger second-order claims.
 
-**Design-tool behaviour it does not have yet, and these are real gaps:**
-
-1. **No dynamics.** `effect_after` and `damping` are recorded and nothing reasons about them.
-   Nyquist says gain plus delay oscillates; this cannot tell you whether *your* loop will
-   thrash, only that it has a delay and no declared damping. `delay_without_damping` remains
-   unimplemented.
-2. **No gain.** How hard does the action push per unit of error? Unrepresentable. Without it,
-   stability is not analysable even in principle.
-3. **Variety is counted, not measured.**
-
-### 3. Cascade — `goal.<q>.set_by: <loop>.<quantity>`
-
-Real control systems nest: a slow outer loop decides what a fast inner loop should aim at.
-Agent systems reach for this constantly — a "strategy" loop setting targets for an "execution"
-loop — and never name it, so nothing can check it.
-
-Naming the **quantity** and not just the loop is what makes the link structural. `set_by:
-strategy` is a comment; `set_by: strategy.target_cac` is a claim something can verify.
-
-Two checks follow, and the first is a genuine necessary condition rather than a preference:
-
-**`cascade_timescale_inversion`** — in cascade control the inner loop must settle *before* the
-outer one acts again. If it does not, the outer loop corrects against a response that has not
-arrived, and both hunt.
-
-> `cost_per_customer_target` is set by the `strategy` loop, and the loop that has to hit that
-> target runs every `weekly` while `strategy` runs every `daily`. The inner loop is not faster
-> than the loop setting its target.
-
-A daily strategy loop driving a weekly execution loop is inverted, and it is an easy mistake to
-make because each loop looks reasonable alone. The check is **silent when either cadence cannot
-be ranked** — cadences are free text on purpose, and a wrong claim about timing is worse than
-no claim.
-
-**`frozen_setpoint`** — the failure `set_by` exists to catch. An outer loop nominally owns a
-setpoint and has no action that moves it, so the target never changes:
-
-> `cost_per_customer_target` is declared `set_by: strategy.target_cac`, and no action anywhere
-> moves `target_cac`. The hierarchy is drawn and the target never changes: the inner loop is
-> regulating against a constant that an outer loop is nominally responsible for and never
-> revisits.
-
-`tools/control.py` draws the cascade as a `sets target` edge from the outer loop's estimate
-into the inner loop's setpoint, so the hierarchy is visible as a hierarchy.
-
-## The honest summary
-
-It is a **cybernetically-grounded notation with a control projection**, not a control-systems
-analysis tool. It will tell you your loop is structurally not a regulator. It will not tell you
-whether your regulator is stable — and it should stop implying otherwise anywhere it does.
-
-**Cascade is now in.** What remains, in order of how much it would move things: **gain**,
-without which stability is not analysable even in principle; then **`delay_without_damping`**,
-which the format already carries the fields for and the linter still does not check.
+Until those exist, LoopSpec should remain strong at structural design analysis and quiet about
+dynamic guarantees.

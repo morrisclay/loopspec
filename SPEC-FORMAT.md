@@ -3,8 +3,8 @@
 **Design constraints, in priority order:**
 
 1. A person unfamiliar with cybernetics can read one and know what the loop does.
-2. A linter can check it against the Good Regulator theorem, requisite variety, observability,
-   controllability and loop polarity.
+2. A linter can check structural closure, epistemic grounding, resources, and authority while
+   stating clearly where control-theoretic proof would require a richer model.
 3. **Any competent LLM can compile it** — to Flue, LangGraph, CrewAI, Goose, or plain code —
    given only the spec file and a target name. No compiler binary, no schema document.
 4. It projects to a diagram without additional layout information.
@@ -18,62 +18,80 @@ format has failed — every key must be self-evident from its name and its posit
 
 ```yaml
 loop: customer_acquisition
-every: weekly                       # cadence — the loop's clock
+runs: weekly                        # cadence — the loop's clock
+
+boundary:
+  drawn_by: founder
+  purpose: regulate acquisition without exhausting company viability
+  inside: [growth policy, acquisition channel, company budget]
+  outside: [prospective customers, advertising market]
 
 # WHAT THIS LOOP IS TRYING TO CONTROL
-regulates:
+goal:
   cac:
-    target: "< 400"
-    computed_from: [ad_spend, new_customers]
+    keep: "below 400"
+    from: [ad_spend, new_customers]
 
 # WHAT IT BELIEVES THAT IT CANNOT SEE DIRECTLY
-estimates:
+beliefs:
   product_market_fit:
-    from: [customer_interviews, stripe]
-    method: bayesian
-    calibrated_by: quarterly_cohort_review     # omit and the linter says so
-    explains: cac                              # the MODEL — Conant & Ashby
+    how: bayesian
+    checked_by: quarterly_cohort_review        # omit and the linter says so
+    explains: cac                              # explicit process model
   willingness_to_pay:
-    from: [customer_interviews]
-    method: judgement
+    how: judgement
     settled_by: "a buyer pays list price without a pilot discount"
 
 # WHAT IT ACTUALLY OBSERVES
 observes:
-  billing_events:      { informs: cac, every: daily, source: Stripe }
-  pipeline_state:      { informs: pipeline_velocity, every: daily, source: the CRM }
-  customer_interviews: { informs: product_market_fit, every: weekly, cost: high }
+  billing_events: { informs: cac, every: daily, origin: outside, how: measured, source: Stripe }
+  customer_interviews:
+    { informs: [product_market_fit, willingness_to_pay], every: weekly, cost: high,
+      origin: outside, how: reported }
+
+# THE WORLD/SYSTEM PATH THROUGH WHICH ACTION BECOMES LATER OBSERVATION
+processes:
+  acquisition_channel:
+    location: interface
+    observed_as: [billing_events]
+    description: market response that turns spend decisions into customers and cost
 
 # WHAT IT CAN DO ABOUT IT
-acts:
-  increase_budget: { reversibility: reversible, delay: 2w }
-  change_pricing:  { reversibility: costly, delay: 4w, approval: founder }
-  stop_market:     { reversibility: irreversible, approval: founder }
+actions:
+  increase_budget: { moves: cac, through: acquisition_channel, effect: unknown,
+                     can_undo: "yes", effect_after: 2w }
+  change_pricing:  { moves: willingness_to_pay, can_undo: costly, effect_after: 4w,
+                     needs_approval: founder }
+  stop_market:     { moves: cac, can_undo: "no", needs_approval: founder }
 
 # WHEN IT DOES WHAT
 when:
   - if: "cac > 400 and product_market_fit.confidence > 0.6"
+    reads: [cac, product_market_fit]
+    against: [cac]
     do: increase_budget
-  - if: "product_market_fit.confidence < 0.4"
-    escalate: founder                          # where the loop stops and asks
+
+asks_human_when:
+  - "product_market_fit confidence falls below 0.4"
+asks_human: founder
 
 # WHO IS INVOLVED AND WHAT IT COSTS THEM
-parties:
-  founder: { human: true, bears: "the company", sees: [cac, product_market_fit] }
-  growth_agent: { agent: true, bears: nothing }
+people:
+  founder: { human: true, loses_if_wrong: "the company", sees: [cac, product_market_fit] }
+  growth_agent: { agent: true, loses_if_wrong: nothing }
 
 # WHAT MUST NEVER HAPPEN
 never:
   - "spend exceeds committed runway"
 
 # WHAT WE KNOW WE ARE NOT MODELLING
-ignoring:
+not_modelling:
   - competitor_response
   - seasonality
 ```
 
-Every key is a plain English word doing one job. `regulates`, `estimates`, `observes`, `acts`,
-`when`, `parties`, `never`, `ignoring`. Nothing is named after a primitive.
+Every key is a plain English word doing one job. `goal`, `beliefs`, `observes`, `actions`,
+`when`, `people`, `never`, `not_modelling`. Nothing is named after a primitive.
 
 ## The specification
 
@@ -83,10 +101,11 @@ generated rather than written, so they cannot drift from the parser:
 | artifact | what it is |
 |---|---|
 | `schema/loop.keys.yaml` | **the grammar** — the single place a key is defined |
+| `schema/semantic-map.yaml` | every accepted key's declared IR, validation, or annotation meaning |
 | `REFERENCE.md` | every key, type, enum and referential rule — *generated* |
 | `schema/loop.schema.json` | JSON Schema for editors and CI — *generated* |
 | `NOTATION.md` | the diagram language: bands, shapes, arrows, how a defect is drawn |
-| `tools/gen_spec.py --check` | fails when the generated artifacts go stale |
+| `tools/loopspec.py doctor` | fails on stale artifacts, uncovered semantics, or behavioral regressions |
 
 **Unknown keys are errors and enums are checked.** A spec misspelling `reversibility` on an
 act named `wipe_production` previously parsed clean and produced no finding — in a format
@@ -103,25 +122,28 @@ The reader never needs this table; the linter and the compiler do.
 
 | spec key | primitive | what the linter does with it |
 |---|---|---|
-| `loop`, `every` | `Loop`, `TimeScale` | loop closure, cadence present |
-| `regulates.*.target` | `DesiredCondition` | **controllability** — can any act move it? |
-| `regulates.*` | `Estimand` (computed) | |
-| `estimates.*` | `Estimand` (latent) + `Estimate` | **observability** — is it measured? |
-| `estimates.*.method` | `Estimator` | idempotency required under at-least-once |
-| `estimates.*.calibrated_by` | `Calibration` | absent → `uncalibrated_estimator` |
-| `estimates.*.explains` | `Explanation` | absent → **Good Regulator** violation |
+| `loop`, `runs` | `Loop`, `TimeScale` | structural closure, cadence present |
+| `boundary` | `Boundary` + `frames`/`bounds` | missing → `boundary_not_declared`; records observer and purpose |
+| `goal.*.keep` | `DesiredCondition` | `target_without_actuator` if no action moves it |
+| `goal.*` | `Estimand` (computed) | |
+| `beliefs.*` | `Estimand` (latent) + `Estimator` | `unmeasured_estimand` if no signal informs it |
+| `beliefs.*.how` | `Estimator` | idempotency required under at-least-once |
+| `beliefs.*.checked_by` | `Calibration` | absent → `belief_never_checked` |
+| `beliefs.*.explains` | `Explanation` | absent → `no_explicit_process_model` |
 | `observes.*` | `Signal` | `orphan_signal` if it measures nothing |
 | `observes.*.every` | `TimeScale` | |
-| `acts.*` | `Intervention` | |
-| `acts.*.delay` | `Delay` | delay without damping → oscillation |
-| `acts.*.reversibility` | attribute | `irreversible_without_approval` |
-| `acts.*.approval` | `requires_approval_from` | the human gate |
+| `actions.*` | `Intervention` | |
+| `actions.*.through`, `processes.*` | controlled-process `System` | missing world leg → `process_path_not_declared` |
+| `actions.*.effect` | signed or explicitly unknown influence | omission → `effect_direction_unspecified`; no stability inference |
+| `actions.*.effect_after` | `Delay` | recorded; no stability inference in v1 |
+| `actions.*.can_undo` | attribute | `irreversible_without_approval` |
+| `actions.*.needs_approval` | `requires_approval_from` | the human gate |
 | `when` | `Policy` | `policy_on_unmeasured_inputs` |
-| `when.*.escalate` | `Policy.escalates` | absent → `no_escalation_path` |
-| `parties.*.bears` | `Consequence` | |
-| `parties.*.sees` | `holds` edges | absent → `accountable_but_blind` |
+| `asks_human_when` | `Policy.asks_human_when` | absent → `no_escalation_path` |
+| `people.*.loses_if_wrong` | `Consequence` | |
+| `people.*.sees` | `holds` edges | absent → `accountable_but_blind` |
 | `never` | `Constraint` | `invariant_on_unmeasured` |
-| `ignoring` | `excluded_variables` | the revision frontier |
+| `not_modelling` | `excluded_variables` | the revision frontier, not a disturbance claim |
 
 ## Naming observations
 
@@ -159,9 +181,9 @@ checks ask whether that is deliberate:
 - **`shared_estimand_no_arbiter`** — two loops estimate the same quantity and nothing reconciles
   them. Felt symptom: *"my agents disagree and whichever finishes last wins."*
 - **`unowned_act`** — an act reachable by two loops with different approval rules.
-- **`group_without_exogenous_signal`** — every signal in the group is produced by some loop in
-  the group. Loop polarity at group scale: the group is reinforcing and cannot be corrected
-  from outside. **This is the multi-agent version of the Ralph finding.**
+- **`no_exogenous_grounding`** — every signal in the group is produced by some loop in the
+  group. The encoded design has no independent observation that can contradict it. This is an
+  epistemic grounding result, not a signed-polarity or stability claim.
 
 ## Compiling
 
@@ -177,7 +199,7 @@ about the target. A compiled artifact ships with the list of what did not surviv
 
 TOML is better for flat configuration and worse for nested lists of objects, which `when` and
 `observes` are. The YAML here uses only maps, lists and strings — the JSON-compatible subset,
-per `schema/uras.graph.md` — so it converts to TOML or JSON mechanically if a target prefers.
+per `schema/loopspec.graph.md` — so it converts to TOML or JSON mechanically if a target prefers.
 
 ---
 
@@ -194,5 +216,6 @@ determinacy is being supplied by the reader.
 **Approval gate preserved 20/20**, across three frameworks that have no such concept.
 
 **The warning:** the most-dropped element was `exit_channel`, the irreversible ungated act,
-in 4 of 20 — and two of those drops went unreported. Compilation output must be linted back
-against the source spec. That check does not exist yet and is the top tool priority.
+in 4 of 20 — and two of those drops went unreported. Compilation output therefore needs a
+target adapter and preservation manifest before it can make a safety claim; text-scan
+verification remains a labelled heuristic, not proof of preservation.

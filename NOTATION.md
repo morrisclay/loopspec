@@ -10,15 +10,15 @@ it.** Mermaid is one rendering of it, not the thing itself.
 
 ---
 
-## 1. Four bands, in reading order
+## 1. Five bands, in reading order
 
 Every diagram lays out left to right in the order a control loop actually runs. The bands are
 not decorative — a node's band is determined by its kind, so two people drawing the same spec
 put the same node in the same place.
 
 ```
-   observed    →    believed    →    decided    →    accountable
-   what arrives     what it thinks   what it does    who is exposed
+ world/boundary → observed → believed → decided → accountable
+ where the path    what arrives   what it thinks   what it does   who is exposed
 ```
 
 A loop that is missing a band is missing a stage of regulation, and that is visible before
@@ -29,6 +29,8 @@ in it, not a regulator** — which is the distinction the whole project rests on
 
 | shape | primitive | reads as |
 |---|---|---|
+| `[[ boundary ]]` | Boundary | an observer-relative inside/outside distinction |
+| `[( process )]` | System with `role: controlled_process` | the world/system path through which action becomes observation |
 | `(  rounded  )` | Estimand | a quantity |
 | `[/ slanted /]` | Signal | data arriving |
 | `[  box  ]` | Estimator | a computation |
@@ -60,6 +62,13 @@ The relation vocabulary is closed, so the arrow set is closed too.
 | `──asserts──▶` | asserts | this party *claims* it — not a measurement |
 | `──after──▶` | delays | the effect arrives later |
 | `──consumes──▶` | consumes | draws down a finite stock |
+| `──reads──▶` | reads | this decision rule semantically reads that quantity or resource |
+| `──uses reference──▶` | uses_reference | this ordered rule compares against that desired condition |
+| `──outcome──▶` | compares | this calibration contract joins to that later outcome |
+| `──through──▶` | causes | this action operates through that controlled process |
+| `──emits──▶` | produces | this process produces that observation |
+| `╌╌frames╌▶` | frames | this party chose that boundary for a purpose |
+| `╌╌bounds╌▶` | bounds | this boundary applies to that controller |
 | `╌╌targets╌▶` | targets | aims at, without guaranteeing reach |
 | `╌╌sees╌▶` | holds | information reaches this party |
 | `╌╌explains╌▶` | explains | claims a mechanism |
@@ -87,10 +96,14 @@ The shapes of the common failures, readable without the labels:
 | a slanted box with **no outgoing arrow** | `orphan_signal` — collected, tells you nothing |
 | a rounded box with **nothing coming in** | `unmeasured_estimand` — believed, never observed |
 | a box with **no return arrow into it** | `uncalibrated_estimator` — never scored |
-| a hexagon with **no flag pointing at it** | `uncontrollable_target` — a wish |
+| a hexagon with **no flag pointing at it** | `target_without_actuator` — a declared target with no declared lever |
 | a circle with `bears` but **no `sees`** | `accountable_but_blind` — oversight in name only |
 | a `⚠` flag with **no circle attached** | `irreversible_without_approval` |
-| an **empty `believed` band** | `regulator_without_model` — a reflex |
+| an **empty model relation** | `no_explicit_process_model` — no generative explanation is encoded |
+| a red **unrepresented process** between act and observation | `process_path_not_declared` — the world leg is implicit |
+| a missing boundary note | `boundary_not_declared` — inside/outside and observer purpose are unstated |
+| an action whose effect sign is absent | `effect_direction_unspecified` — a later view must not invent polarity |
+| a target with no policy arrow using it | `reference_not_used` — target and value coexist without a comparator |
 | **no dashed arrow leaving the diagram** | `no_exogenous_grounding` — nothing can surprise it |
 
 That last one is the group failure and it is the one people recognise instantly once drawn:
@@ -107,8 +120,9 @@ there is no layout in which a missing calibration edge looks present.
 
 ## 6. Rendering
 
-`python3 tools/diagram.py <spec.loop.yaml> [--md]` emits Mermaid, which renders in GitHub,
-most editors, and this notation's own documentation.
+`python3 tools/loopspec.py diagram <spec.loop.yaml> --markdown` emits the dependency/governance
+projection. Add `--control` for the feedback-ring projection. Both emit Mermaid, which renders
+in GitHub, most editors, and this notation's own documentation.
 
 Mermaid was chosen for reach rather than fit: it has no native concept of a band, so bands are
 subgraphs, and its shape set is a near-miss for several primitives. A dedicated renderer would

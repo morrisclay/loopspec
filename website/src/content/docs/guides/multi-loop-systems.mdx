@@ -1,0 +1,80 @@
+---
+title: Compose multiple loops
+description: Model nested, coupled, and verifier loops with explicit namespaces, sharing, cadence, and arbitration.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Mermaid from '../../../components/Mermaid.astro';
+
+Put multiple YAML documents in one file, separated by `---`. Names resolve across the whole file,
+which allows one loop to set a reference, share a quantity, or expose an action to another without
+copying its meaning.
+
+```yaml title="service-system.loop.yaml"
+loop: strategy
+runs: quarterly
+goal:
+  demand:
+    keep: near 1200 tickets per month
+
+---
+
+loop: operations
+runs: daily
+goal:
+  queue_depth:
+    keep: near demand
+    set_by: strategy.demand
+observes:
+  queue_reading:
+    informs: queue_depth
+    origin: outside
+    how: measured
+actions:
+  add_shift:
+    moves: queue_depth
+    effect: decrease
+    can_undo: costly
+when:
+  - if: queue depth exceeds the strategic reference
+    reads: [queue_depth]
+    against: [queue_depth]
+    do: add_shift
+```
+
+<Mermaid
+	chart={`flowchart LR
+	SR["strategy · demand target"] -->|sets| OR["operations · queue reference"]
+	OQ(["queue depth"]) --> OP{"operations policy"}
+	OR -->|uses reference| OP
+	OP --> OA["add shift"]
+	OA --> OW[("service process")] --> OS[/"queue reading"/] --> OQ`}
+	caption="The outer loop changes the inner loop's reference. The setpoint link is explicit rather than inferred from matching names."
+/>
+
+## Three composition questions
+
+### Is one loop setting another loop's reference?
+
+Use `set_by: outer_loop.quantity`. LoopSpec emits an explicit `sets` relation and rejects a target
+that does not exist in the named loop.
+
+### Do multiple estimators form a view about the same quantity?
+
+Shared names can represent shared meaning, but conflicting definitions fail closed. If several
+estimators disagree and no policy reads the shared quantity, `shared_estimand_no_arbiter` asks
+what resolves the disagreement.
+
+### Is a verifier actually independent?
+
+A verifier that observes only the worker's report is still inside the same epistemic enclosure.
+Give it an outside observation capable of disagreeing, and write the policy that acts on the
+disagreement.
+
+<Aside type="caution" title="Cadence is not bandwidth">
+An inner loop should ordinarily update faster than its outer loop. LoopSpec can flag a non-faster
+declared cadence as a review proxy. It cannot prove cascade stability without process dynamics,
+settling time, or bandwidth.
+</Aside>
+
+The [pattern cookbook](/patterns/) covers worker/verifier groups and several other common shapes.

@@ -1,0 +1,21 @@
+{
+  "status": "converged",
+  "objective": "Source-backed real-loop corpus tranche 1",
+  "predicate": "python3 research/real_loops/validate_corpus.py",
+  "result": {
+    "valid_encodings": 21,
+    "source_pinned_cases": 3,
+    "live_candidates": 16,
+    "new_case_findings_after_encoding_correction": 12
+  },
+  "findings": {
+    "errors": 0,
+    "untested_gaps": ["held-out independent encoding before schema changes"],
+    "verification": {
+      "doctor": "40 tests passed; generated artifacts current",
+      "corpus": "21 encodings valid; acceptance thresholds met",
+      "website": "24 Astro pages built"
+    }
+  },
+  "next": "independent verification, then held-out encoding before schema changes"
+}

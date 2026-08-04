@@ -1,0 +1,160 @@
+# Encoded from:
+#   sweagent/agent/agents.py:1062-1215 (forward_with_handling)
+#   sweagent/agent/agents.py:1235-1294 (step, run)
+loop: agent_step_loop
+
+runs: per step, repeated until step_output.done  # agents.py:1284-1285
+
+boundary:
+  drawn_by: controller
+  purpose: >
+    Separate the controller's own bookkeeping (trajectory/history/info
+    updates) from outside-world effects of querying the model and acting
+    in the execution environment, so that format-level errors can be
+    retried while environment/API-level errors force an exit.
+    # agents.py:1067,1088-1104,1152-1210
+  inside:
+    - trajectory                     # agents.py:1092,1253,1260,1286
+    - message history                # agents.py:1099-1104,1253
+    - info dict / model_stats        # agents.py:1255-1258
+    - n_format_fails counter         # agents.py:1106,1121,1126,1132,1136
+  outside:
+    - language model API             # agents.py:1109,1120,1130,1180-1192
+    - execution environment (SWEEnv) # agents.py:1168-1173,1193-1198
+
+goal:
+  episode_completion:
+    keep: "step_output.done becomes True"   # agents.py:1284-1285
+    from: [step_result]
+    confidence: null
+
+actions:
+  query_model:
+    # self.forward(history), per docstring may also execute a model-issued
+    # bash command in the environment; body of forward() itself not shown.
+    moves: episode_completion
+    effect: unknown
+    through: model_and_environment_step
+    consumes: [format_retry_budget, api_cost_budget, execution_time_budget]
+    # agents.py:1107-1109
+
+  attempt_autosubmission:
+    # "Attempts to autosubmit (extract patch from the environment) and
+    # stops the loop." Forces done=True. — agents.py:1076-1086
+    moves: episode_completion
+    effect: increase
+    can_undo: no    # ends the episode; not resumable from within this call
+    through: autosubmission_extraction
+
+processes:
+  model_and_environment_step:
+    description: >
+      The model is queried with the current history and returns a
+      thought/action; per the method docstring, a proposed bash command
+      may be executed against the environment unless it fails a syntax
+      check first. — agents.py:1063-1065,1109
+    location: outside
+    observed_as: [step_result]
+
+  autosubmission_extraction:
+    description: >
+      Reads the environment to extract a patch/diff as a forced final
+      submission when an unrecoverable error occurs. — agents.py:1077
+    location: outside
+    observed_as: [step_result]
+
+observes:
+  step_result:
+    informs: episode_completion
+    origin: outside
+    how: reported
+    reported_by: model
+    every: per step
+    # agents.py:1109,1076-1086 (StepOutput returned on every path)
+
+spends:
+  format_retry_budget:
+    limit: "max_requeries retries (n_format_fails counter)"
+    spent_by: [query_model]
+    replenished: "reset to 0 at the start of each forward_with_handling call"
+    # agents.py:1106-1107,1120-1141,1211-1215
+  api_cost_budget:
+    limit: "cost_limit / total_cost_limit (exact values not shown here)"
+    spent_by: [query_model]
+    # agents.py:1180-1192
+  execution_time_budget:
+    limit: "total execution time limit (exact value not shown here)"
+    spent_by: [query_model]
+    # agents.py:1161-1166
+
+when:
+  - if: "forward() raises FormatError, _BlockedActionError, or BashIncorrectSyntaxError"
+    reads: [format_retry_budget]
+    do: query_model
+    # agents.py:1120-1141 (history rebuilt with an error template before requery)
+
+  - if: "forward() raises ContentPolicyViolationError, _RetryWithOutput, or _RetryWithoutOutput"
+    do: query_model
+    # agents.py:1130-1150
+
+  - if: >
+      forward() raises _ExitForfeit, _TotalExecutionTimeExceeded,
+      CommandTimeoutError, ContextWindowExceededError,
+      CostLimitExceededError, RetryError, SwerexException, RuntimeError,
+      any other unhandled Exception, or n_format_fails reaches max_requeries
+    reads: [format_retry_budget]
+    do: attempt_autosubmission
+    # agents.py:1154-1215
+
+  - if: "step_output.done is False after step()"
+    reads: [episode_completion]
+    do: query_model
+    # agents.py:1284-1286 (outer run() loop)
+
+never:
+  - "continue running after TotalCostLimitExceededError — it is re-raised, not caught"
+    # agents.py:1180-1181
+  - "suppress KeyboardInterrupt or EOFError — both are re-raised"
+    # agents.py:1113-1116
+
+people:
+  controller:
+    kind: agent
+    loses_if_wrong: "wasted steps and API cost; ends in a forced/failed submission"
+    sees: [episode_completion]
+  model:
+    kind: agent
+    loses_if_wrong: nothing
+    # no evidence in excerpt of what the model observes/loses
+
+not_modelling:
+  - >
+    The concrete content and side effects of model-issued bash commands
+    (forward()'s body is not shown), so the real-world reversibility of
+    query_model's environment effects depends on the specific command
+    executed by a given deployment and is not fixed here.
+  - >
+    Exact numeric values of max_requeries, cost_limit, total_cost_limit,
+    and total execution time — these are deployment/config values not
+    shown in this excerpt.
+  - >
+    Any human-in-the-loop approval or escalation path; none appears in
+    forward_with_handling, step, or run.
+  - >
+    Whether the final submission is actually a correct fix — grading
+    happens outside this excerpt; this loop only regulates reaching a
+    terminal (done=True) state.
+  - >
+    Logging (self.logger.*) and save_trajectory()'s disk write are
+    treated as terminal output/bookkeeping, not as actions with effects
+    on episode_completion, since they only report state already decided
+    elsewhere. — agents.py:1078,1090,1131,1155-1213,1286,1289
+  - >
+    The implementation and side effects of self._chook callbacks
+    (on_step_start/on_step_done/on_run_start/on_run_done) are not shown.
+    — agents.py:1248,1262,1282,1287
+  - >
+    No cross-episode calibration is shown: n_format_fails and error
+    handling are scoped to a single forward_with_handling call and reset
+    each step, so this is not modelled as a belief scored/adjusted over
+    time.

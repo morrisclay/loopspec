@@ -8,24 +8,51 @@
 #             If a check has no felt symptom it is probably not worth shipping.
 #   means     what the checker actually looked at.
 #   fix       what to write in the spec.
-#   half      attention | calibration | neither — which of the two second-order loops.
+#   half      attention | calibration | neither — which meta-control concern it serves.
 #   grounded  the theorem or measurement it follows from, if any.
 #   evidence  robust | corpus | motivated | legacy. See the header of CHECKS.md.
+#   assurance structural | qualitative-proxy | quantitative | empirical. This says what the
+#             finding itself establishes; `evidence` separately says how well prevalence was
+#             checked against the corpus.
 
 belief_never_checked:
-  symptom: "my agent's confidence doesn't track reality"
-  means: A belief formed by judgement, with no `checked_by` naming what scores it against outcomes.
-  fix: "Add `checked_by:` to the belief, naming what compares past calls to what happened. If nothing does, that is the finding."
+  symptom: "we see outcomes, but never learn whether the judgement is reliable"
+  means: >
+    A belief formed by judgement with no declared calibration review. `settled_by` resolves
+    an individual case; `checked_by` scores cases over time and changes how the belief is formed.
+  fix: >
+    Add `checked_by:` only when a review scores past calls against outcomes. Then complete the
+    calibration contract with its outcome, scoring rule, window, cadence, and revision target.
   half: calibration
   grounded: "10/10 published reference examples, 4/4 eval harnesses. Survived independent encoding 5/5."
+  assurance: structural
   evidence: robust
 
-regulator_without_model:
+incomplete_calibration_contract:
+  symptom: "we have a review called calibration, but it never changes trust"
+  means: A named belief check lacks an outcome observation, scoring rule, cohort/window, revision target, or review cadence.
+  fix: "Add `checked_against:`, `scoring_rule:`, `window:`, `adjusts:`, and `every:`. The window states what is scored; cadence states when the review closes."
+  half: calibration
+  grounded: "A calibration claim needs prediction→outcome matching, a loss/score over a stated sample, and a response to poor performance. This check establishes contract completeness, not calibrated performance."
+  assurance: structural
+  evidence: motivated
+
+incomplete_attention_contract:
+  symptom: "we review the source, but the review cannot change what we look at"
+  means: A named observation review lacks a decision-value metric, review window, review cadence, or attention-changing response.
+  fix: "Add `value_metric:`, `review_window:`, `review_every:`, and `adjusts:` to the observation. The response must change sampling, source, routing, or retirement."
+  half: attention
+  grounded: "Meta-control contract completeness. It establishes a declared signal-value review path, not that the source is valuable or optimally sampled."
+  assurance: structural
+  evidence: motivated
+
+no_explicit_process_model:
   symptom: "it reacts but never anticipates"
-  means: The loop steers toward a condition and contains no model — no `explains` — of what produces that quantity.
-  fix: "Add `explains:` to the belief that accounts for the goal, or accept that this is a reflex against a setpoint."
+  means: The loop steers toward a condition and contains no explicit `explains` relation for what produces that quantity.
+  fix: "Add `explains:` to the belief that accounts for the goal when anticipation depends on a process model. An implicit policy model may still exist; this check cannot see it."
   half: neither
-  grounded: "Conant & Ashby 1970 — every good regulator of a system must be a model of that system. 10/10 published examples. Survived independent encoding 5/5."
+  grounded: "Inspired by Conant & Ashby 1970, but not a theorem test: LoopSpec does not represent the theorem's optimal-regulation assumptions or regulator↔system state mapping. Historical label: `regulator_without_model`."
+  assurance: structural
   evidence: robust
 
 irreversible_without_approval:
@@ -33,13 +60,24 @@ irreversible_without_approval:
   means: "An action marked `can_undo: no` or `costly` with no `needs_approval`."
   fix: "Add `needs_approval:` naming the person who must say yes. Approval demanded everywhere is ignored; approval where the act cannot be undone is a rule people follow."
   half: neither
+  assurance: structural
   evidence: corpus
+
+reversibility_unspecified:
+  symptom: "nobody knows whether this action can be taken back"
+  means: A generated action omits `can_undo`, so the analyzer cannot determine whether an approval gate is required.
+  fix: "Add `can_undo: yes`, `costly`, or `no`. Omission is unknown, not reversible."
+  half: neither
+  grounded: "Safety-relevant declaration completeness. It does not establish whether the author's classification matches the real action."
+  assurance: structural
+  evidence: motivated
 
 accountable_but_blind:
   symptom: "I'm accountable for it and I find out afterwards"
   means: A person with `loses_if_wrong` and nothing in `sees` — bears the cost, receives no information.
   fix: "Add estimands to that person's `sees:`, or move the exposure to whoever actually watches."
   half: attention
+  assurance: structural
   evidence: corpus
 
 no_human_at_all:
@@ -48,6 +86,7 @@ no_human_at_all:
   fix: "Declare the person under `people:` with `loses_if_wrong`, and add `asks_human_when:`."
   half: attention
   grounded: "14/21 of the corpus. Encoder-dependent — reported as a pattern, not a rate."
+  assurance: structural
   evidence: corpus
 
 no_escalation_path:
@@ -55,22 +94,34 @@ no_escalation_path:
   means: A human is declared, and no rule escalates and no action needs approval.
   fix: "Add `asks_human_when:` with the conditions that should stop the loop."
   half: attention
+  assurance: structural
   evidence: corpus
+
+escalation_target_unspecified:
+  symptom: "the loop stops, but nobody is responsible for answering"
+  means: "`asks_human_when` declares escalation conditions while no `asks_human` recipient is named."
+  fix: "Add `asks_human:` naming a person in `people`. Keep approval gates on irreversible actions separately."
+  half: attention
+  grounded: "Governance path completeness. It establishes a named recipient, not availability, response time, or correct authority in operation."
+  assurance: structural
+  evidence: motivated
 
 unmeasured_estimand:
   symptom: "it claims to track things it doesn't"
   means: A quantity with no observation informing it.
   fix: "Add an entry to `observes:` with `informs:` pointing at it, or stop claiming to track it."
   half: attention
-  grounded: Kalman observability — a state is observable if it can be inferred from outputs.
+  grounded: "A structural sensing precondition. Not Kalman observability: LoopSpec has no state-transition or observation matrices."
+  assurance: structural
   evidence: corpus
 
-uncontrollable_target:
+target_without_actuator:
   symptom: "it has a goal it can't actually move"
   means: A goal with a target, and no action declaring it `moves` that quantity.
   fix: "Add `moves:` to whichever action drives it. A target nothing can drive is a wish."
   half: neither
-  grounded: Kalman controllability — a state is controllable if it can be driven to a target.
+  grounded: "A structural actuation precondition. Not Kalman controllability: LoopSpec has no state-space model. Historical label: `uncontrollable_target`."
+  assurance: structural
   evidence: corpus
 
 open_loop:
@@ -78,13 +129,78 @@ open_loop:
   means: The quantity is measured AND moved, and no loop closes between them.
   fix: Make sure the loop reading that signal is the one taking that action.
   half: neither
+  assurance: structural
   evidence: corpus
+
+incomplete_loop:
+  symptom: "the design is still a list of parts"
+  means: A loop record lacks cadence, observations, actions, controlled quantities, or a decision rule.
+  fix: "Add the missing role. Partial designs are valid inputs so the linter can help before the loop is complete."
+  half: neither
+  grounded: "Structural design completeness, not dynamic stability."
+  assurance: structural
+  evidence: motivated
+
+boundary_not_declared:
+  symptom: "inside, outside, and success mean different things to different people"
+  means: A generated loop has no declared system/environment boundary, observer, or purpose.
+  fix: "Add `boundary:` with `drawn_by:`, `purpose:`, `inside:`, and `outside:`. The observer must name someone in `people`."
+  half: neither
+  grounded: "Cybernetic descriptions are relative to a system/environment distinction and a selected purpose. This check establishes that the distinction is declared, not that it is uniquely correct."
+  assurance: structural
+  evidence: motivated
+
+incomplete_boundary:
+  symptom: "we named a boundary but never said what is on each side"
+  means: A boundary has an observer and purpose but leaves its inside or outside set empty.
+  fix: "Add at least one component to both `boundary.inside` and `boundary.outside`. Keep uncertain membership in the prose purpose or model it at the interface."
+  half: neither
+  grounded: "A structural system/environment distinction. It establishes that both sides are declared, not that membership is objectively correct or exhaustive."
+  assurance: structural
+  evidence: motivated
+
+process_location_unspecified:
+  symptom: "we cannot tell whether this process belongs to us or to the environment"
+  means: A controlled process is not located inside, outside, or at the interface of the declared boundary.
+  fix: "Add `location: inside`, `outside`, or `interface` to the process."
+  half: neither
+  grounded: "Boundary-relative process provenance. It does not imply control ownership or actual causal strength."
+  assurance: structural
+  evidence: motivated
+
+process_path_not_declared:
+  symptom: "the diagram jumps from action to result as if the world were instantaneous"
+  means: An action targets an observed quantity, but no controlled process connects that action to an observation of the quantity.
+  fix: "Declare the world/system component under `processes:` with `observed_as:`, then name it from the action's `through:`."
+  half: neither
+  grounded: "Structural feedback closure: action → process → observation → quantity. It does not establish effect size, gain, delay adequacy, or stability."
+  assurance: structural
+  evidence: motivated
+
+effect_direction_unspecified:
+  symptom: "we agree this action matters but not which way it moves the result"
+  means: An action targets a quantity but omits whether the intended effect increases, decreases, or has unknown direction.
+  fix: "Add `effect: increase`, `decrease`, or `unknown`. Use `unknown` rather than allowing a reader or renderer to invent a sign."
+  half: neither
+  grounded: "Signed influence is a prerequisite for qualitative polarity analysis. Direction alone is not a stability result."
+  assurance: structural
+  evidence: motivated
+
+reference_not_used:
+  symptom: "the system has a target, but none of its rules actually compares against it"
+  means: A desired condition exists while no ordered policy rule declares that it uses the reference.
+  fix: "Add `against: [goal_quantity]` to the `when` rule that compares its observed input with that goal's `keep:` condition. The quantity must also be in `reads:`."
+  half: neither
+  grounded: "Structural comparator closure. It establishes a declared reference-use path, not a numeric error calculation, controller gain, or runtime implementation."
+  assurance: structural
+  evidence: motivated
 
 orphan_signal:
   symptom: "it collects data nobody uses"
   means: An observation with no `informs:`.
   fix: "Add `informs:` naming what it tells you, or stop collecting it."
   half: attention
+  assurance: structural
   evidence: corpus
 
 informs_no_decision:
@@ -93,6 +209,7 @@ informs_no_decision:
   fix: "Either have a rule in `when:` read it, or stop observing it. The loop is not wrong about anything here — it is spending attention it will not get back."
   half: attention
   grounded: "Value of information, from decision theory. Fires 1/10 on published examples — motivated, not yet evidenced at rate."
+  assurance: structural
   evidence: motivated
 
 expensive_signal_unreviewed:
@@ -101,28 +218,32 @@ expensive_signal_unreviewed:
   fix: "Add `checked_by:` to the observation — the way a sourcing channel that finds nothing gets retired."
   half: attention
   grounded: "Three independent instances in the corpus. Fires 3/21 — motivated, not evidenced at rate."
+  assurance: structural
   evidence: motivated
 
 no_exogenous_grounding:
-  symptom: "it confirms its own beliefs"
-  means: "Every observation the loop reads is `origin: ourselves` — produced inside the system."
-  fix: "Add at least one observation with `origin: outside`. Without one it converges on agreement rather than truth."
+  symptom: "every signal is downstream of our own actions"
+  means: "Every observation the loop reads is causally produced by an action inside the system. This does not mean the observations cannot surprise it."
+  fix: "Decide whether the deployment needs an observation that is not caused by the loop. Self-produced experiments and tests may still provide real grounding."
   half: attention
+  assurance: structural
   evidence: corpus
 
 single_point_of_grounding:
   symptom: "everything rests on one input and nobody says so"
-  means: The loop reads several observations and exactly one comes from outside itself.
-  fix: "Nothing to fix necessarily — but the loop is exactly as trustworthy as that one input. Ralph is the canonical case: weaken the tests and it is sealed."
+  means: The loop reads several observations and exactly one is not causally downstream of its own actions.
+  fix: "Nothing to fix necessarily. Review whether losing that independent path matters; action-produced experiments and tests can still surprise and ground the loop."
   half: attention
+  assurance: structural
   evidence: corpus
 
-reinforcing_loop_no_balancer:
-  symptom: "it runs away"
-  means: A loop whose links are all positive — nothing corrects it downward.
-  fix: Add a balancing path, typically an exogenous measurement that can contradict the loop.
+endogenous_feedback_without_crosscheck:
+  symptom: "it confirms its own output"
+  means: An observation is produced inside the system and no outside observation informs the same quantity.
+  fix: Add an independent outside observation, or explicitly accept that the feedback has no external cross-check.
   half: neither
-  grounded: System dynamics loop polarity — Forrester, Sterman.
+  grounded: "Provenance/grounding structure only. LoopSpec can record an action's intended effect direction, but has no signed full-cycle influence graph or dynamics, so it does not establish reinforcing polarity or runaway stability. Historical label: `reinforcing_loop_no_balancer`."
+  assurance: structural
   evidence: corpus
 
 unbounded_loop:
@@ -131,6 +252,7 @@ unbounded_loop:
   fix: "Declare it under `spends:` even if the limit is generous. An undeclared budget is still a budget, just one nobody chose."
   half: attention
   grounded: "Harness engineering — budgets and step ceilings are standard practice. Fires 11/21."
+  assurance: structural
   evidence: corpus
 
 ceiling_without_correction:
@@ -138,7 +260,8 @@ ceiling_without_correction:
   means: A limit exists and no decision rule reads how much is left.
   fix: "Have a rule in `when:` read the resource and do something different when it runs low. A ceiling is a stop, not a correction — it truncates the loop rather than regulating it."
   half: attention
-  grounded: "Ashby — a stop absorbs no disturbance. Known limit: this clears as soon as anything reads the resource, and does not distinguish reading-to-halt from reading-to-adapt."
+  grounded: "Structural resource-feedback closure: a limit constrains execution, while a Policy `reads` edge is the represented precondition for adapting to remaining resource. Known limit: this clears as soon as anything reads the resource and does not distinguish reading-to-halt from reading-to-adapt."
+  assurance: structural
   evidence: corpus
 
 spends_without_limit:
@@ -146,6 +269,7 @@ spends_without_limit:
   means: Something consumed with no ceiling and nothing replenishing it.
   fix: "Give it a `limit:`, or declare what `replenished:` it. Exhaustion is certain; only the date is unstated."
   half: attention
+  assurance: structural
   evidence: corpus
 
 shared_estimand_no_arbiter:
@@ -153,6 +277,7 @@ shared_estimand_no_arbiter:
   means: Two loops in a group estimate the same quantity and no policy reconciles them.
   fix: Have a rule read the quantity and decide, or make one loop's estimate authoritative.
   half: calibration
+  assurance: structural
   evidence: corpus
 
 unowned_act:
@@ -160,6 +285,7 @@ unowned_act:
   means: One action selected by policies belonging to different loops.
   fix: "Give the action one owner. Authority decided by scheduling is not authority."
   half: neither
+  assurance: structural
   evidence: corpus
 
 policy_reads_undeclared:
@@ -167,21 +293,33 @@ policy_reads_undeclared:
   means: A decision rule tests an identifier declared nowhere — not a goal, not a belief, not a resource.
   fix: "Declare it, or fix the condition. Nothing observes it and nothing computes it, so whatever happens at that branch is not what the spec says."
   half: calibration
+  assurance: structural
   evidence: corpus
+
+policy_inputs_inferred:
+  symptom: "renaming prose changed what the tool thought the rule used"
+  means: A `when:` rule omitted `reads:`, so semantic inputs were inferred from tokens in `if:` for compatibility.
+  fix: "Add `reads: [goal_or_belief_name, ...]` to every rule. Keep `if:` as the human-readable expression."
+  half: calibration
+  grounded: "Determinacy requirement: prose tokenization is not a stable semantic interface."
+  assurance: structural
+  evidence: motivated
 
 consequence_without_authority:
   symptom: "I carry the risk and control none of it"
   means: A person bears a consequence and authorises no action.
   fix: "Give them authority over something via `needs_approval:`, or record that the exposure is genuinely one-sided."
   half: neither
+  assurance: structural
   evidence: corpus
 
-cascade_timescale_inversion:
+cascade_cadence_inversion:
   symptom: "the two loops fight each other"
   means: "A goal `set_by` another loop, where the inner loop runs no faster than the outer one."
-  fix: "Make the inner loop faster, or slow the outer one. In cascade control the inner loop must settle before the outer acts again — otherwise the outer corrects against a response that has not arrived and both hunt. Silent when either cadence cannot be ranked."
+  fix: "Review the inner loop's bandwidth and settling time; changing cadence may help, but cadence alone does not prove stability. Silent when either cadence cannot be ranked."
   half: neither
-  grounded: "Cascade control — a necessary condition, not a preference."
+  grounded: "A qualitative screening proxy for the conventional cascade requirement that inner-loop dynamics be substantially faster. Historical label: `cascade_timescale_inversion`."
+  assurance: qualitative-proxy
   evidence: motivated
 
 frozen_setpoint:
@@ -190,14 +328,7 @@ frozen_setpoint:
   fix: "Give the outer loop an action that moves it, or stop claiming the target is managed. The hierarchy is drawn and the target never changes — the inner loop regulates against a constant an outer loop is nominally responsible for and never revisits."
   half: neither
   grounded: "The failure `set_by` exists to make visible."
-  evidence: motivated
-
-insufficient_variety:
-  symptom: "it can only do one thing and the world does many"
-  means: More things named in `not_modelling` than there are distinguishable actions.
-  fix: "Name more levers, or accept that the loop cannot absorb what it has already listed. A crude proxy — Ashby's variety is a measure over states, not a headcount — so treat it as a prompt to think, not a proof."
-  half: neither
-  grounded: "Ashby 1956, Law of Requisite Variety. Listed as blocked on a missing `Disturbance` primitive for most of the project; it was never blocked, because `not_modelling:` IS the disturbance list."
+  assurance: structural
   evidence: motivated
 
 # --- legacy: inherited from the general programme, never fires on the agent corpus ---
@@ -206,17 +337,18 @@ uncalibrated_estimator:
   means: "Superseded by `belief_never_checked`. Required `criticality: existential`, a field the authoring format has no key for, which gated the project's headline finding behind something nobody could write."
   fix: Use `belief_never_checked`.
   half: calibration
+  assurance: structural
   evidence: legacy
-estimand_never_estimated: {symptom: "it tracks nothing", means: Subsumed by `unmeasured_estimand` and `uncontrollable_target` on the authoring path; unreachable because every belief gets an estimator by construction. Still live for hand-written graph encodings., fix: "See `unmeasured_estimand`.", half: neither, evidence: legacy}
-estimate_without_authority: {symptom: "they hold a view and can act on nothing", means: A party holding an estimate that authorises no intervention., fix: "Grant authority or record the asymmetry.", half: neither, evidence: legacy}
-estimate_without_estimator: {symptom: "a belief with no way of forming it", means: An Estimate node with nothing estimating it., fix: "Declare `how:`.", half: calibration, evidence: legacy}
-hinge_without_sensor: {symptom: "an existential bet nothing watches", means: A critical quantity with no signal., fix: "Add an observation.", half: attention, evidence: legacy}
-hinge_without_resolution: {symptom: "a bet that can never settle", means: A critical quantity with no resolution condition., fix: "Add `settled_by:`.", half: calibration, evidence: legacy}
-interventions_without_policy: {symptom: "levers with no rule for pulling them", means: Actions with no policy selecting them., fix: "Add a `when:` rule.", half: neither, evidence: legacy}
-invariant_on_unmeasured: {symptom: "a rule nothing can check", means: A constraint over a quantity nothing measures., fix: "Measure it or drop the constraint.", half: attention, evidence: legacy}
-measurement_authority_inversion: {symptom: "the one who sees most decides least", means: The richest signal feeds a party that does not authorise the decisive act., fix: "Route the information or the authority.", half: attention, evidence: legacy}
-no_loop_closed: {symptom: "it doesn't respond to what it observes", means: Parts declared and nothing closing., fix: "Close a loop.", half: neither, evidence: legacy}
-open_question_delay_exposure: {symptom: "the lag is on someone in particular", means: A delay whose exposure falls on a party who cannot act., fix: "Name who owns the lag.", half: neither, evidence: legacy}
-policy_entirely_blind: {symptom: "it decides on nothing it can see", means: A policy none of whose inputs are measured., fix: "Measure the inputs.", half: attention, evidence: legacy}
-policy_on_unmeasured_inputs: {symptom: "it decides on things it can't actually see", means: A rule reading a declared quantity nothing measures., fix: "Add an observation informing it.", half: attention, evidence: legacy}
-unowned_cross_timescale_coupling: {symptom: "two rhythms fight and nobody owns it", means: Loops at different timescales touching one object with no owner., fix: "Name the owner.", half: neither, evidence: legacy}
+estimand_never_estimated: {symptom: "it tracks nothing", means: Subsumed by `unmeasured_estimand` and `target_without_actuator` on the authoring path; unreachable because every belief gets an estimator by construction. Still live for hand-written graph encodings., fix: "See `unmeasured_estimand`.", half: neither, assurance: structural, evidence: legacy}
+estimate_without_authority: {symptom: "they hold a view and can act on nothing", means: A party holding an estimate that authorises no intervention., fix: "Grant authority or record the asymmetry.", half: neither, assurance: structural, evidence: legacy}
+estimate_without_estimator: {symptom: "a belief with no way of forming it", means: An Estimate node with nothing estimating it., fix: "Declare `how:`.", half: calibration, assurance: structural, evidence: legacy}
+hinge_without_sensor: {symptom: "an existential bet nothing watches", means: A critical quantity with no signal., fix: "Add an observation.", half: attention, assurance: structural, evidence: legacy}
+hinge_without_resolution: {symptom: "a bet that can never settle", means: A critical quantity with no resolution condition., fix: "Add `settled_by:`.", half: calibration, assurance: structural, evidence: legacy}
+interventions_without_policy: {symptom: "levers with no rule for pulling them", means: Actions with no policy selecting them., fix: "Add a `when:` rule.", half: neither, assurance: structural, evidence: legacy}
+invariant_on_unmeasured: {symptom: "a rule nothing can check", means: A constraint over a quantity nothing measures., fix: "Measure it or drop the constraint.", half: attention, assurance: structural, evidence: legacy}
+measurement_authority_inversion: {symptom: "the one who sees most decides least", means: The richest signal feeds a party that does not authorise the decisive act., fix: "Route the information or the authority.", half: attention, assurance: structural, evidence: legacy}
+no_loop_closed: {symptom: "it doesn't respond to what it observes", means: Parts declared and nothing closing., fix: "Close a loop.", half: neither, assurance: structural, evidence: legacy}
+open_question_delay_exposure: {symptom: "the lag is on someone in particular", means: A delay whose exposure falls on a party who cannot act., fix: "Name who owns the lag.", half: neither, assurance: structural, evidence: legacy}
+policy_entirely_blind: {symptom: "it decides on nothing it can see", means: A policy none of whose inputs are measured., fix: "Measure at least one input, then close every remaining observation gap.", half: attention, assurance: structural, evidence: corpus}
+policy_on_unmeasured_inputs: {symptom: "it decides on things it can't actually see", means: A rule reading both measured and unmeasured declared quantities., fix: "Add an observation informing every input, or remove inputs the rule does not actually use.", half: attention, assurance: structural, evidence: motivated}
+unowned_cross_timescale_coupling: {symptom: "two rhythms fight and nobody owns it", means: Loops at different timescales touching one object with no owner., fix: "Name the owner.", half: neither, assurance: structural, evidence: legacy}

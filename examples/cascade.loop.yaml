@@ -2,9 +2,9 @@
 # The standard shape of every control hierarchy, and the one agent systems reach for
 # without naming: a "strategy" loop deciding what the "execution" loop should aim at.
 #
-# The hard requirement: the INNER loop must run FASTER than the loop setting its target.
-# Invert it and the outer loop corrects against a response that has not arrived yet.
-# Try it: swap `monthly` and `daily` below and re-lint.
+# Cascade design requires the INNER dynamics to be substantially faster than the outer loop.
+# URAS only knows update cadence, so swapping `monthly` and `daily` below produces a review
+# signal, not a proof that the pair will oscillate.
 
 loop: strategy
 runs: monthly
@@ -15,7 +15,8 @@ observes:
 actions:
   reset_cac_target: { moves: target_cac, can_undo: yes }
 when:
-  - if: "runway changed"
+  - if: "target_cac changed"
+    reads: [target_cac]
     do: reset_cac_target
 ---
 loop: acquisition
@@ -30,4 +31,5 @@ actions:
   adjust_spend: { moves: cost_per_customer, can_undo: yes }
 when:
   - if: "cost_per_customer above target"
+    reads: [cost_per_customer]
     do: adjust_spend

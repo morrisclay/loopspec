@@ -1,0 +1,253 @@
+version: 1
+as_of: 2026-08-04
+target_cases: 30
+
+acceptance:
+  minimum_valid_encodings: 25
+  minimum_source_pinned_cases: 7
+  minimum_live_candidates: 12
+
+seed_suites:
+  - id: framework_reference_examples
+    stratum: framework_runtime
+    pattern: research/published_study/encodings/*.loop.yaml
+    evidence_status: independently_sampled
+  - id: evaluation_harnesses
+    stratum: evaluation_optimization
+    pattern: research/published_study/encodings_evals/*.loop.yaml
+    evidence_status: independently_encoded
+  - id: field_loops
+    stratum: mixed_field
+    pattern: examples/field/*.loop.yaml
+    evidence_status: author_reviewed_or_public
+
+cases:
+  - id: ralph
+    system: Ralph Wiggum loop
+    stratum: autonomous_coding
+    topology: fresh-context task iteration
+    status: existing
+    encoding: examples/field/ralph.loop.yaml
+    source:
+      kind: web
+      url: https://ghuntley.com/ralph/
+      observed_at: 2026-08-04
+    evidence:
+      - anchor: one item per loop
+        supports: one task is selected for each fresh-context iteration
+      - anchor: loop back is everything
+        supports: tool results and tests are fed back into later iterations
+      - anchor: you will wake up to a broken code base
+        supports: the technique can commit and push code while unattended
+
+  - id: karpathy_autoresearch
+    system: karpathy/autoresearch
+    stratum: autonomous_research
+    topology: metric hill climbing with keep or discard
+    status: encoded
+    encoding: research/real_loops/encodings/autoresearch.loop.yaml
+    source:
+      kind: git
+      repository: https://github.com/karpathy/autoresearch
+      revision: 228791fb499afffb54b46200aca536f79142f117
+      path: program.md
+    evidence:
+      - lines: [21, 39]
+        supports: fixed experiment budget, mutable train.py, and validation-bpb objective
+      - lines: [64, 88]
+        supports: result ledger with keep, discard, and crash outcomes
+      - lines: [90, 112]
+        supports: repeated experiment, metric comparison, rollback, timeout, and indefinite operation
+
+  - id: swe_agent_default
+    system: SWE-agent DefaultAgent
+    stratum: autonomous_coding
+    topology: model action and environment observation until submission
+    status: encoded
+    encoding: research/real_loops/encodings/swe_agent.loop.yaml
+    source:
+      kind: git
+      repository: https://github.com/SWE-agent/SWE-agent
+      revision: 3ea751c087f32b16e039a2233dd6eefecef325d5
+      path: sweagent/agent/agents.py
+    evidence:
+      - lines: [1062, 1145]
+        supports: format and execution failures are observed and can cause bounded model requeries
+      - lines: [1235, 1263]
+        supports: each step adds the chosen action and environment observation to history and trajectory
+      - lines: [1265, 1294]
+        supports: the action-observation loop continues until the step reports done and emits a patch submission
+
+  - id: browser_use
+    system: Browser Use Agent
+    stratum: browser_computer_use
+    topology: browser state, model action, environment result, stall correction
+    status: encoded
+    encoding: research/real_loops/encodings/browser_use.loop.yaml
+    source:
+      kind: git
+      repository: https://github.com/browser-use/browser-use
+      revision: c561b1f514f1e197580e0c4b75a5bfbc3f1e61f2
+      path: browser_use/agent/service.py
+    evidence:
+      - lines: [1205, 1246]
+        supports: model actions are executed, results recorded, failures counted, and done is logged
+      - lines: [1458, 1500]
+        supports: repeated failures, repeated actions, and stagnant pages inject corrective nudges
+      - lines: [2575, 2655]
+        supports: step timeout, max-step loop, failure stop, external stop, and agent-declared completion
+      - path: browser_use/agent/views.py
+        lines: [200, 248]
+        supports: action repetition and page stagnation are observed at escalating thresholds
+
+  - id: openai_codex_cli
+    system: OpenAI Codex turn loop
+    stratum: autonomous_coding
+    topology: model sampling and policy-gated tool results until final response
+    status: encoded
+    encoding: research/real_loops/encodings/codex_turn.loop.yaml
+    source:
+      kind: git
+      repository: https://github.com/openai/codex
+      revision: 2a16af823456712e3dbb030ecf29fb727c2cde66
+      path: codex-rs/core/src/session/turn.rs
+    evidence:
+      - lines: [140, 147]
+        supports: function calls execute and return results to the next sampling request while assistant-only output completes the turn
+      - lines: [267, 485]
+        supports: pending steering, repeated sampling, token-pressure compaction, stop hooks, and turn termination
+      - path: codex-rs/core/src/tools/sandboxing.rs
+        lines: [194, 234]
+        supports: approval is conditional on approval policy and filesystem sandbox policy
+      - path: codex-rs/core/src/session/mod.rs
+        lines: [4024, 4030]
+        supports: the operator can interrupt the active task
+
+  - id: goose_agent
+    system: Goose agent turn loop
+    stratum: autonomous_coding
+    topology: provider and permission-inspected tool loop with goal nudges and bounded turns
+    status: encoded
+    encoding: research/real_loops/encodings/goose_agent.loop.yaml
+    source:
+      kind: git
+      repository: https://github.com/block/goose
+      revision: 7f62ce53e70c49e634ed9ba16a1ef8e02a2d239c
+      path: crates/goose/src/agents/agent.rs
+    evidence:
+      - lines: [2067, 2205]
+        supports: cancellation, pending steering, stop-hook denial, provider sampling, and max-turn enforcement
+      - lines: [2326, 2428]
+        supports: tool requests are inspected, approved, denied, or sent to an approval channel before execution
+      - lines: [2845, 3008]
+        supports: empty-response handling, task and grind goal nudges, bounded retry, and explicit exit branches
+
+  - id: openhands_codeact
+    system: OpenHands SDK conversation loop
+    stratum: autonomous_coding
+    topology: bounded model and tool steps with confirmation, stuck detection, hooks, and critic refinement
+    status: encoded
+    encoding: research/real_loops/encodings/openhands_sdk.loop.yaml
+    source:
+      kind: git
+      repository: https://github.com/OpenHands/software-agent-sdk
+      revision: c8a65f0db7c4e5b455a124989c3a6a0a79fcd9e9
+      path: openhands-sdk/openhands/sdk/conversation/impl/local_conversation.py
+    evidence:
+      - lines: [1826, 1970]
+        supports: pause, confirmation wait, stuck detection, stop hooks, budget and iteration ceilings, and repeated agent steps
+      - path: openhands-sdk/openhands/sdk/agent/agent.py
+        lines: [970, 1033]
+        supports: model-response dispatch and security-risk-based confirmation
+      - path: openhands-sdk/openhands/sdk/agent/critic_mixin.py
+        lines: [75, 142]
+        supports: finish attempts can be scored and returned for bounded iterative refinement
+
+  - id: ai_scientist_v2
+    system: AI Scientist v2 experiment search
+    stratum: autonomous_research
+    topology: staged best-first experiment tree search with execution metrics and completion judges
+    status: encoded
+    encoding: research/real_loops/encodings/ai_scientist_v2.loop.yaml
+    source:
+      kind: git
+      repository: https://github.com/SakanaAI/AI-Scientist-v2
+      revision: 96bd51617cfdbb494a9fc283af00fe090edfae48
+      path: ai_scientist/treesearch/agent_manager.py
+    evidence:
+      - lines: [343, 536]
+        supports: stage completion combines iteration limits, fixed criteria, metrics, VLM feedback, and LLM judgement
+      - lines: [692, 827]
+        supports: nested main-stage, substage, and candidate-experiment loops carry best results forward
+      - path: ai_scientist/treesearch/parallel_agent.py
+        lines: [1921, 2190]
+        supports: draft, debug, exploit, tuning, and ablation candidates execute in workers and append measured results to a journal
+
+candidates:
+  - id: aider_architect_editor
+    stratum: autonomous_coding
+    source_url: https://github.com/Aider-AI/aider
+    topology: architect proposal, editor application, repository feedback
+    priority: medium
+  - id: gpt_researcher_deep
+    stratum: autonomous_research
+    source_url: https://github.com/assafelovic/gpt-researcher
+    topology: recursive query, retrieval, learning extraction, follow-up
+    priority: high
+  - id: paperqa2
+    stratum: autonomous_research
+    source_url: https://github.com/Future-House/paper-qa
+    topology: scientific retrieval and answer refinement
+    priority: medium
+  - id: smolagents_multistep
+    stratum: framework_runtime
+    source_url: https://github.com/huggingface/smolagents
+    topology: plan and act until final answer or max steps
+    priority: high
+  - id: openai_agents_runner
+    stratum: framework_runtime
+    source_url: https://github.com/openai/openai-agents-python
+    topology: model, tool, handoff, approval, final-output loop
+    priority: high
+  - id: autogen_magentic_one
+    stratum: framework_runtime
+    source_url: https://github.com/microsoft/autogen
+    topology: orchestrator planning, stall detection, replanning, delegation
+    priority: high
+  - id: microsoft_agent_framework_handoff
+    stratum: framework_runtime
+    source_url: https://github.com/microsoft/agent-framework
+    topology: multi-agent handoff with tool approval and request-info suspension
+    priority: high
+  - id: pydantic_ai_graph
+    stratum: framework_runtime
+    source_url: https://github.com/pydantic/pydantic-ai
+    topology: typed model request and tool-call graph
+    priority: medium
+  - id: google_adk_loop_agent
+    stratum: framework_runtime
+    source_url: https://github.com/google/adk-python
+    topology: bounded sub-agent repetition with explicit escalate stop
+    priority: medium
+  - id: strands_agent_loop
+    stratum: framework_runtime
+    source_url: https://github.com/strands-agents/sdk-python
+    topology: model-driven tool loop with trace events and user handoff
+    priority: medium
+  - id: dspy_mipro
+    stratum: evaluation_optimization
+    source_url: https://github.com/stanfordnlp/dspy
+    topology: candidate program generation and metric-guided selection
+    priority: high
+  - id: browsergym_agentlab
+    stratum: browser_computer_use
+    source_url: https://github.com/ServiceNow/AgentLab
+    topology: browser observation and action with benchmark termination
+    priority: medium
+
+excluded:
+  - id: openai_agent_patterns_one_shot
+    source_url: https://github.com/openai/openai-agents-python/tree/main/examples/agent_patterns
+    reason: most examples are pipelines rather than repeated control loops; retained in the earlier study record
+  - id: proprietary_deep_research_products
+    reason: product behavior is observable but the control path is not source-inspectable enough for faithful encoding

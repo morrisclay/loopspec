@@ -1,0 +1,152 @@
+# codex-rs/core/src/session/turn.rs:140-185,260-505
+# codex-rs/core/src/session/mod.rs:4024-4030
+# codex-rs/core/src/tools/sandboxing.rs:194-234
+# codex-rs/core/src/tools/runtimes/shell.rs:139-178
+loop: codex_turn_execution
+runs: "per turn; re-enters per sampling step until no follow-up is needed (session/turn.rs:268-505)"
+
+boundary:
+  drawn_by: codex_agent
+  purpose: >
+    Separate the agent's own turn-management state (sampling loop, compaction,
+    hook execution, pending-input queue, approval caching) from actions whose
+    effects reach outside the process — running a shell command against the
+    real filesystem/host, which is gated by an approval policy before it runs.
+  inside:
+    - conversation history / sampling loop (turn.rs:267-355)
+    - context compaction (turn.rs:418-458)
+    - stop-hook and legacy-hook handling (turn.rs:460-505)
+    - pending-input queue (turn.rs:269-283)
+    - per-session approval cache keyed by command signature (shell.rs:156-176)
+  outside:
+    - shell command execution against the real filesystem/host (shell.rs:139-178)
+    - the model API the sampling request is sent to (turn.rs:343-353)
+
+goal:
+  context_window_tokens:
+    keep: "below the auto-compact scope limit / full context-window limit"
+    from: [token_status]
+    unit: tokens
+    # turn.rs:384-427: token_limit_reached / full_context_window_limit_reached
+    # gate whether the loop rolls over into auto-compact.
+
+beliefs:
+  compaction_keeps_under_limit:
+    question: "will auto-compact bring the active context back under the token limit before the loop runs again"
+    explains: context_window_tokens
+    how: judgement
+    known_bias: >
+      Assumed to work well enough that the loop will not spin indefinitely
+      ("as long as compaction works well ... we shouldn't worry about being
+      in an infinite loop", turn.rs:429). No scoring of past compactions
+      against later token status is shown in this excerpt.
+    settled_by: token_status
+    # No checked_by/checked_against/scoring_rule/adjusts given — the source
+    # shows an assumption stated once in a comment, not a calibration loop.
+
+observes:
+  token_status:
+    informs: context_window_tokens
+    origin: ourselves
+    how: calculated
+    # turn.rs:374-394, computed every step from context_window_token_status().
+  model_response:
+    informs: context_window_tokens
+    origin: outside
+    how: reported
+    reported_by: "the model service, via the sampling request (turn.rs:343-361)"
+  pending_input:
+    origin: outside
+    how: reported
+    reported_by: human_operator
+    # "something like a message the user submitted through the UI while the
+    # model was running" (turn.rs:269-271); not tied to a declared goal/belief here.
+  approval_decision:
+    origin: outside
+    how: reported
+    reported_by: human_operator
+    # shell.rs:156-176: session.request_command_approval(...) result, cached
+    # per command signature (`keys`) for the rest of the session — this settles
+    # the current shell-exec action's own approval, not a scored, cross-case
+    # calibration of trust.
+
+processes:
+  model_sampling:
+    location: outside
+    description: "Conversation history is assembled and sent to the model client session; the reply later folds back into the loop (turn.rs:330-361)."
+    observed_as: [model_response]
+  context_compaction:
+    location: inside
+    description: "Rewrites/summarizes conversation history to cut tokens, reinjecting prior world_state/step_context before the last user message (turn.rs:430-457)."
+    observed_as: [token_status]
+  exec_approval_gate:
+    location: interface
+    description: >
+      AskForApproval policy plus FileSystemSandboxKind decide whether shell
+      execution is skipped, requires human approval, or is forbidden outright
+      (sandboxing.rs:199-234); when approval is required the decision is
+      requested from a human and cached by command signature (shell.rs:139-178).
+    observed_as: [approval_decision]
+  shell_execution:
+    location: outside
+    description: "The approved command runs against the real filesystem/process environment outside the agent's own state."
+    # observed_as omitted: these excerpts show the approval gate, not an
+    # observation of the executed command's outcome.
+
+actions:
+  run_sampling_request:
+    moves: context_window_tokens
+    effect: increase
+    through: [model_sampling]
+    can_undo: no
+    # turn.rs:343-361; a sent sampling request cannot be recalled.
+  auto_compact:
+    moves: context_window_tokens
+    effect: decrease
+    through: [context_compaction]
+    # can_undo intentionally omitted: whether compaction's loss of history
+    # detail is reversible depends on the concrete deployment/storage of
+    # prior turns, not shown in this excerpt.
+  interrupt_task:
+    can_undo: no
+    # session/mod.rs:4024-4030: aborts the active turn; no resume path shown.
+  execute_shell_command:
+    needs_approval: human_operator
+    can_undo: no
+    effect: unknown
+    through: [exec_approval_gate, shell_execution]
+    # sandboxing.rs:199-234 + shell.rs:139-178: approval is conditional on
+    # policy, but when the gate requires it, human_operator is asked.
+
+when:
+  - if: "the turn needs a follow-up step and either a new context window was requested or the token limit was reached"
+    reads: [context_window_tokens]
+    against: [context_window_tokens]
+    do: auto_compact
+    # turn.rs:418-458 (should_roll_over)
+  - if: "an interrupt is received while a turn may be active"
+    reads: []
+    do: interrupt_task
+    # session/mod.rs:4024-4030
+
+asks_human_when:
+  - "AskForApproval::UnlessTrusted (sandboxing.rs:211)"
+  - "AskForApproval::OnRequest or Granular, and the filesystem sandbox kind is Restricted, and (for Granular) the granular config allows a sandbox approval prompt (sandboxing.rs:203-224)"
+asks_human: human_operator
+
+never:
+  - "run a shell command past the sandbox gate when a Granular approval policy disallows the sandbox approval prompt (ExecApprovalRequirement::Forbidden, sandboxing.rs:214-223)"
+
+people:
+  codex_agent:
+    agent: true
+    loses_if_wrong: "nothing directly; a bad turn yields an error event or wasted tokens/iterations (turn.rs:174-179, 445-451)"
+  human_operator:
+    human: true
+    loses_if_wrong: "unwanted or hard-to-reverse effects from an approved shell command run against their real filesystem/host"
+
+not_modelling:
+  - "the observable outcome of an executed shell command (these excerpts show only the approval gate, not a post-execution observation)"
+  - "whether auto_compact's history rewrite is itself reversible — depends on what the concrete deployment retains from prior turns"
+  - "the approval cache in with_cached_approval (shell.rs:156-176) settles only the current shell-exec action's own decision within one session; the excerpt shows no scoring of past approvals against outcomes or any resulting change to future trust, so it is not treated as calibration"
+  - "no explicit iteration/step ceiling is declared for the sampling loop; continuation past token pressure relies solely on the unverified assumption in compaction_keeps_under_limit (turn.rs:429)"

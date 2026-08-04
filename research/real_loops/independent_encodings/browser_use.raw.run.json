@@ -1,0 +1,12 @@
+{
+  "case": "browser_use",
+  "encoder": "Anthropic Claude CLI",
+  "model_alias": "sonnet",
+  "tool_access": "disabled",
+  "session_persistence": "disabled",
+  "generated_at": "2026-08-04T12:09:28.901106+00:00",
+  "source_repository": "https://github.com/browser-use/browser-use",
+  "source_revision": "c561b1f514f1e197580e0c4b75a5bfbc3f1e61f2",
+  "prompt_sha256": "3abcb64e187f11bc1d72cfffc9ea8c3dc5afc709820412652d0eefdaaea49f35",
+  "output_sha256": "e993b3132c625773bfd742b7ef7062ab5673f56a25aab5fbdfe16d63f6b04530"
+}

@@ -24,6 +24,11 @@ beliefs:
     question: "Can this channel absorb more money before cost climbs?"
     how: judgement
     checked_by: monthly_spend_vs_cost_review
+    checked_against: ad_delivery
+    scoring_rule: absolute error in predicted marginal acquisition cost
+    window: 4 weekly cohorts
+    adjusts: trust
+    every: monthly
 
 observes:
   billing_events:
@@ -74,8 +79,10 @@ actions:
 
 when:
   - if: "cost_per_customer below 400 and product_market_fit above 0.6"
+    reads: [cost_per_customer, product_market_fit]
     do: increase_budget
   - if: "payback_months above 12"
+    reads: [payback_months]
     do: change_pricing
 
 asks_human_when:

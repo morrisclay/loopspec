@@ -1,0 +1,91 @@
+---
+title: Governance and viability
+description: Make authority, reversibility, exposure, escalation, constraints, and resource correction part of the feedback design.
+---
+
+import { Aside, Card, CardGrid } from '@astrojs/starlight/components';
+
+Agent loops do not operate in an empty control diagram. They act with somebody's authority,
+consume finite resources, expose people to losses, and eventually encounter a condition they
+cannot safely resolve alone.
+
+<CardGrid>
+	<Card title="Authority">
+		`needs_approval` names who must authorize a costly or irreversible action. A person merely
+		listed under `people` is not an approval path.
+	</Card>
+	<Card title="Exposure">
+		`loses_if_wrong` records who bears the consequence. `sees` records what information reaches
+		them. Exposure without visibility is a structural governance defect.
+	</Card>
+	<Card title="Interruption">
+		`asks_human_when` names stop conditions; `asks_human` names the recipient. A stop with no
+		address is not an escalation path.
+	</Card>
+	<Card title="Viability">
+		`spends` records finite stocks, limits, replenishment, and the actions that draw them down. A
+		ceiling without a corrective rule is only a halt.
+	</Card>
+</CardGrid>
+
+## Reversibility changes the governance requirement
+
+```yaml
+actions:
+  draft_refund:
+    moves: customer_balance
+    effect: increase
+    can_undo: yes
+
+  publish_refund:
+    moves: customer_balance
+    effect: increase
+    can_undo: no
+    needs_approval: support_lead
+```
+
+Approval everywhere becomes ceremony; approval nowhere becomes uncontrolled delegation. The
+format puts the gate where the action's reversibility says it belongs.
+
+## Exposure and information must meet
+
+```yaml
+people:
+  support_lead:
+    human: yes
+    loses_if_wrong: customer trust and refund budget
+    sees: [customer_balance, refund_rate]
+```
+
+`accountable_but_blind` fires when someone bears a consequence and receives no declared
+information. This establishes a routing omission, not that the person would make the right
+decision if informed.
+
+## A limit is not regulation
+
+```yaml
+spends:
+  refund_budget:
+    limit: 4000 per week
+    spent_by: [publish_refund]
+
+when:
+  - if: refund budget falls below 500
+    reads: [refund_budget]
+    do: ask_support_lead
+```
+
+A hard ceiling makes the loop stop when the stock is gone. A corrective rule lets remaining
+resource information alter behavior before exhaustion.
+
+<Aside type="caution" title="Declared governance is not runtime enforcement">
+The analyzer can prove that an approval relation appears in the specification. It cannot prove
+that deployed code enforces it. Runtime adapters must provide their own preservation evidence;
+the current text scanner is experimental review support, not certification.
+</Aside>
+
+## The boundary is part of governance
+
+`boundary.drawn_by` and `boundary.purpose` record whose distinctions make inside, outside, and
+success meaningful. This prevents process ownership and data provenance from appearing
+objective when they are modeling choices.

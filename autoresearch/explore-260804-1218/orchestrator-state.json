@@ -1,0 +1,20 @@
+{
+  "goal": "Explore and improve LoopSpec against source-backed real agent loops",
+  "archetype": "explore",
+  "mode": "orchestration-loop",
+  "predicate": {
+    "command": "python3 research/real_loops/validate_corpus.py",
+    "expected": "exit 0 and acceptance thresholds met"
+  },
+  "terminal_choice": "stop-at-verified",
+  "cycle_count": 3,
+  "units_remaining": [3, 1, 0],
+  "pending_verify": false,
+  "current_incumbent": "21 valid encodings, 3 pinned real-runtime cases, 16 frozen candidates",
+  "pipeline": [
+    {"hop": "probe", "outcome": "progressed"},
+    {"hop": "scenario", "outcome": "progressed"},
+    {"hop": "plan", "outcome": "progressed"},
+    {"hop": "verify", "outcome": "progressed"}
+  ]
+}

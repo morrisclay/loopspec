@@ -1,0 +1,129 @@
+# Encoded from Browser Use Agent at revision
+# c561b1f514f1e197580e0c4b75a5bfbc3f1e61f2.
+# Evidence: browser_use/agent/service.py lines 1205-1246, 1458-1545, 2575-2655;
+# browser_use/agent/views.py lines 200-248 and 251-315.
+
+loop: browser_use_agent
+runs: per_browser_task
+
+boundary:
+  drawn_by: browser_operator
+  purpose: complete a user task by observing and acting on websites
+  inside: [agent state, model policy, action history, planner, loop detector, post-run judge]
+  outside: [user intent, browser, websites, remote services]
+
+goal:
+  browser_task_success:
+    keep: all criteria in the user's browser task completed
+
+beliefs:
+  next_action_effective:
+    question: Which browser action is most likely to make progress now?
+    how: LLM judgement over browser state, action results, memory, and plan
+    explains: browser_task_success
+    settled_by: action_result
+    known_bias: visible page state can omit side effects and remote state changes
+
+  task_complete:
+    question: Has the browser task actually satisfied the user's criteria?
+    how: the acting model's done decision, followed after termination by a separate default LLM judge
+    explains: browser_task_success
+    known_bias: both completion judgements are model reports rather than user-confirmed outcomes
+
+observes:
+  user_task:
+    informs: [browser_task_success, next_action_effective, task_complete]
+    every: once per task or follow-up
+    origin: outside
+    how: reported
+    reported_by: browser_operator
+
+  browser_state:
+    informs: [next_action_effective, task_complete]
+    every: before each step
+    origin: outside
+    how: measured
+    source: browser session DOM, URL, screenshots, and tabs
+
+  action_result:
+    informs: [next_action_effective, task_complete, browser_task_success]
+    every: after each browser action
+    origin: outside
+    how: measured
+    source: browser action execution
+
+  repetition_and_stagnation:
+    informs: next_action_effective
+    every: after each action and page-state update
+    origin: ourselves
+    how: calculated
+    produced_by: perform_browser_action
+
+  post_run_judge_verdict:
+    informs: task_complete
+    every: after an agent-declared completion when judging is enabled
+    origin: ourselves
+    how: calculated
+    produced_by: declare_done
+
+processes:
+  website_interaction:
+    description: browser actions change or query a website and yield later browser state and action results
+    location: outside
+    observed_as: [browser_state, action_result]
+
+actions:
+  perform_browser_action:
+    moves: browser_task_success
+    through: website_interaction
+    effect: unknown
+    consumes: [step_budget]
+
+  replan_or_change_approach:
+    can_undo: "yes"
+
+  declare_done:
+    can_undo: "yes"
+
+when:
+  - if: the task is not declared done, failure limit is not reached, and steps remain
+    reads: [task_complete, step_budget]
+    do: perform_browser_action
+  - if: repeated failures, repeated actions, or stagnant pages indicate no progress
+    reads: [next_action_effective]
+    do: replan_or_change_approach
+  - if: the acting model judges all user criteria complete
+    reads: [task_complete, browser_task_success]
+    against: [browser_task_success]
+    do: declare_done
+
+asks_human_when:
+  - the operator pauses or stops the run externally
+asks_human: browser_operator
+
+people:
+  browser_operator:
+    human: true
+    loses_if_wrong: account state, money, privacy, and time affected by browser actions
+    sees: [browser_task_success, task_complete]
+
+  browser_agent:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [browser_task_success, next_action_effective, task_complete]
+
+spends:
+  step_budget:
+    limit: 500 steps by default
+    replenished: a new task run
+    spent_by: [perform_browser_action]
+
+never:
+  - continue after the configured consecutive-failure ceiling
+  - continue after the configured maximum step count
+
+not_modelling:
+  - the reversibility and approval needs of each concrete website action
+  - whether the optional LLM judge agrees with affected users
+  - site-specific financial or legal consequences
+  - domain allowlists and sensitive-data policy selected by a concrete deployment

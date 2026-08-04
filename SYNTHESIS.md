@@ -8,14 +8,15 @@ Underlying work: `research/published_study/` (two pre-registered studies),
 
 ---
 
-## Part 0 — The frame: attention and calibration, as second-order loops
+## Part 0 — The frame: attention and calibration as meta-control
 
 The contribution is **a simple YAML for describing and arguing about loops** — applied
-cybernetics, aimed at two things no agent framework has. The linter is a consumer of that
-notation, not the point, and that distinction changes what a wrong check costs.
+cybernetics, aimed at two concerns underrepresented in the sampled agent-loop specifications.
+The linter is a consumer of that notation, not the point, and that distinction changes what a
+wrong check costs.
 
-Every framework builds the **first-order** loop: observe, believe, decide, act. Neither of the
-loops *about* that loop exists anywhere:
+Every framework builds the **operating** loop: observe, believe, decide, act. The sampled
+reference loops rarely make the loops *about* observing and believing explicit:
 
 | | **attention** (`ATTENTION.md`) | **calibration** (`CALIBRATION.md`) |
 |---|---|---|
@@ -29,16 +30,18 @@ They are duals. **Calibration is how you find out whether your attention was wel
 attention determines what you can calibrate against, since a belief about something you never
 observe has no outcome to be scored on.
 
-Second-order cybernetics puts the observer inside the system. These are the two places the
-observer's own performance becomes checkable — which is why *applied cybernetics* is the
-accurate description rather than a flourish.
+These are meta-control mechanisms: they make parts of the observer's performance checkable.
+They do not yet constitute a full second-order account. LoopSpec now records who draws the
+boundary, which purpose organizes observation, and what is placed inside and outside; it does
+not represent how observing changes the system or how those distinctions are revised.
+*Applied cybernetics* is accurate; an unqualified second-order claim is not.
 
 Attention itself operates at three levels, worked out in `ATTENTION.md`:
 
 | level | the claim | where the evidence is |
 |---|---|---|
 | **L1 — the author's attention** | *a field is a place you have to look.* "You do not check for a defect you have no word for" is an **attention** claim, not a knowledge claim | §1.2, §1.4, §2.1 |
-| **L2 — the loop's attention** | what it observes, at what cost, from where. **Every `Calibration` here scored an estimator; nothing ever scored a signal** — the apparatus asks *was my conclusion right* and never *was my looking right* | §1.6, §2.4 |
+| **L2 — the loop's attention** | what it observes, at what cost, from where. The measured baseline scored estimators and never signals; the current format adds an attention-review contract with a value metric, window, and attention-changing response | §1.6, §2.4 |
 | **L3 — the humans' attention** | who must look at what, and who pays when it is wrong. O'Reilly names the gap and leaves it: **the human oversight loop at the top of its taxonomy has no exit condition** | §1.8 |
 
 Nobody building agent loops is *ignorant* of calibration. Three careful authors of three real
@@ -215,22 +218,28 @@ Evals require the failure to have already happened. A structural check reads the
 catches an irreversible ungated act while it is still cheap. The two mechanisms are
 complementary and this project should stop implying otherwise.
 
-### 2.3 Theorem-grounded necessary conditions
+### 2.3 Theory-inspired checks with explicit limits
 
-Where a check follows from a proved result it is not a style opinion:
+Cybernetics supplies the questions, while LoopSpec v1 supplies only structural evidence:
 
-- **Conant & Ashby 1970** — every good regulator must be a model of the system → a loop with a
-  target and no model is a *reflex*. **100% of reference examples.**
-- **Kalman** — observability, controllability → a target nothing can drive is a wish.
-- **Forrester/Sterman** — loop polarity → a reinforcing loop with no balancer diverges.
+- **Conant & Ashby 1970** motivates asking where a process model is represented.
+  `no_explicit_process_model` says no `explains` relation is encoded; it does not test the
+  theorem's optimal-regulation assumptions or regulator↔system mapping.
+- **Kalman** clarifies why sensing and actuation matter. `unmeasured_estimand` and
+  `target_without_actuator` check declarations, not state-space observability/controllability.
+- **Forrester/Sterman** clarifies polarity. LoopSpec records an intervention's intended effect
+  direction but not signed influence around a complete cycle, so
+  `endogenous_feedback_without_crosscheck` reports provenance rather than divergence.
 
-The pitch changes with it: not *"here are things I noticed"* but *"your loop violates the Good
-Regulator theorem, and here is the line."*
+This narrower pitch is stronger: every message names the evidence it actually has, and the
+tool stays quiet about dynamic guarantees it cannot calculate.
 
 ### 2.4 Scoring the looking, not just the conclusion *(L2 — the newest, and least proven)*
 
-The asymmetry that was invisible until it was named: **every `Calibration` in this project
-scored an `Estimator`. Nothing scored a `Signal`.**
+The baseline asymmetry that was invisible until it was named: **every `Calibration` in this
+project scored an `Estimator`. Nothing scored a `Signal`.** The current language responds with
+a distinct attention contract; the statement remains a finding about the measured baseline,
+not the current expressiveness of the format.
 
 Three instances were already in the corpus from three authors — this project's own bar — and
 one of them had been flagged as *"unusual"* and *"the shape to copy"* before it had a name:
@@ -259,9 +268,9 @@ The field has budgets, step ceilings and stall detection. The question after it:
 
 > **A ceiling is a stop, not a correction.**
 
-A loop that runs at full rate into a wall and halts has not regulated anything — it has been
-**truncated**. Ashby's point about variety is exactly this: a stop absorbs no disturbance. The
-halt is indistinguishable from failure and arrives without warning.
+A loop that runs at full rate into a wall and halts has been **truncated**, not corrected. A
+ceiling is a constraint; it is not by itself a policy that changes behaviour as resources run
+low. This is a structural runtime distinction, not an Ashby requisite-variety result.
 
 *Known limit:* the check clears as soon as any rule reads the resource, and does not
 distinguish **reading-to-halt** from **reading-to-adapt**. A clear result means *something
@@ -292,8 +301,9 @@ without seeing this one, and **3/3 rejected every jargon word** (`regulates`→`
 
 Stated plainly, because the value of the above depends on it.
 
-1. **Only two checks are robust to who encodes.** `belief_never_checked` and
-   `regulator_without_model` agreed 5/5 with an independent encoder. Every other check agreed
+1. **Only two historical checks were robust to who encodes.** `belief_never_checked` and the
+   check then named `regulator_without_model` agreed 5/5 with an independent encoder. The
+   current, narrower name is `no_explicit_process_model`. Every other check agreed
    2–3/5 and **is not reported as a rate**. That is the honest ceiling on current evidence.
 
 2. **The encoding-bias problem recurred three times, and each time the first result flattered

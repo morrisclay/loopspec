@@ -1,0 +1,68 @@
+---
+title: Review semantic changes
+description: Compare two validated loop designs by canonical meaning and finding changes rather than YAML text.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Text diffs are useful for authorship. Semantic diffs are useful for design review. LoopSpec expands
+both inputs to canonical IR before comparing them, so moving YAML keys or reversing maps does not
+create noise.
+
+```bash
+loopspec diff before.loop.yaml after.loop.yaml
+```
+
+The comparison reports:
+
+- document-level declarations and exclusions;
+- added, removed, and modified typed nodes;
+- added and removed relations;
+- loop membership and policy changes;
+- findings introduced or resolved;
+- a deterministic semantic hash for each side.
+
+## Example
+
+Suppose a revision changes an action's intended direction and removes the explicit target used
+by a rule:
+
+```diff
+ actions:
+   escalate_to_engineer:
+-    effect: decrease
++    effect: increase
+
+ when:
+   - if: resolution_time exceeds 4 hours
+     reads: [resolution_time]
+-    against: [resolution_time]
+     do: escalate_to_engineer
+```
+
+The semantic review names the actual consequences:
+
+```text
+~ node escalate_to_engineer.effect_direction: "decrease" → "increase"
+- edge support_triage_policy_1 -uses_reference→ resolution_time_target
++ finding [reference_not_used] structural
+```
+
+## Automation
+
+```bash
+loopspec diff before.loop.yaml after.loop.yaml --json
+loopspec diff before.loop.yaml after.loop.yaml --fail-on-change
+```
+
+`--fail-on-change` exits with status `3` when any semantic delta exists. Invalid input remains
+status `1`, so automation can distinguish a rejected specification from a valid design change.
+
+<Aside type="tip" title="Use the hash as an identity, not an explanation">
+The semantic hash proves that two normalized documents are equal under the current IR contract.
+It cannot tell a reviewer whether a change is desirable. Keep the human-readable delta in the
+review record.
+</Aside>
+
+All shipped examples are pinned by semantic and complete finding-set hashes in the normative
+conformance manifest. See [versions and compatibility](/reference/compatibility/).

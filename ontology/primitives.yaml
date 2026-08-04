@@ -47,26 +47,25 @@ primitives:
   tier: core
   depth: 1
   renamed_from: Observer
-  discriminator: 'RESOLVED by narrowing. A Party MUST bear a consequence. It may additionally hold
-    estimates, hold desired conditions, and exercise authority, but consequence-bearing is what makes
-    it a party rather than a mechanism.
+  discriminator: 'RESOLVED by explicit declaration. A Party participates as an authored locus
+    of knowledge, authority, preference, or consequence. It must declare whether it bears a
+    consequence; explicit none is distinct from an omitted stake and exposes governance asymmetry.
 
     '
   discriminator_rationale: 'Round 1 exposed that the definition was broader than its author''"''"''s
     use of it: gpt-5-codex counted a thermostat controller as a Party because it exercises authority,
     and by the definition as written codex was right.
 
-    Narrowing rather than broadening, because the alternative makes every relay and actuator a Party,
-    which dilutes the construct to nothing. Party was introduced to carry INTERESTED parties with
-    asymmetric stakes; a relay has no stake.
+    Explicit authoring rather than inference prevents every relay and actuator from becoming a Party.
+    Party was introduced to carry interested actors and asymmetric stakes, including the revealing
+    case where an actor exercises authority while explicitly bearing none.
 
-    Authority is therefore delegable to a non-Party component. The thermostat controller holds authority
-    over fire_boiler and is a component; the householder bears the consequence of being cold and
-    is the Party.
+    Authority remains delegable to a non-Party component. The thermostat controller can stay a
+    component when nobody authors it as a governance actor; the householder bears the consequence
+    of being cold and is the Party.
 
-    Side benefit: this links Party to Consequence constitutively, which independently justifies Consequence
-    beyond its coverage count — it is not an optional annotation but the thing that makes a Party
-    identifiable.
+    Consequence remains constitutive when stakes exist. Recording explicit none preserves rather than
+    erases the asymmetry between an actor that can decide and another actor that pays.
 
     '
   definition: 'A locus that may hold estimates, hold desired conditions, exercise authority, and
@@ -89,6 +88,8 @@ primitives:
   - kind: human | agent | system. Who this party actually is. An agent loop with no human party is
       fully autonomous; one with a human party has an oversight surface, and the checks differ. Declared
       rather than inferred, because 'human in the loop' is claimed far more often than it is wired.
+  - consequence_status: declared | none. `declared` is accompanied by a bears edge; `none` is
+      an intentional absence, not missing information.
 - name: Estimand
   tier: core
   depth: 1

@@ -1,0 +1,95 @@
+authoring_version: "1.1"
+ir_revision: "2.1"
+
+# Every canonical authoring key must appear exactly once. `tools/check_semantic_map.py` makes
+# additions fail the release gate until their end-to-end meaning is declared here.
+fields:
+  top_level.loop: {mode: node, maps_to: "Loop.id and controller System.label"}
+  top_level.runs: {mode: edge, maps_to: "Loop.timescale -> TimeScale"}
+  top_level.boundary: {mode: container, maps_to: "Boundary node and frames/bounds edges"}
+  top_level.goal: {mode: container, maps_to: "Estimand and DesiredCondition nodes"}
+  top_level.beliefs: {mode: container, maps_to: "Estimand, Estimator, Calibration and Explanation nodes"}
+  top_level.observes: {mode: container, maps_to: "Signal nodes"}
+  top_level.actions: {mode: container, maps_to: "Intervention and Delay nodes"}
+  top_level.processes: {mode: container, maps_to: "controlled_process System nodes"}
+  top_level.when: {mode: container, maps_to: "Policy node, reads and authorizes edges"}
+  top_level.asks_human_when: {mode: field, maps_to: "Loop.asks_human_when escalation conditions"}
+  top_level.asks_human: {mode: field, maps_to: "Loop.escalates_to with Party reference validation"}
+  top_level.people: {mode: container, maps_to: "Party and Consequence nodes"}
+  top_level.spends: {mode: container, maps_to: "Resource nodes and consumes/replenishes edges"}
+  top_level.consider: {mode: annotation, maps_to: "canonical considered decision record"}
+  top_level.never: {mode: node, maps_to: "Constraint nodes and constrains edges"}
+  top_level.not_modelling: {mode: annotation, maps_to: "excluded_variables; never inferred as Disturbance"}
+
+  boundary_entry.drawn_by: {mode: edge, maps_to: "Party ->frames-> Boundary"}
+  boundary_entry.purpose: {mode: field, maps_to: "Boundary.purpose"}
+  boundary_entry.inside: {mode: field, maps_to: "Boundary.inside"}
+  boundary_entry.outside: {mode: field, maps_to: "Boundary.outside"}
+
+  goal_entry.keep: {mode: node, maps_to: "DesiredCondition.statement and targets edge"}
+  goal_entry.from: {mode: field, maps_to: "Estimand.computed_from"}
+  goal_entry.unit: {mode: field, maps_to: "Estimand.unit"}
+  goal_entry.set_by: {mode: edge, maps_to: "outer Estimand ->sets-> DesiredCondition with per-loop reference validation"}
+  goal_entry.confidence: {mode: field, maps_to: "DesiredCondition.confidence_in_target, range checked 0..1"}
+
+  beliefs_entry.question: {mode: field, maps_to: "Estimand.question"}
+  beliefs_entry.from: {mode: compatibility, maps_to: "deprecated Signal ->measures-> Estimand edge"}
+  beliefs_entry.how: {mode: field, maps_to: "Estimator.form"}
+  beliefs_entry.checked_by: {mode: node, maps_to: "distinct belief Calibration.review"}
+  beliefs_entry.checked_against: {mode: edge, maps_to: "Calibration ->compares-> outcome Signal"}
+  beliefs_entry.scoring_rule: {mode: field, maps_to: "Calibration.scoring_rule"}
+  beliefs_entry.window: {mode: field, maps_to: "Calibration.window"}
+  beliefs_entry.adjusts: {mode: field, maps_to: "Calibration.adjusts"}
+  beliefs_entry.every: {mode: edge, maps_to: "Calibration ->reviews_at-> TimeScale"}
+  beliefs_entry.explains: {mode: edge, maps_to: "Explanation ->explains-> Estimand"}
+  beliefs_entry.settled_by: {mode: field, maps_to: "Estimand.settled_by"}
+  beliefs_entry.known_bias: {mode: field, maps_to: "Estimand.known_bias"}
+  beliefs_entry.safe_to_repeat: {mode: field, maps_to: "Estimator.idempotency_basis"}
+
+  observes_entry.informs: {mode: edge, maps_to: "Signal ->measures-> Estimand"}
+  observes_entry.every: {mode: edge, maps_to: "Signal ->samples_at-> TimeScale"}
+  observes_entry.cost: {mode: field, maps_to: "Signal.cost"}
+  observes_entry.origin: {mode: field, maps_to: "Signal.origin and endogenous provenance analysis"}
+  observes_entry.how: {mode: field, maps_to: "Signal.obtained"}
+  observes_entry.reported_by: {mode: field, maps_to: "Signal.reported_by plus Party ->asserts-> Signal when resolvable"}
+  observes_entry.produced_by: {mode: edge, maps_to: "Intervention ->produces-> Signal"}
+  observes_entry.source: {mode: field, maps_to: "Signal.source"}
+  observes_entry.checked_by: {mode: node, maps_to: "distinct attention Calibration.review"}
+  observes_entry.value_metric: {mode: field, maps_to: "attention Calibration.value_metric"}
+  observes_entry.review_window: {mode: field, maps_to: "attention Calibration.window"}
+  observes_entry.review_every: {mode: edge, maps_to: "attention Calibration ->reviews_at-> TimeScale"}
+  observes_entry.adjusts: {mode: field, maps_to: "attention Calibration.adjusts"}
+
+  actions_entry.moves: {mode: edge, maps_to: "Intervention ->targets-> Estimand"}
+  actions_entry.can_undo: {mode: field, maps_to: "Intervention.reversibility"}
+  actions_entry.needs_approval: {mode: edge, maps_to: "Party ->authorizes-> Intervention"}
+  actions_entry.effect_after: {mode: node, maps_to: "Delay.duration and Intervention ->delays-> Delay"}
+  actions_entry.damping: {mode: field, maps_to: "Intervention.damping and Delay.damping when delay exists"}
+  actions_entry.consumes: {mode: edge, maps_to: "Intervention ->consumes-> Resource"}
+  actions_entry.through: {mode: edge, maps_to: "Intervention ->causes-> controlled_process System"}
+  actions_entry.effect: {mode: field, maps_to: "Intervention.effect_direction"}
+  actions_entry.effects: {mode: field, maps_to: "total per-target Intervention.effect_directions map"}
+
+  processes_entry.observed_as: {mode: edge, maps_to: "controlled_process System ->produces-> Signal"}
+  processes_entry.location: {mode: field, maps_to: "controlled_process System.location"}
+  processes_entry.description: {mode: field, maps_to: "controlled_process System.description"}
+
+  when_entry.if: {mode: field, maps_to: "Policy.rule human-readable condition"}
+  when_entry.reads: {mode: edge, maps_to: "Policy ->reads-> Estimand or Resource"}
+  when_entry.against: {mode: edge, maps_to: "Policy ->uses_reference-> DesiredCondition"}
+  when_entry.do: {mode: edge, maps_to: "Policy ->authorizes-> Intervention"}
+  when_entry.escalate: {mode: compatibility, maps_to: "deprecated Policy.escalates"}
+
+  consider_entry.because: {mode: annotation, maps_to: "considered.<finding>.because"}
+  consider_entry.revisit: {mode: annotation, maps_to: "considered.<finding>.revisit"}
+
+  spends_entry.limit: {mode: field, maps_to: "Resource.limit"}
+  spends_entry.replenished: {mode: edge, maps_to: "Resource.replenished plus System ->replenishes-> Resource"}
+  spends_entry.spent_by: {mode: edge, maps_to: "Intervention ->consumes-> Resource"}
+
+  people_entry.human: {mode: field, maps_to: "Party.party_kind=human"}
+  people_entry.agent: {mode: field, maps_to: "Party.party_kind=agent"}
+  people_entry.kind: {mode: field, maps_to: "Party.party_kind explicit alternative"}
+  people_entry.loses_if_wrong: {mode: node, maps_to: "Consequence.statement and Party ->bears-> Consequence; literal nothing/none maps to Party.consequence_status=none"}
+  people_entry.sees: {mode: edge, maps_to: "Party ->holds-> Estimand"}
+  people_entry.may_decide: {mode: compatibility, maps_to: "deprecated Party.authority annotation"}

@@ -1,0 +1,90 @@
+# A compact, fully explicit URAS v1.1 authoring example.
+# It expands to IR v2.1 and intentionally has no active design findings.
+
+loop: support_triage
+runs: per_ticket
+
+boundary:
+  drawn_by: support_lead
+  purpose: route support work while protecting customer trust and engineering capacity
+  inside: [triage policy, support queue, engineering escalation]
+  outside: [customer situation, product behavior]
+
+goal:
+  resolution_time:
+    keep: below 4 hours
+    unit: hours
+
+beliefs:
+  ticket_severity:
+    question: "How badly is this customer blocked?"
+    how: judgement
+    explains: resolution_time
+    settled_by: ticket_outcome
+    safe_to_repeat: ticket id plus evidence revision
+    checked_by: weekly_severity_review
+    checked_against: ticket_outcome
+    scoring_rule: severity classification error
+    window: 100 resolved tickets
+    adjusts: trust
+    every: weekly
+
+observes:
+  ticket_text:
+    informs: ticket_severity
+    origin: outside
+    how: reported
+    source: support inbox
+  ticket_outcome:
+    informs: [ticket_severity, resolution_time]
+    origin: outside
+    how: measured
+    every: on_resolution
+
+processes:
+  support_workflow:
+    description: ticket routing and engineering work that produce a resolved-ticket outcome
+    location: inside
+    observed_as: [ticket_outcome]
+
+actions:
+  escalate_to_engineer:
+    moves: resolution_time
+    through: support_workflow
+    effect: decrease
+    can_undo: "yes"
+    needs_approval: support_lead
+    effect_after: 30 minutes
+    consumes: [engineer_hours]
+
+spends:
+  engineer_hours:
+    limit: 8 per week
+    replenished: weekly staffing cycle
+    spent_by: [escalate_to_engineer]
+
+when:
+  - if: "ticket_severity is high and engineer_hours remain"
+    reads: [ticket_severity, engineer_hours]
+    do: escalate_to_engineer
+  - if: "resolution_time exceeds 4 hours"
+    reads: [resolution_time]
+    against: [resolution_time]
+    do: escalate_to_engineer
+
+asks_human_when:
+  - "severity evidence conflicts"
+  - "engineer_hours are exhausted"
+asks_human: support_lead
+
+people:
+  support_lead:
+    human: true
+    loses_if_wrong: the customer relationship
+    sees: [ticket_severity, resolution_time]
+
+never:
+  - expose private ticket content outside the support boundary
+
+not_modelling:
+  - long-term staffing policy

@@ -1,0 +1,71 @@
+---
+title: Install and run
+description: Install the LoopSpec command, verify the release gate, and understand its exit statuses.
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+LoopSpec requires Python 3.11 or newer. The specification file remains the durable artifact; the
+installation only provides the command and its YAML dependency.
+
+## Install in a clean environment
+
+<Tabs>
+	<TabItem label="Use the repository">
+```bash
+python3 -m venv .venv
+.venv/bin/pip install .
+.venv/bin/loopspec doctor
+```
+	</TabItem>
+	<TabItem label="Develop LoopSpec itself">
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -e .
+.venv/bin/loopspec doctor
+```
+	</TabItem>
+	<TabItem label="Without installing">
+```bash
+python3 tools/loopspec.py doctor
+```
+	</TabItem>
+</Tabs>
+
+A healthy source checkout reports that the semantic pipeline, generated grammar, semantic map,
+and check catalog are current. An installed wheel runs a smaller runtime health check against
+its packaged grammar, ontology, and catalog.
+
+## The everyday commands
+
+```bash
+loopspec check spec.loop.yaml
+loopspec expand spec.loop.yaml
+loopspec diagram spec.loop.yaml --markdown
+loopspec diagram spec.loop.yaml --control --markdown
+loopspec diff before.loop.yaml after.loop.yaml
+loopspec doctor
+```
+
+<Steps>
+1. Run `check` while designing. It validates syntax, expands canonical meaning, validates that
+   graph, and only then derives findings.
+2. Use `diagram` when a group needs to inspect closure, authority, or process paths together.
+3. Keep the prior version and use `diff` before accepting a design change.
+4. Run `doctor` after changing the language, analyzer, or generated references.
+</Steps>
+
+## Status codes
+
+| Status | Meaning |
+|---:|---|
+| `0` | valid input; the command completed |
+| `1` | invalid or ambiguous input, broken analysis, or stale generated material |
+| `2` | `check --fail-on-findings` found design findings |
+| `3` | `diff --fail-on-change` found a semantic change |
+
+<Aside type="note" title="A finding is not a parse failure">
+Partial designs are valid input because the analyzer should help before a loop is complete.
+Use `--fail-on-findings` only when your review process has decided that any remaining finding
+must stop a pipeline.
+</Aside>

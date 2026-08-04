@@ -10,16 +10,17 @@ literature, and which from me.
 
 ## 1. Cybernetics and control theory — where the checks come from
 
-The rule from `RULESET.md`: where a check follows from a **theorem** it is a necessary
-condition, not a style opinion, and can be stated as such to a user.
+The rule from `RULESET.md`: literature may motivate a check, but theorem language is used only
+when the representation states the theorem's premises. LoopSpec v1 does not yet do that for the
+control-theoretic results below.
 
 | source | what it gives | where it lands |
 |---|---|---|
-| ⚑ **Conant & Ashby 1970**, *Every good regulator of a system must be a model of that system* | A loop with a target and no model of what produces it is a reflex, not a regulator | `regulator_without_model` — **100% of published examples** |
-| ⚑ **Ashby 1956**, *Introduction to Cybernetics* — Law of Requisite Variety | Only variety can destroy variety: a regulator needs as many distinguishable responses as the disturbance has modes | `insufficient_variety` — **still unimplemented**, blocked on a missing `Disturbance` primitive |
-| ⚑ **Kalman** — observability / controllability | A state is observable if inferable from outputs; controllable if drivable to a target | `unmeasured_estimand`, `uncontrollable_target` |
-| ⚑ **Forrester / Sterman** — system dynamics loop polarity | Even number of negative links = reinforcing (runaway); odd = balancing | `reinforcing_loop_no_balancer` |
-| ⚑ **Nyquist** — gain with delay | High loop gain plus delay produces oscillation | `delay_without_damping` — **unimplemented**; the format carries `effect_after` and `damping` for it |
+| ⚑ **Conant & Ashby 1970**, *Every good regulator of a system must be a model of that system* | Motivates asking where a process model is represented; the theorem assumes an optimal-regulation setup and state mapping | `no_explicit_process_model` is structural and explicitly **not** a theorem test |
+| ⚑ **Ashby 1956**, *Introduction to Cybernetics* — Law of Requisite Variety | Variety is over distinguishable disturbance and response states | No active check. The former headcount proxy was withdrawn because exclusions are not disturbances |
+| ⚑ **Kalman** — observability / controllability | Matrix properties of a specified state-space model | No Kalman test. `unmeasured_estimand` and `target_without_actuator` check only sensor/actuator declarations |
+| ⚑ **Forrester / Sterman** — system dynamics loop polarity | Polarity requires signed causal links around a cycle | No polarity test. LoopSpec records an intervention's intended effect direction but not all cycle signs; `endogenous_feedback_without_crosscheck` checks provenance only |
+| ⚑ **Nyquist** — gain with delay | Stability analysis requires a dynamic model, gain, and delay | No active check; qualitative `effect_after` and `damping` fields are insufficient |
 | ✎ **Beer** — Viable System Model | S1–S5 decomposition; most agent loops are S1 plus a little S3 with no S4 environmental scanning | **Surveyed and deliberately not adopted** — imposing five levels on things that may have one is exactly the failure that killed the org-modelling programme |
 | ✎ **Powers** — Perceptual Control Theory | You control the *perception*, not the output | No lint yet. Directly relevant: an agent controlling its *report* of success rather than success is a real failure mode |
 | ✎ **Bhaskar** — critical realism | Real / Actual / Empirical; transitive vs intransitive knowledge | Why `Estimand` is separate from `Estimate` — the quantity exists independently of anyone's belief about it |
@@ -58,7 +59,7 @@ Full analysis: `research/published_study/LITERATURE.md`.
 |---|---|
 | ⚑ **`@flue/runtime` 1.0.0-beta.9**, verified in a running deployment | `defineAgent` / `defineAction` / `defineTool`; workflows default-export `run(ctx)` |
 | ⚑ **Flue's own docs on at-least-once execution** — *"recovery may re-dispatch the provider once… use application-owned idempotency keys where repeated effects would be harmful"* | Why every belief carries `safe_to_repeat`. A Bayesian update applied twice double-counts into a well-formed **wrong** posterior |
-| ⚑ A production comment describing a workflow as *"a bounded, result-returning operation… it terminates"* | **Loop → Agent, not Workflow.** Flue workflows terminate; URAS loops do not |
+| ⚑ A production comment describing a workflow as *"a bounded, result-returning operation… it terminates"* | **Loop → Agent, not Workflow.** Flue workflows terminate; LoopSpec loops do not |
 | ⚠ **Open question** — can evidence chains be *reconstructed* from durable stream records, or only replayed? | Calibration needs an immutable record of what was believed *before* an outcome arrived. If replay-only, calibration cannot be built on them |
 
 ## 5. Prior art — what this must beat

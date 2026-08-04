@@ -1,0 +1,132 @@
+# Encoded from blinded source packet (agent_manager.py, parallel_agent.py, journal.py)
+# Single loop covering per-node stage/substage progression in AI-Scientist tree search.
+
+loop: treesearch_node_execution
+runs: per node selection (inner "while True" loop in AgentManager.run) # agent_manager.py:721-804
+
+boundary:
+  drawn_by: orchestrator
+  purpose: >
+    Decide, for each iteration, whether to draft a new node, debug a buggy
+    one, or extend the current best node, and whether a stage/substage's
+    goals have been met — without itself re-deriving research correctness.
+    # agent_manager.py:343-536, parallel_agent.py:1931-2051
+  inside:
+    - node selection logic (draft / debug / exploit choice) # parallel_agent.py:1931-2051
+    - journal/state bookkeeping (nodes, stages, substages) # journal.py:374-408, agent_manager.py:692-827
+    - GPU assignment tracking # parallel_agent.py:2086-2094,2182-2190
+  outside:
+    - worker-process code execution of the generated experiment # parallel_agent.py:2128-2181
+    - GPU hardware / wall-clock compute consumed by that execution
+    - the LLM judgment calls used for completion and best-node evaluation # agent_manager.py:363-395, journal.py:436-455
+
+goal:
+  stage_progress:
+    keep: a good (non-buggy) implementation meeting the current stage's goals is found before max_iterations is exhausted
+    from: [execution_result]
+    # agent_manager.py:397-536
+
+beliefs:
+  stage_complete:
+    question: has the current stage/substage's goals been met, given the figure analysis and stated completion criteria?
+    how: LLM judgment (query() with stage_completion_eval_spec) over parsed VLM figure feedback and stage.goals
+    explains: stage_progress
+    # agent_manager.py:351-395, 455-498
+    # No scoring of this judgment against later outcomes, and no adjustment of future
+    # trust in it, is shown in this excerpt — the verdict is used once, immediately,
+    # to decide progression, not checked longitudinally. checked_by intentionally omitted.
+  best_node:
+    question: which candidate implementation in the journal is the best one to extend or hand off to the next stage?
+    how: LLM comparison prompt over non-buggy candidates, or max validation metric alone when use_val_metric_only is set
+    explains: stage_progress
+    # journal.py:420-455
+    # As with stage_complete, this selection is not shown being checked against a later
+    # outcome or scored across cases; no calibration mechanism is present in the excerpt.
+
+observes:
+  vlm_feedback:
+    informs: stage_complete
+    origin: ourselves
+    how: calculated
+    produced_by: run_experiment
+    # agent_manager.py:351,455 (_parse_vlm_feedback(best_node))
+  execution_result:
+    informs: [stage_complete, best_node]
+    origin: ourselves
+    how: measured
+    produced_by: run_experiment
+    # parallel_agent.py:2152-2170 (metric, is_buggy, is_buggy_plots, datasets_successfully_tested, exec_time)
+
+actions:
+  run_experiment:
+    moves: stage_progress
+    can_undo: no
+    through: node_execution
+    effect: unknown
+    consumes: [iterations, gpu, compute_time]
+    effect_after: up to worker timeout (self.timeout) per submitted node
+    # parallel_agent.py:2053-2145 (agent.step -> executor.submit(_process_node_wrapper, ...))
+
+processes:
+  node_execution:
+    location: interface
+    description: >
+      A worker process runs the submitted node's generated code (a new
+      draft, a debug attempt, or a hyperparameter/ablation variant) on an
+      assigned GPU, and returns metric, bug flags, plots, and exec_time
+      once complete or timed out.
+    observed_as: [execution_result, vlm_feedback]
+    # parallel_agent.py:2053-2190
+
+when:
+  - if: fewer draft nodes exist than the configured number of drafts
+    do: run_experiment
+    # parallel_agent.py:1947-1954
+  - if: a random draw falls under debug_prob and a debuggable buggy leaf node exists
+    do: run_experiment
+    # parallel_agent.py:1963-2004
+  - if: current stage is ablation (stage name starts with "4_")
+    do: run_experiment
+    # parallel_agent.py:2006-2011
+  - if: current stage is baseline hyperparameter tuning (stage name starts with "2_")
+    do: run_experiment
+    # parallel_agent.py:2012-2015
+  - if: otherwise (stage 1 or 3), extend the best good node from an as-yet-unprocessed tree
+    reads: [best_node]
+    do: run_experiment
+    # parallel_agent.py:2016-2049
+
+spends:
+  iterations:
+    limit: stage.max_iterations (varies per stage, e.g. stage3_max_iters)
+    replenished: reset when a new stage/substage journal is created
+    spent_by: run_experiment
+    # agent_manager.py:398-431, 514-516
+  gpu:
+    limit: not stated in this excerpt — depends on the concrete deployment's available GPU count
+    replenished: released once a node's result is retrieved or its worker times out
+    spent_by: run_experiment
+    # parallel_agent.py:2086-2094, 2182-2190
+  compute_time:
+    limit: self.timeout per submitted node
+    spent_by: run_experiment
+    # parallel_agent.py:2152, 2172-2174
+
+never:
+  - if stage 1 (initial drafting) exhausts max_iterations without any good node, end the whole experiment rather than continuing to later stages
+    # agent_manager.py:419-429
+
+people:
+  orchestrator:
+    kind: agent
+    loses_if_wrong: nothing
+    sees: [stage_progress, stage_complete, best_node]
+    # agent_manager.py:343-536, 692-827
+
+not_modelling:
+  - how is_buggy / is_buggy_plots are determined (Node class not shown in this excerpt)
+  - exact GPU count, hardware, and per-node compute cost — deployment-specific
+  - the LLM model/version and full prompts backing the query() calls, beyond the text quoted
+  - internals of _run_multi_seed_evaluation, _run_plot_aggregation, _create_next_substage, and _create_next_main_stage (called but bodies not shown)
+  - whether/how stage_complete or best_node judgments are later checked against outcomes; no such mechanism appears in this excerpt
+  - print()/logger.* calls throughout are terminal/log output and are not modelled as actions or observations

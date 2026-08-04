@@ -1,0 +1,53 @@
+---
+title: LoopSpec documentation
+description: Specify, inspect, and argue about cybernetic agent loops.
+template: splash
+pagefind: false
+---
+
+import HomeHero from '../../components/HomeHero.astro';
+
+<HomeHero />
+
+<section class="loopspec-home-section" aria-labelledby="learning-path-title">
+	<p class="loopspec-section-label">A useful path through the system</p>
+	<h2 id="learning-path-title">From an idea to a reviewable loop.</h2>
+	<div class="loopspec-path-grid">
+		<a href="/start/first-loop/">
+			<span class="loopspec-path-index">01</span>
+			<span><strong>Write the smallest honest loop</strong><p>Name the quantity, observation, action, process, and person before filling in detail.</p></span>
+			<span class="loopspec-path-arrow" aria-hidden="true">→</span>
+		</a>
+		<a href="/guides/findings/">
+			<span class="loopspec-path-index">02</span>
+			<span><strong>Read findings as questions</strong><p>Separate structural facts from design judgments and record deliberate exceptions.</p></span>
+			<span class="loopspec-path-arrow" aria-hidden="true">→</span>
+		</a>
+		<a href="/guides/diagrams/">
+			<span class="loopspec-path-index">03</span>
+			<span><strong>See whether feedback closes</strong><p>Render dependency, governance, and control projections from the same validated model.</p></span>
+			<span class="loopspec-path-arrow" aria-hidden="true">→</span>
+		</a>
+		<a href="/guides/semantic-diff/">
+			<span class="loopspec-path-index">04</span>
+			<span><strong>Review changes by meaning</strong><p>Compare canonical semantics and findings instead of arguing over YAML line order.</p></span>
+			<span class="loopspec-path-arrow" aria-hidden="true">→</span>
+		</a>
+	</div>
+
+	<div class="loopspec-contract">
+		<div class="loopspec-contract-copy">
+			<p class="loopspec-section-label">The promise</p>
+			<h2>Strong about structure. Quiet about dynamics.</h2>
+			<p>LoopSpec can establish that a declared path, gate, observer, or calibration contract exists. It cannot infer stability, runtime correctness, or field usefulness from structure alone.</p>
+			<p><a href="/concepts/cybernetic-contract/">Read the cybernetic contract →</a></p>
+		</div>
+		<dl class="loopspec-contract-list">
+			<div><dt>OBSERVE</dt><dd>What arrives, where it came from, how it was obtained, and what it informs.</dd></div>
+			<div><dt>DECIDE</dt><dd>Which ordered rule reads which quantity and which reference it actually uses.</dd></div>
+			<div><dt>ACT</dt><dd>What changes, through which process, in which direction, under whose authority.</dd></div>
+			<div><dt>LEARN</dt><dd>How beliefs meet later outcomes and how costly sources earn continued attention.</dd></div>
+			<div><dt>SURVIVE</dt><dd>What the loop consumes, where it stops, and who bears the loss when it is wrong.</dd></div>
+		</dl>
+	</div>
+</section>

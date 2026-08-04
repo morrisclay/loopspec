@@ -1,0 +1,66 @@
+---
+title: The control-loop kernel
+description: The minimum semantics required for feedback closure and the higher-order loops built from the same parts.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Mermaid from '../../../components/Mermaid.astro';
+
+LoopSpec treats a loop as a traversable cycle, not a bag of controller nouns. Closure exists only
+when the path can be derived without a modeling choice.
+
+<Mermaid
+	chart={`flowchart LR
+	R["reference"] --> C["comparison / difference"]
+	X["perception"] --> C
+	C --> P{"policy"} --> A["action"] --> W[("process / environment")]
+	W --> S[/"sensor / observation"/] --> E["estimator"] --> X`}
+	caption="LoopSpec v1.1 represents structural closure. Numeric error, gain, and process dynamics remain outside the current executable semantics."
+/>
+
+## The minimum semantic record
+
+| Role | What must be knowable |
+|---|---|
+| boundary | what is treated as system, environment, and interface, and who chose it |
+| controlled quantity | the condition being regulated |
+| reference | desired value, range, ordering, or termination condition |
+| observation | what arrives, with provenance and acquisition method |
+| estimation | how observation becomes the value used for control |
+| comparison | which policy rule reads the quantity and uses its reference |
+| action | what may be done, with authority and reversibility |
+| effect path | the process through which action produces a later observation |
+| cadence and delay | when sensing, deciding, acting, and effects occur |
+| constraints and resources | what must never happen and what operation consumes |
+
+The authoring surface does not need a noun for every row. A comparator can be derived from a
+rule that both reads a goal quantity and names it under `against`. The derivation must still be
+total and unique.
+
+## Higher-order regulation reuses the kernel
+
+An opaque review name is workflow metadata. A cybernetic review must observe a performance
+quantity, compare it with a reference, and change the component under review.
+
+| Higher-order loop | Regulated object | Observation | Corrective action |
+|---|---|---|---|
+| attention | signal or source | decision value relative to acquisition cost | change sampling, routing, source, or retirement |
+| calibration | estimator | prediction loss against later outcomes | revise trust, estimator, or use |
+| adaptation | lower-order loop | viability or changing conditions | change policy, model, action set, goal, or boundary |
+| governance | delegated authority | exposure, violations, or exceptions | approve, constrain, revoke, or escalate |
+
+<Aside type="note" title="Meta-control is not automatically second-order cybernetics">
+LoopSpec records the observer, purpose, and boundary. A fuller second-order account must also show
+how observing changes the system and how the observer's distinctions and purpose are revised.
+</Aside>
+
+## Unknown is a real value
+
+`unknown`, `not_applicable`, and `not_modelled` are different:
+
+- **unknown** — the quantity matters but its value or effect is not known;
+- **not applicable** — the concept does not apply to this component;
+- **not modelled** — the designer deliberately placed it beyond the current boundary.
+
+Silence must not be interpreted as a favorable value. That is why omitting action direction
+produces a finding while `effect: unknown` preserves explicit uncertainty.

@@ -88,7 +88,7 @@ def compile(path, outdir):
     agent = f"""import {{ defineAgent }} from '@flue/runtime';
 
 /**
- * {name} — compiled from a URAS loop encoding.
+ * {name} — compiled from a LoopSpec loop encoding.
  *
  * Loop -> Agent: an Agent is continuing and stateful with an identity, which is what a
  * non-terminating regulator needs. A Workflow would be wrong here — it is "a bounded job
@@ -210,7 +210,7 @@ export default defineAction({{
     if not kind("Resource"):
         gaps.append("Resource — tokens/time/compute budget. Flue has no accounting.")
     gaps.append("Uncertainty — Flue has no distribution or confidence type. Estimate carries "
-                "it as URAS-side state only.")
+                "it as LoopSpec-side state only.")
     open(f"{outdir}/GAPS.md", "w").write(
         "# What does not compile\n\n" + "\n".join(f"- {g}" for g in gaps) + "\n")
 
