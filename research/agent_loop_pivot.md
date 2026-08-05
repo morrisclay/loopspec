@@ -20,7 +20,7 @@ The strong framing is the project's own methodology applied to itself:
 > Therefore they are where the representation should be built and validated. Universality
 > stops being a premise and becomes a hypothesis to test afterwards.**
 
-`benchmarks/reference_set.md` already contains the argument: *"A GAP IN THE CORPUS PRODUCED A
+`research/archive/uras/benchmarks/reference_set.md` already contains the argument: *"A GAP IN THE CORPUS PRODUCED A
 WRONG FINDING ABOUT THE ONTOLOGY … derivation from data is only as good as the data
 selected."* The current corpus is prose descriptions of hospitals and immune systems, written
 by one person, with no ground truth and no way to check an encoding against what the system

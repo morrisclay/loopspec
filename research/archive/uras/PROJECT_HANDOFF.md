@@ -1,6 +1,12 @@
 # Project Handoff
 ## Universal Representation for Adaptive Systems (URAS)
 
+> [!CAUTION]
+> **Historical charter, superseded by LoopSpec.** The universal-representation ambition in this
+> document was rejected by the later evidence and narrowed to agentic feedback loops. It remains
+> here so that the change of scope is auditable. See the archived [`FORK.md`](FORK.md), current
+> [`convergence record`](../../CONVERGENCE.md), and product [`README`](../../../README.md).
+
 > **Assume we are designing something that should still make sense in 30 years. Prefer timeless cybernetic concepts over current AI terminology. If a primitive would become obsolete when today's LLMs are replaced, it does not belong in the core representation.**
 
 ---

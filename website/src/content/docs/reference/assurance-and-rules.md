@@ -6,8 +6,8 @@ description: "How checks are admitted, scoped, ranked, and kept below their evid
 > This page is generated from `RULESET.md` during every site build. Edit the canonical source, not this copy.
 
 The linter reports only what can be derived from the encoded structure. Its source of truth is
-[`docs/checks.yaml`](docs/checks.yaml); [`docs/CHECKS.md`](docs/CHECKS.md) and
-[`docs/base_rates.json`](docs/base_rates.json) are generated from that metadata and a live
+[`docs/checks.yaml`](https://github.com/morrisclay/loopspec/blob/main/docs/checks.yaml); [`docs/CHECKS.md`](/reference/checks/) and
+[`docs/base_rates.json`](https://github.com/morrisclay/loopspec/blob/main/docs/base_rates.json) are generated from that metadata and a live
 corpus run.
 
 ## Two independent axes

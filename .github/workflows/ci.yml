@@ -3,6 +3,11 @@ name: semantic-contract
 on:
   push:
   pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -10,6 +15,9 @@ permissions:
 jobs:
   doctor:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
     strategy:
       matrix:
         python-version: ["3.11", "3.13"]
@@ -29,3 +37,22 @@ jobs:
           loopspec diff ${{ github.workspace }}/examples/complete.loop.yaml ${{ github.workspace }}/examples/complete.loop.yaml --fail-on-change
           loopspec doctor
           uras --help 2>&1 | grep 'renamed to `loopspec`'
+
+  documentation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - run: npm ci
+      - run: npm run check
+      - name: Verify generated documentation is committed
+        working-directory: .
+        run: git diff --exit-code

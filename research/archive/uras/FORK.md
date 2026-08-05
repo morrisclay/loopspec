@@ -1,5 +1,10 @@
 # Fork — a representation language for cybernetic loop engineering
 
+> [!NOTE]
+> **Archived scope-decision record.** This explains the move from the original URAS programme
+> to LoopSpec. It is provenance, not onboarding or a current language specification. See the
+> product [`README`](../../../README.md) for the current system.
+
 **Scope: agent control loops. First compile target: Flue.**
 
 This supersedes the URAS charter. Everything before it is retained as the research programme

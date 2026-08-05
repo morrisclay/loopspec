@@ -37,7 +37,7 @@ Full analysis: `research/published_study/LITERATURE.md`.
 | ⚑ **AIEWF 2026 recap** — [truefoundry.com](https://www.truefoundry.com/blog/aiewf-2026-loops-harness-engineering) | Harness engineering: budgets, step ceilings, stall detection, quotas, brokered credentials, per-step traces. Mike Krieger on delegation; *"the harness changes failure economics, not failure existence"* | **Was the clearest place the literature was ahead of this project, and is now closed.** Produced `spends:` in the format and three checks — `unbounded_loop`, `ceiling_without_correction`, `spends_without_limit`. The second goes beyond the source: *a ceiling is a stop, not a correction* |
 | ✎ **latent.space, AIEWF trends** — [latent.space](https://www.latent.space/p/aiewf26trends) | *"evaluation + traces + tooling"* as the connective tissue | Confirms the field's answer to loop quality is outcome measurement, which is the threat in §5 |
 | ✎ **Orosz** on loop engineering scepticism | *"outside of the increasingly few people who have unlimited AI token budgets… I don't think many have a use case"* | Probably right about *operational* loop engineering. This project targets the epistemic version, whose audience is anyone whose agent confidently does the wrong thing |
-| ✎ **ghuntley.com/ralph** + the ralph-loop plugin | The `while true` agent loop | Encoded as `examples/field/ralph.loop.yaml`. Produced `single_point_of_grounding` and **corrected a wrong claim in `THESIS.md`** |
+| ✎ **ghuntley.com/ralph** + the ralph-loop plugin | The `while true` agent loop | Encoded as `examples/field/ralph.loop.yaml`. Produced `single_point_of_grounding` and **corrected a wrong claim in `research/archive/THESIS.md`** |
 | ✎ *Supervising Ralph Wiggum: a Metacognitive Co-Regulation Agentic AI Loop* | Academic work adding a regulation layer to Ralph | Independent convergence on the same gap from the other direction |
 
 ## 3. The code corpus — what was measured
@@ -75,7 +75,7 @@ Full analysis: `research/published_study/LITERATURE.md`.
 | source | what was taken |
 |---|---|
 | ⚑ **t-minus P5** — cross-provider beats same-model reruns | Two runs of one model share a prior and agree for reasons unrelated to determinacy. Same-model figures may be reported but never enter a score |
-| ⚑ **The capability sweep** (`BRIEFING-2026-07-31.md` §4) | *A strong model given a suggestive format supplies the determinacy the format lacks.* **Measure the slope, not the value. Flat is what you want.** Applied to compilation: 0.898 at 8B → 0.993 at frontier |
+| ⚑ **The capability sweep** (`research/archive/uras/BRIEFING-2026-07-31.md` §4) | *A strong model given a suggestive format supplies the determinacy the format lacks.* **Measure the slope, not the value. Flat is what you want.** Applied to compilation: 0.898 at 8B → 0.993 at frontier |
 | ⚑ **Pre-registration**, after the archive study | Four of five predictions failed there and the failure was the useful part. Both studies here are pre-registered with stated kill conditions |
 | ⚑ **Toyota's A3** | One sheet, readable by someone not involved. Why the IR is flat rather than nested |
 | ⚑ **ElectricSQL's adoption posture** — *"adopt incrementally, one route at a time… greenfield and brownfield"* | Why the primary verb is **lint**, not **author**. Every general-representation project in the corpus that required wholesale adoption lost |

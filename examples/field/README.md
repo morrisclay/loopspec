@@ -30,7 +30,7 @@ The real property is narrower and more useful, and is now a check of its own:
 > `test_results` is therefore the only thing that can fail in a way this loop did not intend,
 > and the loop is exactly as trustworthy as that one input.
 
-That is what `THESIS.md` claimed from intuition — *"Ralph is grounded only through the test
+That is what `research/archive/THESIS.md` claimed from intuition — *"Ralph is grounded only through the test
 signal"* — now **derived from the spec's shape** rather than asserted. It is also what
 practitioners report, which the wrong version was not.
 

@@ -3,7 +3,7 @@
 # without naming: a "strategy" loop deciding what the "execution" loop should aim at.
 #
 # Cascade design requires the INNER dynamics to be substantially faster than the outer loop.
-# URAS only knows update cadence, so swapping `monthly` and `daily` below produces a review
+# LoopSpec only knows update cadence, so swapping `monthly` and `daily` below produces a review
 # signal, not a proof that the pair will oscillate.
 
 loop: strategy

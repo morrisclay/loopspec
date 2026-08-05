@@ -78,11 +78,16 @@ const replacements = new Map([
 	['../REFERENCE.md', '/reference/language/'],
 	['REFERENCE.md', '/reference/language/'],
 	['CHECKS.md', '/reference/checks/'],
+	['docs/CHECKS.md', '/reference/checks/'],
+	['docs/checks.yaml', 'https://github.com/morrisclay/loopspec/blob/main/docs/checks.yaml'],
+	['docs/base_rates.json', 'https://github.com/morrisclay/loopspec/blob/main/docs/base_rates.json'],
 	['COOKBOOK.md', '/patterns/'],
 	['LINTING-EXISTING.md', '/guides/linting-existing/'],
 	['../NOTATION.md', '/reference/diagram-notation/'],
 	['../ATTENTION.md', '/concepts/attention/'],
 	['../CALIBRATION.md', '/concepts/calibration/'],
+	['../research/README.md', '/evidence/status/'],
+	['research/README.md', '/evidence/status/'],
 	['../research/llm_as_compiler.md', '/evidence/status/'],
 ]);
 

@@ -1,5 +1,10 @@
 # Field Test — one loop of your conviction engine
 
+> [!NOTE]
+> **Historical field instrument.** This is preserved research material, not evidence that the
+> current LoopSpec candidate has passed external usefulness validation. See
+> the current [`external-validation preregistration`](../../external_validation/PREREGISTRATION.md).
+
 I encoded a single loop of `/complicate` — the INVESTIGATE cycle, nothing else. 63 lines, one
 screen, no commitment to the rest of the ontology. Below is what the structure says about it.
 

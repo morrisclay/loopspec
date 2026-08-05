@@ -398,17 +398,19 @@ Try one without creating a file:
 | [`REFERENCE.md`](REFERENCE.md) | Browse every accepted language key |
 | [`COMPATIBILITY.md`](COMPATIBILITY.md) | Understand authoring and canonical-IR compatibility |
 
-For the theory, evidence, and limits:
+For the design theory behind the language:
 
 | Read next | Purpose |
 |---|---|
-| [`SYNTHESIS.md`](SYNTHESIS.md) | The field-level argument and bounded contribution |
 | [`CYBERNETICS.md`](CYBERNETICS.md) | What is genuinely cybernetic and what is still missing |
 | [`ATTENTION.md`](ATTENTION.md) | Signals, selection, cost, and attention as meta-control |
 | [`CALIBRATION.md`](CALIBRATION.md) | Outcome scoring and revision of unreliable belief formation |
 | [`RULESET.md`](RULESET.md) | Checks, assurance levels, and theorem boundaries |
 | [`REFERENCES.md`](REFERENCES.md) | External sources and the decisions they shaped |
-| [`research/real_loops/`](research/real_loops/) | Source-pinned encodings of real agent loops |
+
+Research protocols, results, negative findings, and project history are intentionally kept out
+of the getting-started path. They remain available through the
+[`research archive`](research/README.md).
 
 The searchable Astro manual lives in [`website/`](website/):
 
@@ -429,16 +431,11 @@ The package is version 2.0.0. Its current semantic layers are:
 - **authoring v1.2:** experimental control-plane additions; and
 - **canonical IR v2.2:** experimental typed operations, outputs, and action profiles.
 
-The v1.2 vocabulary is internally verified, but an eight-cycle independent-encoding study
-scored **0.467 raw micro-F1** against a preregistered **0.80** convergence threshold. It therefore
-remains an experimental candidate rather than a settled field standard. The complete negative
-result is retained in [`research/control_plane/`](research/control_plane/) and
-[`autoresearch/control-plane-260804-2251/`](autoresearch/control-plane-260804-2251/).
-
-The external-author usefulness protocol is preregistered in
-[`research/external_validation/PREREGISTRATION.md`](research/external_validation/PREREGISTRATION.md)
-and has no observed outcomes yet. LoopSpec currently claims useful structural specification and
-review machinery—not proven field usefulness or operational safety.
+The current language and tooling are usable for structural specification and review, but remain
+an early research candidate. The vocabulary is still being tested across frameworks and
+independent authors. Do not treat LoopSpec output as proof of field usefulness, operational
+safety, or dynamic stability. Detailed protocols and results live in the
+[`research archive`](research/README.md), not in the onboarding path.
 
 ## What LoopSpec is not
 
@@ -446,13 +443,3 @@ review machinery—not proven field usefulness or operational safety.
 - It is not a prompt format or a replacement for executable tests.
 - It is not a formal proof of system safety or stability.
 - It is not yet a standards-body specification.
-
-## Project history
-
-LoopSpec began as **URAS**, a proposed universal representation for adaptive systems. Evidence
-did not support that scope, so the project narrowed to agent control loops. The old `uras`
-command remains a deprecated alias throughout LoopSpec 2.x.
-
-[`research/ORIGINAL-CHARTER.md`](research/ORIGINAL-CHARTER.md) preserves the original premise,
-[`FORK.md`](FORK.md) records the narrowing, and [`CONVERGENCE.md`](CONVERGENCE.md) records the
-evidence gates. Those documents are research history, not promises made by the language.

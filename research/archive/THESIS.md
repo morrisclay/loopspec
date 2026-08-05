@@ -1,5 +1,11 @@
 # Thesis — a loop design layer above agent frameworks
 
+> [!NOTE]
+> **Research thesis snapshot.** Several claims and finding names in this document were corrected
+> by later encodings and adjudication. It is preserved as argument history. Current product and
+> evidence claims live in the product [`README`](../../README.md), current
+> [`SYNTHESIS`](../SYNTHESIS.md), and [`research index`](../README.md).
+
 **An abstraction over agent frameworks for cybernetic loop design. Machine-writable,
 human-readable, diagram-native. The linter is the product.**
 

@@ -10,7 +10,8 @@ It also tests whether a generic action family can carry conditional, late-bound 
 without pretending that runtime capability is deployment policy.
 
 The test is preregistered in
-`autoresearch/control-plane-260804-2251/README.md`. Sources and expected mechanisms were frozen
+`research/archive/autoresearch/control-plane-260804-2251/README.md`. Sources and expected
+mechanisms were frozen
 before candidate syntax was implemented. Independent outputs do not receive `gold.yaml`.
 
 ## Holdouts

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-LoopSpec score — the self-optimization function defined in ontology/score.md
+Archived URAS score — the self-optimization function defined in ../ontology/score.md
 
-    python3 tools/score.py            # score + coverage report
-    python3 tools/score.py --check    # exit nonzero on any hard violation (CI use)
-    python3 tools/score.py --json     # machine-readable
+    python3 research/archive/uras/tools/score.py
+    python3 research/archive/uras/tools/score.py --check
+    python3 research/archive/uras/tools/score.py --json
 
 Design rules enforced here, not just documented:
 
@@ -27,7 +27,8 @@ try:
 except ImportError:
     sys.exit("needs pyyaml: pip install pyyaml")
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ARCHIVE_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+REPOSITORY_ROOT = os.path.abspath(os.path.join(ARCHIVE_ROOT, "..", "..", ".."))
 SOURCES = []
 
 VALID_TIERS = {"core", "provisional", "extension"}
@@ -43,7 +44,7 @@ def clamp(x, lo=0.0, hi=1.0):
 # ---------------------------------------------------------------- loading
 
 def load_primitives():
-    path = os.path.join(ROOT, "ontology", "primitives.yaml")
+    path = os.path.join(REPOSITORY_ROOT, "ontology", "primitives.yaml")
     if not os.path.exists(path):
         return None, ["ontology/primitives.yaml not found"]
     with open(path) as f:
@@ -74,7 +75,7 @@ def load_primitives():
 def load_encodings():
     """Formal encodings (.yaml). Seed prose (.md) is source material, not an encoding."""
     out = []
-    for path in sorted(glob.glob(os.path.join(ROOT, "benchmarks", "**", "*.yaml"), recursive=True)):
+    for path in sorted(glob.glob(os.path.join(ARCHIVE_ROOT, "benchmarks", "**", "*.yaml"), recursive=True)):
         with open(path) as f:
             try:
                 doc = yaml.safe_load(f)
@@ -94,7 +95,7 @@ def load_encodings():
 def load_seed_sources():
     """Prose seed descriptions, for their front matter (domain, axes, breaks)."""
     out = []
-    for path in sorted(glob.glob(os.path.join(ROOT, "benchmarks", "**", "*.md"), recursive=True)):
+    for path in sorted(glob.glob(os.path.join(ARCHIVE_ROOT, "benchmarks", "**", "*.md"), recursive=True)):
         with open(path) as f:
             text = f.read()
         if not text.startswith("---"):
@@ -439,16 +440,16 @@ def load_adjudications():
     """
     out = {"surfaced": {}, "breaks": {}, "by_encoding": {}}
     # Prefer the highest-numbered round: later rounds cover strictly more claims.
-    rounds = sorted(glob.glob(os.path.join(ROOT, "adjudication", "round*_verdicts.yaml")))
+    rounds = sorted(glob.glob(os.path.join(ARCHIVE_ROOT, "adjudication", "round*_verdicts.yaml")))
     if not rounds:
         return None
     latest = rounds[-1]
     n = os.path.basename(latest).split("_")[0]        # e.g. "round2"
     out["round"] = n
     vpath = latest
-    lpath = os.path.join(ROOT, "adjudication", f"{n}_label_map.json")
-    spath = os.path.join(ROOT, "adjudication", f"{n}_surfaced_cases.yaml")
-    bpath = os.path.join(ROOT, "adjudication", f"{n}_breaks_cases.yaml")
+    lpath = os.path.join(ARCHIVE_ROOT, "adjudication", f"{n}_label_map.json")
+    spath = os.path.join(ARCHIVE_ROOT, "adjudication", f"{n}_surfaced_cases.yaml")
+    bpath = os.path.join(ARCHIVE_ROOT, "adjudication", f"{n}_breaks_cases.yaml")
     if not all(os.path.exists(p) for p in (vpath, lpath, spath, bpath)):
         return None
     v = yaml.safe_load(open(vpath))
@@ -584,7 +585,7 @@ def rnd(x):
 # ---------------------------------------------------------------- gates
 
 def gate_negative_control():
-    path = os.path.join(ROOT, "benchmarks", "negative")
+    path = os.path.join(ARCHIVE_ROOT, "benchmarks", "negative")
     if not os.path.isdir(path):
         return None, "benchmarks/negative/ missing — anti-vacuity gate cannot be evaluated"
     files = [f for f in os.listdir(path) if not f.startswith(".")]

@@ -105,7 +105,6 @@ loopspec expand agent.loop.yaml
 ## Evidence status
 
 These v1.2 constructs are experimental. They distinguish the intended graph types and validate
-mechanically, but an eight-cycle independent-encoding study did not meet its 0.80 convergence
-threshold. Use them to make disagreements inspectable; do not cite the current vocabulary as a
-settled standard. The study ledger is preserved in
-`autoresearch/control-plane-260804-2251/`.
+mechanically, but the vocabulary is still being tested across systems and independent authors.
+Use it to make design assumptions inspectable; do not cite it as a settled standard. Detailed
+protocols and results are kept in the [`research archive`](../research/README.md).

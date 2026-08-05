@@ -1,26 +1,19 @@
 #!/usr/bin/env python3
 """
-LoopSpec Semantic Validator — the Phase 5 deliverable.
+LoopSpec semantic validator.
 
-    python3 tools/validate.py                  # validate everything
-    python3 tools/validate.py <file.yaml>...    # validate specific encodings
+    python3 tools/validate.py <file.yaml>...    # validate canonical graph encodings
     python3 tools/validate.py --json
 
-Exists because JSON Schema cannot express what actually matters here: loop closure,
+JSON Schema cannot express what matters here: loop closure,
 referential integrity, temporal consistency, or the rule that an estimator may not depend
 on its own output without an intervening Delay. Those are graph-level properties.
-
-It also exists because the same structural YAML error was made three times during round 1
-(list items followed by a mapping key at the same indent) and was silent until parse, plus
-one reserved-word key (`on:`, which YAML 1.1 reads as boolean True). Both are exactly the
-class of defect a validator catches instantly and a document does not.
 
 ERRORS block; WARNINGS do not.
 """
 
 import sys
 import os
-import glob
 import json
 import re
 
@@ -516,9 +509,18 @@ def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     as_json = "--json" in sys.argv
 
+    if not args:
+        message = ("no canonical graph files supplied; use `loopspec check <spec.loop.yaml>` "
+                   "for the authoring workflow")
+        if as_json:
+            print(json.dumps({"checked": 0, "errors": [message], "warnings": [], "ok": False},
+                             indent=2))
+        else:
+            print(message, file=sys.stderr)
+        return 2
+
     _, core, allp, _fields = load_catalog()
-    paths = args or sorted(glob.glob(os.path.join(ROOT, "benchmarks", "**", "*.yaml"),
-                                     recursive=True))
+    paths = args
     rep = Report()
     checked = 0
     for p in paths:

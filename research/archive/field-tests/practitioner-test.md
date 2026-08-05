@@ -1,5 +1,10 @@
 # Practitioner Test
 
+> [!NOTE]
+> **Historical field instrument.** This predates the current preregistered external-author
+> protocol and records no accepted outcome for LoopSpec. See
+> the current [`external-validation preregistration`](../../external_validation/PREREGISTRATION.md).
+
 **Purpose:** the only thing currently capping this project is whether the representation tells
 a real operator something they did not already know. A model can catch restatement — and does,
 reproducibly — but it cannot judge news. This is the instrument for that.

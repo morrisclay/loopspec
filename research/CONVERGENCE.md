@@ -1,12 +1,14 @@
 # Convergence plan — a cybernetic loop language and design tool
 
-**Status (2026-08-04):** active convergence record, not a normative language document.
+**Status (2026-08-05):** active convergence record, not a normative language document. The
+stable compatibility baseline is authoring v1.1. Authoring v1.2 and canonical IR v2.2 are an
+experimental control-plane candidate whose independent convergence gate has not passed.
 
 Verified milestones:
 
 - the authoring → IR → semantic validation → analysis path is fail-closed;
-- IR v2.1 has order-independent loop membership, typed policy-input and world-path edges,
-  and observer-relative boundaries;
+- IR v2.2 has order-independent loop membership, typed policy-input and world-path edges,
+  observer-relative boundaries, and experimental typed operations, outputs, and action profiles;
 - authoring aliases, types, references, slugs, and shared meanings fail on ambiguity;
 - partial designs remain valid IR and receive `incomplete_loop` findings;
 - belief calibration can declare outcome, scoring rule, window, and revision target;
@@ -28,13 +30,15 @@ Verified milestones:
 - the real-loop gate covers 25 encodings and 7 exact upstream revisions; a blinded SWE-agent /
   Browser Use replication rejects defect-rate claims from raw finding counts while reproducing
   controller-operation, conditional-authority, and deployment-binding language pressure.
+- an eight-cycle control-plane study preserved raw and normalized independent encodings; its
+  fresh replication scored 0.467 micro-F1 against the frozen 0.80 threshold, so the candidate
+  was retained for research but not promoted as a converged field vocabulary.
 
-Still open: controller operations and terminal outputs distinct from world interventions,
-conditional and loop-level authority, deployment-bound action profiles, quantitative
-process/environment dynamics, full-cycle signed influence,
-disturbance/response semantics, revision of observer distinctions, external-author usefulness,
-and prospective outcome evidence. Those gates limit the release claim even though the local
-structural system is now coherent.
+Still open: independent convergence on the experimental control-plane vocabulary, loop-level
+authority beyond the current typed declarations, quantitative process/environment dynamics,
+full-cycle signed influence, disturbance/response semantics, revision of observer distinctions,
+external-author usefulness, and prospective outcome evidence. Those gates limit the release
+claim even though the local structural system is coherent.
 
 This project is converging on a useful and defensible thing:
 

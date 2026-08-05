@@ -1,5 +1,12 @@
 # Status
 
+> [!CAUTION]
+> **Historical URAS research snapshot.** This scorecard predates the LoopSpec rename, the
+> agent-loop scope, and the current authoring v1.2 / IR v2.2 candidate. It is preserved as
+> experimental provenance, not as the current project status. Start with the product
+> [`README`](../../../README.md), current [`SYNTHESIS`](../../SYNTHESIS.md), and
+> [`research index`](../../README.md).
+
 ```
 SCORE                     0.534     first non-zero score
 binding term              U_usefulness = 0.129

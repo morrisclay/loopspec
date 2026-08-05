@@ -654,7 +654,7 @@ retired:
     Its two jobs are already covered: identity by Signal, and protection against double-counting
     by Estimator.idempotency_basis (required, per the at-least-once finding in research/flue_notes.md).
 
-    CAVEAT ON WHO DECIDED THIS: ontology/score.md lists "whether a merge lost something" as something
+    CAVEAT ON WHO DECIDED THIS: the archived URAS score contract lists "whether a merge lost something" as something
     the score cannot see, and I am the party judging that the channel/datum distinction is not load-bearing
     at specification time. The mechanical evidence is strong (7 declared, 0 instantiated) but the
     judgement is mine. Reversible in one commit if an encoding ever needs it.
@@ -723,4 +723,4 @@ honest_notes:
     omitted rather than carried forward on authority. Expect scientific_community to demand it.
 
     '
-scope: agent control loops — see FORK.md
+scope: agent control loops — see research/archive/uras/FORK.md

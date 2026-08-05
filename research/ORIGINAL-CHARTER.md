@@ -2,8 +2,9 @@
 
 This is the original universal-adaptive-systems charter, moved intact from the primary README
 when authoring v1.1 / IR v2.1 converged on the narrower agent-loop scope. It is retained as a
-research artifact, not as the current product claim. See [`../FORK.md`](../FORK.md) for the
-scope decision and [`../CONVERGENCE.md`](../CONVERGENCE.md) for the release path.
+research artifact, not as the current product claim. See
+[`archive/uras/FORK.md`](archive/uras/FORK.md) for the scope decision and
+[`CONVERGENCE.md`](CONVERGENCE.md) for the current evidence path.
 
 ---
 

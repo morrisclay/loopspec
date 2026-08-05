@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 """
-Derive claims from a canonical LoopSpec encoding by QUERY, not by assertion.
+Derive structural findings from a canonical LoopSpec encoding.
 
-    python3 tools/derive.py benchmarks/encodings/canonical/*.yaml
+    python3 tools/derive.py research/archive/uras/benchmarks/encodings/canonical/*.yaml
 
-Motivation: 11 of 11 hand-asserted `surfaced` claims were rejected under blind
-adjudication — 8 restatement, 3 unsupported. The adjudicator's diagnosis was that the
-encodings "mistake typed paraphrase for explanatory structure."
-
-The test this tool exists to run: can a claim FALL OUT of the graph rather than be written
-into a field? A derived claim has a property no asserted claim had — it is a computed
-consequence of the encoding, so if it is true of the encoding it is true, and if the
-encoding is wrong the claim is wrong for a locatable reason.
+Findings must follow mechanically from the encoded graph rather than being written into an
+assertion field. If the encoding is wrong, the resulting finding is wrong for a locatable
+reason.
 
 Each query returns claims only when the structural pattern actually holds. Queries that
 find nothing print nothing. No query is allowed to restate a single node; every one must

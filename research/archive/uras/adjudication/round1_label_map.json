@@ -2,21 +2,21 @@
   "hospital-A": {
     "system": "hospital",
     "encoded_by": "gpt-5-codex",
-    "path": "benchmarks/encodings/hospital__gpt5codex.yaml"
+    "path": "research/archive/uras/benchmarks/encodings/hospital__gpt5codex.yaml"
   },
   "hospital-B": {
     "system": "hospital",
     "encoded_by": "claude-opus-5",
-    "path": "benchmarks/encodings/hospital__claude.yaml"
+    "path": "research/archive/uras/benchmarks/encodings/hospital__claude.yaml"
   },
   "thermostat-A": {
     "system": "thermostat",
     "encoded_by": "claude-opus-5",
-    "path": "benchmarks/encodings/thermostat__claude.yaml"
+    "path": "research/archive/uras/benchmarks/encodings/thermostat__claude.yaml"
   },
   "thermostat-B": {
     "system": "thermostat",
     "encoded_by": "gpt-5-codex",
-    "path": "benchmarks/encodings/thermostat__gpt5codex.yaml"
+    "path": "research/archive/uras/benchmarks/encodings/thermostat__gpt5codex.yaml"
   }
 }

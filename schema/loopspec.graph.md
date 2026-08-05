@@ -209,6 +209,6 @@ expansions emit the richer fields and receive explicit findings when they are ab
 
 IR revision 2.2 adds optional `ActionProfile`, `ControlOperation`, and `Output` nodes plus
 `profiles` and `emits` edges. Existing v1.1 authoring documents and earlier v2 graphs remain
-readable. The additions are experimental: an eight-cycle independent-encoding study did not meet
-its preregistered convergence threshold, so these types are implemented and testable but not yet
-claimed as a settled cross-encoder vocabulary.
+readable. The additions are experimental and still being tested across systems and independent
+authors; they are implemented and testable but not yet claimed as a settled cross-encoder
+vocabulary. Protocols and results live under `research/`.

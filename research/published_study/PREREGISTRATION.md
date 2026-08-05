@@ -8,7 +8,7 @@ failure was the useful part. Predictions written after seeing data are not predi
 
 ## The claim under test
 
-`THESIS.md` §2: *"people are not good at loop engineering… this is not a carefulness problem,
+`research/archive/THESIS.md` §2: *"people are not good at loop engineering… this is not a carefulness problem,
 it is a vocabulary problem. You do not check for a defect you have no word for."*
 
 Evidence so far is four loops, all hand-picked by me, three of them from one codebase. That

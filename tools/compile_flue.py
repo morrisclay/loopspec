@@ -4,7 +4,7 @@ Compile a canonical loop encoding to Flue TypeScript.
 
     python3 tools/compile_flue.py <encoding.yaml> [--out DIR]
 
-Mapping, from compiler/primitive_mapping.md, which was written against the real Flue
+Mapping, from research/archive/uras/compiler/primitive_mapping.md, which was written against the real Flue
 documentation (97 pages via `npx flue docs`) rather than the marketing page:
 
     Loop          -> Agent      defineAgent — continuing, stateful, identity-bearing

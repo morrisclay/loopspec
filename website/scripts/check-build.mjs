@@ -48,8 +48,10 @@ for (const [route, page] of pagesByRoute) {
 			}
 			continue;
 		}
-		if (!href.startsWith('/') || href.startsWith('//')) continue;
-		const [targetPath, targetHash] = href.split('#');
+		if (href.startsWith('//') || /^[a-z][a-z0-9+.-]*:/i.test(href)) continue;
+		const resolved = new URL(href, `https://loopspec.invalid${route}`);
+		const targetPath = resolved.pathname;
+		const targetHash = resolved.hash.slice(1);
 		if (targetPath.includes('.')) {
 			if (!filePaths.has(targetPath)) broken.push(`${route} -> ${href}`);
 			continue;

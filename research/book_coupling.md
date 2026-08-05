@@ -13,7 +13,7 @@ failure mode that must be guarded against explicitly.
 
 The obvious objection to putting URAS notation in a book is that publication removes the
 project's ability to fail: readers depend on the notation, and the kill criteria in
-`PROJECT_HANDOFF.md` become unexecutable because retreat has been made expensive.
+`research/archive/uras/PROJECT_HANDOFF.md` become unexecutable because retreat has been made expensive.
 
 Gating the book on convergence removes that objection by inverting the dependency. **URAS's
 kill criteria become the book's kill criteria.** If the Phase 1 residue collapses, if the 2–4
@@ -24,12 +24,12 @@ to die; the manuscript simply does not ship.
 ## The failure mode this creates, and the rule against it
 
 A book creates schedule pressure, and schedule pressure will push toward **declaring
-convergence early**. That is the same class of error `ontology/score.md` already guards
+convergence early**. That is the same class of error the archived URAS score contract already guards
 against with *"no term may be edited in the same commit as the ontology it scores."*
 
 **Rule, adopted now while it is cheap:**
 
-> The convergence declaration is made against the criteria in `PROJECT_HANDOFF.md` alone —
+> The convergence declaration is made against the criteria in `research/archive/uras/PROJECT_HANDOFF.md` alone —
 > three consecutive adversarial benchmarks with no new primitive required and no unresolved
 > contradiction — and no book milestone, deadline or draft may be cited in the commit that
 > declares it. If the two are ever argued together in one place, the declaration is void.
@@ -45,7 +45,7 @@ It is not one-directional. The book is a genuine test of a success criterion tha
 
 Founders and operators reading encodings of their own companies is a **real usability trial
 against a non-expert population**. If they cannot read it, `C` is failing in a way the
-formula cannot currently detect. That is a better instrument than anything in `tools/score.py`
+formula cannot currently detect. That is a better instrument than the archived URAS score tool
 today, and it arrives free.
 
 ---

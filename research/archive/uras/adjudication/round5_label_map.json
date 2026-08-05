@@ -1,0 +1,22 @@
+{
+  "venture_acme": {
+    "system": "venture_acme",
+    "encoded_by": "claude-opus-5",
+    "path": "research/archive/uras/benchmarks/encodings/canonical/venture_acme__claude.yaml"
+  },
+  "hospital": {
+    "system": "hospital",
+    "encoded_by": "claude-opus-5",
+    "path": "research/archive/uras/benchmarks/encodings/canonical/hospital__claude.yaml"
+  },
+  "portfolio_company": {
+    "system": "portfolio_company",
+    "encoded_by": "claude-opus-5",
+    "path": "research/archive/uras/benchmarks/encodings/canonical/portfolio_company__claude.yaml"
+  },
+  "hop_aero": {
+    "system": "hop_aero",
+    "encoded_by": "claude-opus-5",
+    "path": "research/archive/uras/benchmarks/encodings/canonical/hop_aero__claude.yaml"
+  }
+}

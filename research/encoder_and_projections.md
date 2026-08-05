@@ -11,7 +11,7 @@ instrument for the project's most important success criterion.**
 
 ## 1. Diagrams are already the architecture, not an add-on
 
-`PROJECT_HANDOFF.md` states it: *"The IR is the canonical truth. Everything else is a
+`research/archive/uras/PROJECT_HANDOFF.md` states it: *"The IR is the canonical truth. Everything else is a
 projection."* Diagram, DSL, JSON and YAML are four renderings of one typed graph, and Phase 6
 is the visual grammar. Nothing new is required for this to be true — it is what the design
 already commits to.
@@ -35,14 +35,14 @@ wrong, it probably should not be an invariant.
 
 ## 2. The LLM encoder is the instrument for `D`
 
-`ontology/score.md` is unambiguous about which term matters:
+The archived URAS score contract is unambiguous about which term matters:
 
 > **D — Determinacy (inter-encoder agreement). The most important term.** If the ontology is
 > determinate, independent encoders converge. If it is merely suggestive, they diverge — and
 > no amount of documentation fixes that, because divergence means the primitives do not have
 > single meanings.
 
-And `PROJECT_HANDOFF.md` calls inter-encoder agreement *"the only proposed measure that tests
+And `research/archive/uras/PROJECT_HANDOFF.md` calls inter-encoder agreement *"the only proposed measure that tests
 whether the representation means anything."*
 
 That term currently has no practical instrument. It requires two independent encoders given

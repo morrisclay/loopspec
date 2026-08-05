@@ -16,10 +16,9 @@ emit `loopspec_version`; readers accept the legacy `uras_version` marker through
 `source_format: loop-v1.2` and `ir_revision: "2.2"` are emitted mechanically. Authors do not
 write either field.
 
-The v1.2 implementation is internally verified but not yet a converged field claim. Its bounded
-control-plane study stopped at the preregistered ceiling after a fresh independent replication
-scored 0.467 micro-F1 against a 0.80 threshold. The complete negative-result ledger is retained
-under `autoresearch/control-plane-260804-2251/`.
+The v1.2 implementation is internally verified but remains experimental while its vocabulary is
+tested across systems and independent authors. Detailed protocols and results are kept in the
+[`research archive`](research/README.md).
 
 ## Reading older artifacts
 

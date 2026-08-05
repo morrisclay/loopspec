@@ -1,0 +1,12 @@
+{
+  "hospital": {
+    "system": "hospital",
+    "encoded_by": "claude-opus-5",
+    "path": "research/archive/uras/benchmarks/encodings/canonical/hospital__claude.yaml"
+  },
+  "thermostat": {
+    "system": "thermostat",
+    "encoded_by": "claude-opus-5",
+    "path": "research/archive/uras/benchmarks/encodings/canonical/thermostat__claude.yaml"
+  }
+}

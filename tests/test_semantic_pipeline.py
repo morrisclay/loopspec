@@ -1236,7 +1236,8 @@ class SemanticPipelineTests(unittest.TestCase):
 
     def test_legacy_held_out_ir_remains_readable_without_v2_invention(self):
         paths = sorted(glob.glob(os.path.join(
-            ROOT, "benchmarks", "encodings", "held_out", "*.yaml"
+            ROOT, "research", "archive", "uras", "benchmarks", "encodings", "held_out",
+            "*.yaml"
         )))
         self.assertEqual(8, len(paths))
 

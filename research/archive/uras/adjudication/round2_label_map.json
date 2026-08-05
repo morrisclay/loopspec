@@ -2,61 +2,61 @@
   "hop_aero-A": {
     "system": "hop_aero",
     "encoded_by": "gpt-5-codex",
-    "path": "benchmarks/encodings/hop_aero__gpt5codex.yaml"
+    "path": "research/archive/uras/benchmarks/encodings/hop_aero__gpt5codex.yaml"
   },
   "hospital-A": {
     "system": "hospital",
     "encoded_by": "gemini-2.5-pro",
-    "path": "benchmarks/encodings/hospital__gemini-2.5-pro.yaml"
+    "path": "research/archive/uras/benchmarks/encodings/hospital__gemini-2.5-pro.yaml"
   },
   "hospital-B": {
     "system": "hospital",
     "encoded_by": "claude-opus-5",
-    "path": "benchmarks/encodings/hospital__claude.yaml"
+    "path": "research/archive/uras/benchmarks/encodings/hospital__claude.yaml"
   },
   "hospital-C": {
     "system": "hospital",
     "encoded_by": "gpt-5-codex",
-    "path": "benchmarks/encodings/hospital__gpt5codex.yaml"
+    "path": "research/archive/uras/benchmarks/encodings/hospital__gpt5codex.yaml"
   },
   "hospital-D": {
     "system": "hospital",
     "encoded_by": "deepseek-v3.2",
-    "path": "benchmarks/encodings/hospital__deepseek-v3.2.yaml"
+    "path": "research/archive/uras/benchmarks/encodings/hospital__deepseek-v3.2.yaml"
   },
   "hospital-E": {
     "system": "hospital",
     "encoded_by": "kimi-k2-thinking",
-    "path": "benchmarks/encodings/hospital__kimi-k2-thinking.yaml"
+    "path": "research/archive/uras/benchmarks/encodings/hospital__kimi-k2-thinking.yaml"
   },
   "thermostat-A": {
     "system": "thermostat",
     "encoded_by": "deepseek-v3.2",
-    "path": "benchmarks/encodings/thermostat__deepseek-v3.2.yaml"
+    "path": "research/archive/uras/benchmarks/encodings/thermostat__deepseek-v3.2.yaml"
   },
   "thermostat-B": {
     "system": "thermostat",
     "encoded_by": "kimi-k2-thinking",
-    "path": "benchmarks/encodings/thermostat__kimi-k2-thinking.yaml"
+    "path": "research/archive/uras/benchmarks/encodings/thermostat__kimi-k2-thinking.yaml"
   },
   "thermostat-C": {
     "system": "thermostat",
     "encoded_by": "gemini-2.5-pro",
-    "path": "benchmarks/encodings/thermostat__gemini-2.5-pro.yaml"
+    "path": "research/archive/uras/benchmarks/encodings/thermostat__gemini-2.5-pro.yaml"
   },
   "thermostat-D": {
     "system": "thermostat",
     "encoded_by": "gpt-5-codex",
-    "path": "benchmarks/encodings/thermostat__gpt5codex.yaml"
+    "path": "research/archive/uras/benchmarks/encodings/thermostat__gpt5codex.yaml"
   },
   "thermostat-E": {
     "system": "thermostat",
     "encoded_by": "claude-opus-5",
-    "path": "benchmarks/encodings/thermostat__claude.yaml"
+    "path": "research/archive/uras/benchmarks/encodings/thermostat__claude.yaml"
   },
   "toyota-A": {
     "system": "toyota",
     "encoded_by": "gpt-5-codex",
-    "path": "benchmarks/encodings/toyota__gpt5codex.yaml"
+    "path": "research/archive/uras/benchmarks/encodings/toyota__gpt5codex.yaml"
   }
 }

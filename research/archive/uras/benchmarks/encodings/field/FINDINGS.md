@@ -66,7 +66,7 @@ cannot verify the four candidates without the person who wrote the specs.
 
 ## Against the fork's stated risk
 
-`FORK.md` said the fork rested on one human-validated data point and that the correct next move
+`research/archive/uras/FORK.md` said the fork rested on one human-validated data point and that the correct next move
 was three more loops from other authors, held lightly until they landed.
 
 They have now been run. **The result is equivocal**: one clearly real finding of the type that
