@@ -1,0 +1,13 @@
+{
+  "case": "codex_turn",
+  "study_role": "control_plane_holdout",
+  "encoder": "Anthropic Claude CLI",
+  "model_alias": "sonnet",
+  "tool_access": "disabled",
+  "session_persistence": "disabled",
+  "generated_at": "2026-08-04T21:54:47.893305+00:00",
+  "source_repository": "https://github.com/openai/codex",
+  "source_revision": "2a16af823456712e3dbb030ecf29fb727c2cde66",
+  "prompt_sha256": "f75acfdfbee8f70f07896f47f77e565ccb7ca318a653ffc3071e26d70333649a",
+  "output_sha256": "1f3cb2b3be1fe01bd09d683de13b3a337a6af6761d8d96606b04dfd208609565"
+}

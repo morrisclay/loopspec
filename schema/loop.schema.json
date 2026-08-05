@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/morrisclay/loopspec/schema/loop.schema.json",
-  "title": "LoopSpec loop format v1.1",
+  "title": "LoopSpec loop format v1.2",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -14,7 +14,7 @@
     },
     "runs": {
       "type": "string",
-      "description": "How often the loop runs \u2014 `weekly`, `every 6 hours`, `per_question`. Free text, since cadence is domain-specific; the linter checks that one exists, not its units."
+      "description": "How often the loop runs \u2014 `weekly`, `every 6 hours`, `per_question`. Free text, since cadence is domain-specific; the linter checks that one exists, not its units. This is also the execution boundary used by `outputs.*.terminates`: if a public API returns after one step and expects a later call to continue, write `per_step` and model that return as a non-terminal output plus `pause`; if one API call internally drives all steps, write `per_run_invocation`. A terminal output at this represented boundary uses `terminates: run` even when the domain calls that invocation a turn. Do not mix both altitudes in one document."
     },
     "boundary": {
       "$ref": "#/$defs/boundary_entry",
@@ -46,7 +46,28 @@
       "additionalProperties": {
         "$ref": "#/$defs/actions_entry"
       },
-      "description": "The levers it may pull."
+      "description": "The levers it may pull on the represented world or controlled process. Classify by semantic effect, not implementation dispatch: a `final_answer`, `done`, `complete`, or `terminate` sentinel whose only effect is ending controller execution is a `stop` operation even when the runtime routes it through tool or action code. A sentinel that also changes an outside domain process may be both, but those effects must be represented separately."
+    },
+    "action_profiles": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/action_profiles_entry"
+      },
+      "description": "Conditional, late-bound variants of generic actions. A runtime-level action such as `execute_tool` may have different reversibility and approval properties for different deployments or concrete requests. Profiles preserve that variation without pretending the whole action family is safe or always gated. Make one profile per distinct (binding stage, reversibility, approver) tuple and include one explicit default. Conditions with the same typed properties are one profile with a disjunctive selector, not several named cases. Do not create a lone default profile: put those non-varying properties on the action. Across several profiles, reversibility or approver must actually vary; binding stage alone is not a safety distinction. Do not profile controller-only sentinels; they are operations."
+    },
+    "operations": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/operations_entry"
+      },
+      "description": "Changes to execution of the controller itself \u2014 pause, resume, interrupt, retry, compact, hand off, or stop. These are not interventions on the controlled process and therefore do not inherit world-action reversibility or effect-path checks. Merge branches into one operation when kind, authority, and emitted outputs are the same; write their trigger as a disjunction. Split them only when one of those typed consequences differs. The language enforces one operation per `(kind, authorized_by, emitted output-role set)` tuple."
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/outputs_entry"
+      },
+      "description": "Values emitted out of the represented loop boundary, including final responses, submissions, approval requests, status records, and failures. An output says what leaves; `terminates:` says whether it closes a turn, a run, or neither. Model returned values and operation-relevant emissions, not every log line or persisted trace; termination is always relative to the boundary and cadence declared by this spec. Output identity is its typed role, not a branch label: declare at most one output for each `(kind, terminates)` pair and describe all producing branches together. Publicly yielded stream events are `status` with `terminates: none`; internal logs and persisted traces are not outputs."
     },
     "processes": {
       "type": "object",
@@ -71,7 +92,7 @@
     },
     "asks_human": {
       "type": "string",
-      "description": "The person who receives the escalation described by `asks_human_when`. Must name an entry in `people`. Conditions without a recipient remain accepted as a partial design and produce `escalation_target_unspecified`."
+      "description": "The person who receives the escalation described by `asks_human_when`. Must name an entry in `people`. Conditions without a recipient remain accepted as a partial design and produce `escalation_target_unspecified`. Local references may be bare (`operator`) or section-qualified (`people.operator`); normalization removes only a valid, known prefix before strict reference checking."
     },
     "people": {
       "type": "object",
@@ -114,7 +135,7 @@
     },
     "every": {
       "type": "string",
-      "description": "How often the loop runs \u2014 `weekly`, `every 6 hours`, `per_question`. Free text, since cadence is domain-specific; the linter checks that one exists, not its units."
+      "description": "How often the loop runs \u2014 `weekly`, `every 6 hours`, `per_question`. Free text, since cadence is domain-specific; the linter checks that one exists, not its units. This is also the execution boundary used by `outputs.*.terminates`: if a public API returns after one step and expects a later call to continue, write `per_step` and model that return as a non-terminal output plus `pause`; if one API call internally drives all steps, write `per_run_invocation`. A terminal output at this represented boundary uses `terminates: run` even when the domain calls that invocation a turn. Do not mix both altitudes in one document."
     },
     "regulates": {
       "type": "object",
@@ -135,7 +156,7 @@
       "additionalProperties": {
         "$ref": "#/$defs/actions_entry"
       },
-      "description": "The levers it may pull."
+      "description": "The levers it may pull on the represented world or controlled process. Classify by semantic effect, not implementation dispatch: a `final_answer`, `done`, `complete`, or `terminate` sentinel whose only effect is ending controller execution is a `stop` operation even when the runtime routes it through tool or action code. A sentinel that also changes an outside domain process may be both, but those effects must be represented separately."
     },
     "parties": {
       "type": "object",
@@ -375,9 +396,10 @@
           "enum": [
             "yes",
             "costly",
-            "no"
+            "no",
+            "unknown"
           ],
-          "description": "THE LOAD-BEARING FIELD, phrased as the question anyone would actually ask. Approval demanded everywhere gets ignored; approval demanded where the answer is `no` is a rule people follow. `costly` means undoable at real expense. NOTE: YAML 1.1 reads bare yes/no as booleans, so `can_undo: no` arrives as False. That is accepted and normalised rather than rejected \u2014 the natural phrasing must not be a trap. It is the one place this format tolerates YAML's ambiguity, because the blind test showed people write exactly this."
+          "description": "THE LOAD-BEARING FIELD, phrased as the question anyone would actually ask. Approval demanded everywhere gets ignored; approval demanded where the answer is `no` is a rule people follow. `costly` means undoable at real expense. `unknown` states that the design has not bound reversibility; it never counts as safe. NOTE: YAML 1.1 reads bare yes/no as booleans, so `can_undo: no` arrives as False. That is accepted and normalised rather than rejected \u2014 the natural phrasing must not be a trap. It is the one place this format tolerates YAML's ambiguity, because the blind test showed people write exactly this."
         },
         "needs_approval": {
           "type": "string",
@@ -425,6 +447,127 @@
           "description": "Per-quantity effect directions when one action moves several quantities in different directions. Keys must exactly name quantities in `moves`. Use either `effect:` for one shared direction or `effects:`, never both."
         }
       }
+    },
+    "action_profiles_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "type": "string",
+          "description": "The generic entry in `actions` whose request or deployment variant this describes."
+        },
+        "when": {
+          "type": "string",
+          "description": "The condition selecting this profile. Use `default: true` instead for the fallback profile; exactly one of `when:` and `default: true` is required."
+        },
+        "default": {
+          "type": "boolean",
+          "description": "This profile covers requests not matched by another profile. At most one default is allowed per action. A default with `can_undo: unknown` is how a generic runtime remains honestly unbound rather than silently safe."
+        },
+        "resolved_at": {
+          "enum": [
+            "design",
+            "deployment",
+            "request"
+          ],
+          "description": "The stage at which this profile becomes known. `deployment` distinguishes an available runtime capability from configured policy; `request` says concrete arguments determine it."
+        },
+        "can_undo": {
+          "enum": [
+            "yes",
+            "costly",
+            "no",
+            "unknown"
+          ],
+          "description": "Reversibility for this profile only. `unknown` is explicit and does not count as safe."
+        },
+        "needs_approval": {
+          "type": "string",
+          "description": "The person who must approve requests matching this profile. Because the profile has a selector, this gate is conditional rather than a claim about every instance of the action."
+        },
+        "description": {
+          "type": "string",
+          "description": "What source or deployment fact this profile represents."
+        }
+      },
+      "required": [
+        "action",
+        "resolved_at",
+        "can_undo"
+      ]
+    },
+    "operations_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "start",
+            "pause",
+            "resume",
+            "interrupt",
+            "retry",
+            "compact",
+            "handoff",
+            "stop"
+          ],
+          "description": "The controller transition. `pause` is a resumable suspension exposed across the public invocation boundary; awaiting approval inside one still-running call is an action gate, not a pause/resume pair. `interrupt` cancels an active step asynchronously; a stop flag polled between steps is `stop`. Ordinary invocation is implicit, so use `start` only for a distinct out-of-band start transition. `retry` repeats the same stage; `handoff` changes the active controller; `stop` ends the declared turn or run. None acts on the controlled process."
+        },
+        "when": {
+          "type": "string",
+          "description": "The condition under which this controller operation occurs."
+        },
+        "authorized_by": {
+          "type": "string",
+          "description": "The external person or agent granted authority to invoke this operation. Must name an entry in `people`. Omit it when the controller merely executes its own branch; execution is not authorization. A generic API caller is not evidence of a human: use `kind: system` when the source identifies a calling component, and omit authority when it identifies neither. For asynchronous cancellation requested through an external flag, use `kind: interrupt` and name the party only when the source establishes who may set that flag."
+        },
+        "emits": {
+          "type": [
+            "string",
+            "array"
+          ],
+          "description": "Output or outputs produced when this operation occurs. Must name entries in `outputs`."
+        },
+        "description": {
+          "type": "string",
+          "description": "What the operation changes in controller execution."
+        }
+      },
+      "required": [
+        "kind"
+      ]
+    },
+    "outputs_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "final",
+            "submission",
+            "approval_request",
+            "status",
+            "failure"
+          ],
+          "description": "The outward role of this emitted value. `final` is the successful deliverable; `failure` is an error result or exception; `status` is lifecycle/progress information; `approval_request` asks an external authority to decide; `submission` hands work to an external evaluator. Only model separately consumable interface values. Logs, internal callbacks, and fields nested inside a final result are not additional outputs unless the represented public contract exposes them independently."
+        },
+        "terminates": {
+          "enum": [
+            "none",
+            "turn",
+            "run"
+          ],
+          "description": "The execution scope closed by this output. `run` always closes the represented invocation, even when that invocation is named a user turn. `turn` is reserved for an internal model/provider turn inside a longer represented run. `none` is outward but non-terminal."
+        },
+        "description": {
+          "type": "string",
+          "description": "What leaves the loop boundary."
+        }
+      },
+      "required": [
+        "kind",
+        "terminates"
+      ]
     },
     "processes_entry": {
       "type": "object",
@@ -506,7 +649,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Goal quantities whose declared `keep:` conditions this rule compares its inputs against. Each name must be a goal with a target and, when `reads:` is explicit, must also appear there. This is the semantic comparator; `if:` remains the human-readable expression."
+          "description": "Goal quantities whose declared `keep:` conditions this rule compares its inputs against. Each name must be a goal with a target. Naming it here implies that the rule reads that quantity; normalization adds it to an explicit `reads:` list when needed. This is the semantic comparator; `if:` remains the human-readable expression."
         },
         "do": {
           "type": [

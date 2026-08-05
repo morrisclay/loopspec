@@ -5,12 +5,13 @@ description: The verified local properties, empirical evidence, open gates, and 
 
 import { Aside } from '@astrojs/starlight/components';
 
-LoopSpec v1.1 and canonical IR v2.1 are a locally verified structural release candidate. That is a
-real result and a bounded one.
+LoopSpec v1.1 remains readable and locally verified. The current v1.2 / IR v2.2 producer adds an
+experimental control plane, but its bounded independent-encoding study stopped below the
+preregistered convergence threshold. That negative result is retained rather than promoted away.
 
 ## Verified locally
 
-- every one of the 79 accepted authoring fields has a documented semantic effect;
+- every one of the 97 accepted authoring fields has a documented semantic effect;
 - source input flows through fail-closed authoring validation, expansion, IR validation, and
   analysis;
 - all nine shipped product fixtures have pinned normalized semantic and finding-set hashes;

@@ -1,0 +1,165 @@
+# packages/notte-agent/src/notte_agent/agent.py:49-121, 123-269, 359-414
+# packages/notte-agent/src/notte_agent/common/base.py:1-20
+loop: notte_agent
+# base.py:16-20 — arun() is the abstract entrypoint; run() is a sync asyncio.run(arun()) wrapper.
+# agent.py:390-414 — _run() internally drives the whole step loop from one arun() call.
+runs: per_run_invocation
+
+boundary:
+  drawn_by: developer
+  purpose: >
+    Separate the agent's own step/decision loop (reasoning LLM call, dispatch,
+    trajectory recording, credential vaulting, completion validation) from the
+    browser session it drives, the reasoning LLM API it calls, and the human
+    who requested the task.
+  inside:
+    - step dispatch (agent.py:144-265)
+    - trajectory recording (agent.py:139, 396, 404-407)
+    - credential vaulting (agent.py:80-109)
+    - completion validation (agent.py:207-247)
+  outside:
+    - browser session / world (agent.py:93, 251, 397)
+    - reasoning LLM API (agent.py:131-135)
+    - requesting human (agent.py:111, 362)
+
+goal:
+  task_completion:
+    # agent.py:193-247, 400-414
+    keep: "task resolved with a validator-confirmed successful answer, within max_steps and max_consecutive_failures budgets"
+    from: [session_observation, action_result, validation_result]
+
+beliefs:
+  task_success:
+    # agent.py:207-218 — CompletionValidator judges the agent's claimed success
+    question: "Does the agent's claimed CompletionAction(success=True) answer actually satisfy the task?"
+    how: "LLM-as-judge validation (CompletionValidator.validate) over trajectory, task, and response_format"
+    explains: task_completion
+    settled_by: validation_result
+
+observes:
+  session_observation:
+    # agent.py:124, 395 — self.session.aobserve(...)
+    informs: task_completion
+    origin: outside
+    how: measured
+    source: "browser session snapshot/screenshot"
+
+  action_result:
+    # agent.py:251-261 — self.session.aexecute(action, raise_on_failure=False)
+    informs: task_completion
+    origin: ourselves
+    how: measured
+    produced_by: browser_action
+
+  validation_result:
+    # agent.py:210-217 — CompletionValidator.validate(...) output
+    informs: task_success
+    origin: ourselves
+    how: calculated
+
+actions:
+  browser_action:
+    # agent.py:250-261 (step-loop dispatch), agent.py:393-398 (initial GotoAction)
+    moves: task_completion
+    through: browser_session
+    effect: increase
+
+action_profiles:
+  browser_action_default:
+    action: browser_action
+    default: true
+    resolved_at: request
+    can_undo: unknown
+    description: >
+      Generic browser interaction (click, type, submit, navigate) executed
+      via session.aexecute; reversibility depends on the concrete action and
+      target site, which is not determined until the request is issued.
+      (agent.py:248-261)
+
+  browser_action_captcha:
+    action: browser_action
+    when: "the requested action is a captcha-solving action"
+    resolved_at: deployment
+    can_undo: unknown
+    description: >
+      Only dispatched through the generic path when the session was deployed
+      with solve_captchas=True; otherwise the run stops with failure instead
+      of executing. (agent.py:177-191)
+
+operations:
+  stop_with_failure:
+    kind: stop
+    # agent.py:164-176 (HelpAction), 177-191 (captcha unsupported),
+    # agent.py:193-205 (CompletionAction success=False), 412-414 (max_steps
+    # exhausted), 256-260/374-384 (consecutive-failure/general exception,
+    # only converted to this output when config.raise_condition is NEVER;
+    # otherwise the exception propagates out of arun and no output is emitted)
+    when: >
+      the agent emits HelpAction (human-in-the-loop not implemented) or a
+      captcha action while the session is not configured to solve captchas,
+      or a CompletionAction(success=False), or trajectory.num_steps reaches
+      config.max_steps without a completion action, or consecutive
+      browser_action failures reach max_consecutive_failures, or an
+      unhandled error occurs — and, for the latter two, config.raise_condition
+      is NEVER
+    emits: failure_result
+
+  stop_on_validated_success:
+    kind: stop
+    # agent.py:207-230
+    when: "the agent emits CompletionAction(success=True) and the validator confirms success"
+    emits: final_result
+
+outputs:
+  final_result:
+    kind: final
+    terminates: run
+    description: "AgentResponse with success=True, validated answer, trajectory, llm messages, and usage (agent.py:111-121)"
+
+  failure_result:
+    kind: failure
+    terminates: run
+    description: "AgentResponse with success=False and an error/failure message (agent.py:111-121)"
+
+processes:
+  browser_session:
+    location: outside
+    observed_as: [session_observation, action_result]
+    description: "the browser session that browser_action acts on and that later observation/execution calls read back"
+
+when:
+  - if: "the LLM's completion is a regular action (not HelpAction, a blocked CaptchaSolveAction, or a CompletionAction)"
+    reads: [task_completion]
+    do: browser_action
+
+spends:
+  steps:
+    # agent.py:401, 412-414
+    limit: "config.max_steps"
+    spent_by: [browser_action]
+
+  consecutive_failures:
+    # agent.py:252-260
+    limit: "config.max_consecutive_failures"
+    spent_by: [browser_action]
+    replenished: "reset to 0 immediately after any successful browser_action execution"
+
+people:
+  user:
+    human: true
+    loses_if_wrong: "receives an incorrect, incomplete, or unresolved answer to their task"
+    sees: [task_completion]
+
+  developer:
+    human: true
+    loses_if_wrong: "agent runs unsafe/incorrect browser actions, or errors are silently swallowed vs. propagated depending on raise_condition misconfiguration"
+    sees: [task_completion]
+
+never:
+  - "never let raw vault credentials reach the LLM's messages or screenshots (agent.py:80-88)"
+
+not_modelling:
+  - "human-in-the-loop escalation for HelpAction: requested by the agent but not implemented; currently resolved as an immediate stop_with_failure, not an actual pause-and-ask (agent.py:164-176)"
+  - "trajectory start_step/stop_step bookkeeping as controller pause/resume (agent.py:394-407) — internal step-bracket logging, not a resumable suspension"
+  - "action_with_credentials vault substitution (agent.py:90-109) as a separate lever — modeled as part of browser_action's dispatch, not a distinct action"
+  - "propagation of unhandled errors out of arun() when config.raise_condition is not NEVER (agent.py:374-384) — exits the represented loop boundary without producing a modeled output"

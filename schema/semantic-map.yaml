@@ -1,5 +1,5 @@
-authoring_version: "1.1"
-ir_revision: "2.1"
+authoring_version: "1.2"
+ir_revision: "2.2"
 
 # Every canonical authoring key must appear exactly once. `tools/check_semantic_map.py` makes
 # additions fail the release gate until their end-to-end meaning is declared here.
@@ -11,6 +11,9 @@ fields:
   top_level.beliefs: {mode: container, maps_to: "Estimand, Estimator, Calibration and Explanation nodes"}
   top_level.observes: {mode: container, maps_to: "Signal nodes"}
   top_level.actions: {mode: container, maps_to: "Intervention and Delay nodes"}
+  top_level.action_profiles: {mode: container, maps_to: "ActionProfile nodes plus profiles and conditional authorizes edges"}
+  top_level.operations: {mode: container, maps_to: "ControlOperation nodes plus authorizes and emits edges"}
+  top_level.outputs: {mode: container, maps_to: "Output nodes and loop output membership"}
   top_level.processes: {mode: container, maps_to: "controlled_process System nodes"}
   top_level.when: {mode: container, maps_to: "Policy node, reads and authorizes edges"}
   top_level.asks_human_when: {mode: field, maps_to: "Loop.asks_human_when escalation conditions"}
@@ -69,6 +72,24 @@ fields:
   actions_entry.through: {mode: edge, maps_to: "Intervention ->causes-> controlled_process System"}
   actions_entry.effect: {mode: field, maps_to: "Intervention.effect_direction"}
   actions_entry.effects: {mode: field, maps_to: "total per-target Intervention.effect_directions map"}
+
+  action_profiles_entry.action: {mode: edge, maps_to: "ActionProfile ->profiles-> Intervention"}
+  action_profiles_entry.when: {mode: field, maps_to: "ActionProfile.condition"}
+  action_profiles_entry.default: {mode: field, maps_to: "ActionProfile.default fallback marker"}
+  action_profiles_entry.resolved_at: {mode: field, maps_to: "ActionProfile.binding_stage"}
+  action_profiles_entry.can_undo: {mode: field, maps_to: "ActionProfile.reversibility including explicit unknown"}
+  action_profiles_entry.needs_approval: {mode: edge, maps_to: "Party ->authorizes-> ActionProfile with requires_approval_from field"}
+  action_profiles_entry.description: {mode: field, maps_to: "ActionProfile.description"}
+
+  operations_entry.kind: {mode: field, maps_to: "ControlOperation.operation_kind"}
+  operations_entry.when: {mode: field, maps_to: "ControlOperation.condition"}
+  operations_entry.authorized_by: {mode: edge, maps_to: "Party ->authorizes-> ControlOperation"}
+  operations_entry.emits: {mode: edge, maps_to: "ControlOperation ->emits-> Output"}
+  operations_entry.description: {mode: field, maps_to: "ControlOperation.description"}
+
+  outputs_entry.kind: {mode: field, maps_to: "Output.output_kind"}
+  outputs_entry.terminates: {mode: field, maps_to: "Output.terminates"}
+  outputs_entry.description: {mode: field, maps_to: "Output.description"}
 
   processes_entry.observed_as: {mode: edge, maps_to: "controlled_process System ->produces-> Signal"}
   processes_entry.location: {mode: field, maps_to: "controlled_process System.location"}

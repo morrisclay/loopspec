@@ -1,0 +1,13 @@
+{
+  "case": "stagehand",
+  "study_role": "control_plane_holdout",
+  "encoder": "Anthropic Claude CLI",
+  "model_alias": "sonnet",
+  "tool_access": "disabled",
+  "session_persistence": "disabled",
+  "generated_at": "2026-08-04T21:32:07.724140+00:00",
+  "source_repository": "https://github.com/browserbase/stagehand",
+  "source_revision": "7566804ed4b97649706782bccdcab5d80f6fe588",
+  "prompt_sha256": "c4b84cc6498f80849bd7e51cbaa70c8d64b93e821cd6e142cc70433e4431573e",
+  "output_sha256": "116765fc01186a72cc4c6a69a54477c8abc3fe794faec6167aed55a809c862ec"
+}

@@ -1,0 +1,28 @@
+{
+  "status": "ceiling",
+  "objective": "Converge LoopSpec control-plane semantics across independently encoded real agent loops",
+  "predicate": "raw independent typed-fingerprint micro-F1 >= 0.80 with v1.1 compatibility and all repository gates passing",
+  "result": {
+    "cycles": 8,
+    "replication_micro_precision": 0.389,
+    "replication_micro_recall": 0.583,
+    "replication_micro_f1": 0.467,
+    "promotion_threshold": 0.8,
+    "candidate_status": "experimental"
+  },
+  "findings": {
+    "residual_instability": [
+      "ordinary invocation over-encoded as an explicit start operation",
+      "logs and nested result fields over-encoded as public outputs",
+      "profiles declared where no safety property varies",
+      "human authority and asynchronous interruption inferred without source evidence"
+    ],
+    "verification": {
+      "doctor": "47 tests passed; generated grammar, semantic map, and check catalog current",
+      "corpus": "25 encodings valid; 7 source-pinned cases; 12 live candidates",
+      "website": "26 Astro pages built; routes, anchors, assets, worker, and starter cleanup valid",
+      "patch": "git diff --check passed"
+    }
+  },
+  "next": "Run a fresh source-pinned, tool-disabled confirmation against the frozen cycle-08 rules; keep the 0.80 raw micro-F1 threshold unchanged"
+}

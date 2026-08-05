@@ -1,0 +1,241 @@
+version: 1.2
+frozen_before_candidate: true
+unit: typed_semantic_fingerprint
+
+# This file is not included in independent-encoder prompts.
+cases:
+  aider:
+    operations:
+      - {kind: interrupt, authorized_by: operator}
+      - {kind: retry}
+      - {kind: stop, condition: reflection_limit}
+    outputs:
+      - {kind: final, terminates: turn}
+    action_profiles:
+      - {action_class: edit_files, resolved_at: request, authority: operator}
+      - {action_class: edit_files, resolved_at: request, reversibility: reversible}
+      - {action_class: edit_files, resolved_at: request, reversibility: unknown, default: true}
+    relations:
+      - [operator, authorizes, interrupt]
+      - [operator, authorizes, edit_files]
+      - [stop, emits, final]
+
+  agentlab:
+    operations:
+      - {kind: stop, condition: agent_returned_no_action}
+      - {kind: stop, condition: environment_terminated_or_truncated}
+    outputs:
+      - {kind: status, terminates: run}
+    action_profiles:
+      - {action_class: browser_action, resolved_at: request, reversibility: unknown, default: true}
+    relations:
+      - [stop, emits, status]
+
+  openai_agents_sdk:
+    operations:
+      - {kind: pause, condition: approval_required}
+      - {kind: resume, authorized_by: operator}
+      - {kind: handoff}
+      - {kind: retry, condition: run_again}
+      - {kind: stop, condition: final_output}
+      - {kind: stop, condition: max_turns}
+    outputs:
+      - {kind: final, terminates: run}
+      - {kind: approval_request, terminates: run}
+      - {kind: failure, terminates: run}
+    action_profiles:
+      - {action_class: tool_call, resolved_at: request, authority: operator, reversibility: unknown}
+      - {action_class: tool_call, resolved_at: request, reversibility: unknown, default: true}
+    relations:
+      - [pause, emits, approval_request]
+      - [operator, authorizes, resume]
+      - [operator, authorizes, tool_call]
+      - [stop, emits, final]
+      - [stop, emits, failure]
+
+  smolagents:
+    operations:
+      - {kind: interrupt, condition: caller_interrupt, authorized_by: caller}
+      - {kind: retry, condition: recoverable_agent_error}
+      - {kind: stop, condition: final_answer_or_max_steps}
+    outputs:
+      - {kind: final, terminates: run}
+      - {kind: status, terminates: none}
+    action_profiles:
+      - {action_class: tool_call, resolved_at: request, reversibility: unknown, default: true}
+    relations:
+      - [caller, authorizes, interrupt]
+      - [stop, emits, final]
+
+  skyvern:
+    operations:
+      - {kind: interrupt, condition: external_cancel_or_timeout}
+      - {kind: retry, condition: failed_step_with_retry_budget}
+      - {kind: stop, condition: completed}
+      - {kind: stop, condition: failed_or_terminated}
+    outputs:
+      - {kind: final, terminates: run}
+      - {kind: status, terminates: run}
+      - {kind: failure, terminates: run}
+    action_profiles:
+      - {action_class: browser_action, resolved_at: request, reversibility: unknown, default: true}
+    relations:
+      - [interrupt, emits, status]
+      - [stop, emits, final]
+      - [stop, emits, failure]
+
+  pydantic_ai:
+    operations:
+      - {kind: pause, condition: approval_or_external_execution_required}
+      - {kind: resume, authorized_by: run_caller}
+      - {kind: resume, condition: suspended_provider_turn}
+      - {kind: retry, condition: invalid_output_or_model_retry}
+      - {kind: interrupt, condition: interrupted_tool_batch}
+      - {kind: stop, condition: successful_final_output}
+      - {kind: stop, condition: terminal_error_or_usage_limit}
+    outputs:
+      - {kind: final, terminates: run}
+      - {kind: approval_request, terminates: run}
+      - {kind: submission, terminates: run}
+      - {kind: failure, terminates: run}
+      - {kind: status, terminates: none}
+    action_profiles:
+      - {action_class: tool_call, resolved_at: request, authority: approver, reversibility: unknown}
+      - {action_class: tool_call, resolved_at: request, reversibility: unknown, default: true}
+    relations:
+      - [pause, emits, approval_request]
+      - [pause, emits, submission]
+      - [run_caller, authorizes, resume]
+      - [approver, authorizes, tool_call]
+      - [interrupt, emits, failure]
+      - [stop, emits, final]
+      - [stop, emits, failure]
+
+  stagehand:
+    operations:
+      - {kind: interrupt, condition: abort_signal, authorized_by: run_caller}
+      - {kind: stop, condition: done_tool}
+      - {kind: stop, condition: max_steps_or_terminal_error}
+    outputs:
+      - {kind: final, terminates: run}
+      - {kind: failure, terminates: run}
+      - {kind: status, terminates: none}
+    action_profiles:
+      - {action_class: browser_or_custom_tool, resolved_at: request, reversibility: unknown, default: true}
+    relations:
+      - [run_caller, authorizes, interrupt]
+      - [interrupt, emits, failure]
+      - [stop, emits, final]
+      - [stop, emits, failure]
+
+  pocketflow:
+    operations:
+      - {kind: retry, condition: node_exception_with_budget}
+      - {kind: stop, condition: done_or_step_cap_or_no_successor}
+      - {kind: stop, condition: exhausted_retry}
+    outputs:
+      - {kind: final, terminates: run}
+      - {kind: failure, terminates: run}
+    action_profiles:
+      - {action_class: browser_action, resolved_at: request, reversibility: unknown, default: true}
+    relations:
+      - [stop, emits, final]
+      - [stop, emits, failure]
+
+  notte:
+    operations:
+      - {kind: retry, condition: rejected_completion_or_recoverable_action_failure}
+      - {kind: stop, condition: validated_completion}
+      - {kind: stop, condition: declared_or_terminal_failure}
+    outputs:
+      - {kind: final, terminates: run}
+      - {kind: failure, terminates: run}
+    action_profiles:
+      - {action_class: browser_action, resolved_at: request, reversibility: unknown, default: true}
+    relations:
+      - [stop, emits, final]
+      - [stop, emits, failure]
+
+  codex_turn:
+    operations:
+      - {kind: pause, condition: approval_required}
+      - {kind: resume, authorized_by: operator}
+      - {kind: interrupt, condition: caller_interrupt, authorized_by: operator}
+      - {kind: retry, condition: sampling_or_stop_hook_continuation}
+      - {kind: compact, condition: context_limit}
+      - {kind: stop, condition: final_response}
+      - {kind: stop, condition: terminal_failure}
+    outputs:
+      - {kind: final, terminates: turn}
+      - {kind: approval_request, terminates: none}
+      - {kind: failure, terminates: turn}
+    action_profiles:
+      - {action_class: tool_call, resolved_at: request, authority: operator, reversibility: unknown}
+      - {action_class: tool_call, resolved_at: request, reversibility: unknown, default: true}
+    relations:
+      - [pause, emits, approval_request]
+      - [operator, authorizes, resume]
+      - [operator, authorizes, interrupt]
+      - [interrupt, emits, failure]
+      - [operator, authorizes, tool_call]
+      - [stop, emits, final]
+      - [stop, emits, failure]
+
+  goose_agent:
+    operations:
+      - {kind: pause, condition: approval_required}
+      - {kind: resume, authorized_by: operator}
+      - {kind: interrupt, condition: caller_cancellation, authorized_by: operator}
+      - {kind: retry, condition: bounded_continuation}
+      - {kind: compact, condition: context_recovery}
+      - {kind: stop, condition: final_response}
+      - {kind: stop, condition: terminal_failure}
+    outputs:
+      - {kind: final, terminates: turn}
+      - {kind: approval_request, terminates: none}
+      - {kind: failure, terminates: turn}
+      - {kind: status, terminates: none}
+    action_profiles:
+      - {action_class: tool_call, resolved_at: request, authority: operator, reversibility: unknown}
+      - {action_class: tool_call, resolved_at: request, reversibility: unknown, default: true}
+    relations:
+      - [pause, emits, approval_request]
+      - [operator, authorizes, resume]
+      - [operator, authorizes, interrupt]
+      - [operator, authorizes, tool_call]
+      - [stop, emits, final]
+      - [stop, emits, failure]
+
+  swe_agent_default:
+    operations:
+      - {kind: retry, condition: recoverable_model_or_format_error}
+      - {kind: stop, condition: submission_or_autosubmission}
+      - {kind: stop, condition: propagated_terminal_exception}
+    outputs:
+      - {kind: final, terminates: run}
+      - {kind: failure, terminates: run}
+    action_profiles:
+      - {action_class: repository_step, resolved_at: request, reversibility: unknown, default: true}
+    relations:
+      - [stop, emits, final]
+      - [stop, emits, failure]
+
+  browser_use:
+    operations:
+      - {kind: pause, condition: external_pause, authorized_by: operator}
+      - {kind: resume, condition: external_resume, authorized_by: operator}
+      - {kind: interrupt, condition: external_stop_or_interrupt, authorized_by: operator}
+      - {kind: retry, condition: corrective_nudge}
+      - {kind: stop, condition: done_success}
+      - {kind: stop, condition: terminal_failure}
+    outputs:
+      - {kind: final, terminates: run}
+      - {kind: failure, terminates: run}
+    action_profiles:
+      - {action_class: browser_action, resolved_at: request, reversibility: unknown, default: true}
+    relations:
+      - [operator, authorizes, pause]
+      - [operator, authorizes, resume]
+      - [operator, authorizes, interrupt]
+      - [stop, emits, final]
+      - [stop, emits, failure]

@@ -1,0 +1,157 @@
+# Encoded from smolagents src/smolagents/agents.py
+# run(): 436-538, _run_stream(): 540-611, _handle_max_steps_reached(): 625-637,
+# interrupt(): 754-756, _step_stream(): 1276-1359, process_tool_calls(): 1361-1439,
+# execute_tool_call(): 1453-1488
+loop: agent_step_loop
+runs: "per call to run(); internally repeats one step per iteration until max_steps or a final answer (agents.py:545)"
+
+boundary:
+  drawn_by: operator
+  purpose: >
+    Isolate the per-task ReAct step loop (planning cadence, model call, tool execution,
+    memory bookkeeping) as the regulated system, treating the LLM service, tools, and
+    managed sub-agents as environment the loop calls into but does not itself implement.
+  inside:
+    - "step loop (self.step_number, ActionStep/PlanningStep generation) (agents.py:543-611)"
+    - "AgentMemory (self.memory.steps) (agents.py:479-489, 566-567, 601-602)"
+    - "self.monitor (agents.py:480)"
+  outside:
+    - "LLM model service (self.model.generate / generate_stream) (agents.py:1292-1313)"
+    - "tools and managed_agents invoked via execute_tool_call (agents.py:1453-1488)"
+    - "python_executor state/tool injection (agents.py:490-492)"
+
+goal:
+  task_completion:
+    keep: "a final answer is produced, and (if final_answer_checks are configured) passes them, within max_steps"
+    from: [model_response, tool_observation]
+    # agents.py:582-592 (validation gate), 606-608 (max_steps fallback)
+
+beliefs:
+  final_answer_validity:
+    question: "Does the candidate final answer returned via the 'final_answer' tool pass the configured final_answer_checks?"
+    how: "invoke each callable in self.final_answer_checks against the candidate answer, via self._validate_final_answer (agents.py:589-590)"
+    explains: task_completion
+    # Source shows a single per-run validation gate, not scoring of past predictions against
+    # outcomes, so no checked_by/checked_against/scoring_rule is claimed here.
+
+observes:
+  model_response:
+    informs: task_completion
+    every: "each action step, and each scheduled planning step (agents.py:1292-1323)"
+    origin: outside
+    how: reported
+    reported_by: "the configured model (self.model)"
+  tool_observation:
+    informs: task_completion
+    every: "each tool call within an action step (agents.py:1390-1413)"
+    origin: outside
+    how: measured
+
+actions:
+  query_model:
+    moves: task_completion
+    can_undo: yes
+    through: model_inference
+    effect: unknown
+    consumes: [tokens]
+    # agents.py:1292-1323 - model.generate/generate_stream call, no external side effect itself
+  execute_tool:
+    moves: task_completion
+    through: tool_execution
+    effect: unknown
+    # can_undo intentionally left off the generic action: reversibility depends on which
+    # tool/managed agent is named at request time (agents.py:1453-1488); see action_profiles.
+
+action_profiles:
+  generic_tool_call:
+    action: execute_tool
+    default: true
+    resolved_at: request
+    can_undo: unknown
+    description: "Arbitrary named tool invoked with model-supplied, state-substituted arguments (agents.py:1470-1488); the runtime does not bind what the tool does."
+  final_answer_call:
+    action: execute_tool
+    when: "tool_name == 'final_answer' (agents.py:1406)"
+    resolved_at: request
+    can_undo: yes
+    description: "Declares the task's final answer; returns a value without invoking an external tool side effect."
+  managed_agent_call:
+    action: execute_tool
+    when: "tool_name in self.managed_agents (agents.py:1473, 1486)"
+    resolved_at: request
+    can_undo: unknown
+    description: "Delegates the call to a managed sub-agent (called without sanitize_inputs_outputs) rather than a plain tool; the sub-agent's own effects are opaque here."
+
+operations:
+  interrupt_run:
+    kind: interrupt
+    when: "self.interrupt_switch is True, checked at the start of each step in the run loop (agents.py:546-547)"
+    authorized_by: operator
+    emits: interrupted_failure
+    description: "An external call to agent.interrupt() (agents.py:754-756) sets interrupt_switch; the next step start raises AgentError('Agent interrupted.') instead of proceeding."
+  stop_on_final_answer:
+    kind: stop
+    when: "a tool call with is_final_answer=True is processed and, if configured, passes final_answer_checks (agents.py:582-592, 1339-1351)"
+    emits: run_output
+    description: "returned_final_answer is set True, ending the while loop; a FinalAnswerStep is yielded and becomes run()'s return value."
+  stop_at_max_steps:
+    kind: stop
+    when: "step_number reaches max_steps + 1 without a returned final answer (agents.py:606-608, 625-637)"
+    emits: run_output
+    description: "_handle_max_steps_reached forces a final answer via provide_final_answer and records AgentMaxStepsError on the last ActionStep."
+
+outputs:
+  run_output:
+    kind: final
+    terminates: run
+    description: "The final answer (or, when return_full_result is True, a RunResult bundling output, token_usage, steps and state) returned by run() (agents.py:501-538), from either normal completion or the forced max-steps path."
+  interrupted_failure:
+    kind: failure
+    terminates: run
+    description: "AgentError('Agent interrupted.') raised and propagated out of run() when interrupt_switch was set (agents.py:547)."
+
+processes:
+  model_inference:
+    observed_as: [model_response]
+    location: outside
+    description: "self.model.generate/generate_stream called with memory-derived input_messages, producing a ChatMessage with content and/or tool_calls (agents.py:1292-1323)."
+  tool_execution:
+    observed_as: [tool_observation]
+    location: outside
+    description: "execute_tool_call resolves the named tool or managed agent, substitutes state variables, validates arguments, and calls it, sequentially or in parallel via a thread pool for multiple calls (agents.py:1383-1439, 1453-1488)."
+
+when:
+  - if: "step_number <= max_steps and no final answer has been returned yet"
+    reads: [task_completion, iterations]
+    against: [task_completion]
+    do: query_model
+  - if: "the model's chat message contains tool calls to resolve"
+    reads: [task_completion]
+    do: execute_tool
+
+people:
+  controller:
+    kind: agent
+    loses_if_wrong: "nothing (bears no stated loss in excerpt)"
+    sees: [task_completion, final_answer_validity]
+  operator:
+    kind: human
+    loses_if_wrong: "wasted run time and cost of tool/model calls already made before an interruption or max-steps stop"
+    sees: [task_completion]
+
+spends:
+  iterations:
+    limit: "max_steps steps per run() call (defaults to self.max_steps) (agents.py:468, 545, 606)"
+    replenished: "a subsequent agent.run(reset=True) restarts step_number at 1 (agents.py:478-480, 543)"
+    spent_by: [query_model, execute_tool]
+  tokens:
+    spent_by: [query_model]
+    # Aggregated into TokenUsage for reporting (agents.py:507-521); no ceiling shown in excerpt.
+
+not_modelling:
+  - "internals of _generate_planning_step and provide_final_answer (bodies not in excerpt) (agents.py:555-559, 627)"
+  - "write_memory_to_messages / memory formatting (agents.py:1284)"
+  - "thread-pool scheduling details for parallel tool calls (agents.py:1426-1434)"
+  - "_substitute_state_variables argument substitution logic (agents.py:1472)"
+  - "streaming delta rendering (Live/Markdown) - presentation only (agents.py:1300-1306)"
+  - "python_executor variable/tool injection (agents.py:490-492)"

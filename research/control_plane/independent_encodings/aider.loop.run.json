@@ -1,0 +1,13 @@
+{
+  "case": "aider",
+  "study_role": "control_plane_holdout",
+  "encoder": "Anthropic Claude CLI",
+  "model_alias": "sonnet",
+  "tool_access": "disabled",
+  "session_persistence": "disabled",
+  "generated_at": "2026-08-04T21:07:33.183710+00:00",
+  "source_repository": "https://github.com/Aider-AI/aider",
+  "source_revision": "5dc9490bb35f9729ef2c95d00a19ccd30c26339c",
+  "prompt_sha256": "17ada3669e27533006454a7f7385536da4cc3a61a76429646d662fc5068a8cbe",
+  "output_sha256": "49a7d61f675dc56a28657e7b98b37de010a14cb9fec41432a62edbd8973cb38e"
+}

@@ -1,0 +1,308 @@
+# LoopSpec encoding of the browser-use Agent run loop.
+# Sources: browser_use/agent/service.py L1205-1246, L1458-1545, L2575-2655
+#          browser_use/agent/views.py L200-315
+loop: browser_use_agent_run
+runs: per_run_invocation  # one run() call drives the whole while-loop up to max_steps (service.py L2603-2637)
+
+boundary:
+  drawn_by: operator
+  purpose: >
+    Review how the agent keeps a browser task moving: what it executes, how it notices
+    stalling or looping, and what ends the run. Drawn at the run() invocation so that
+    the per-step nudges are internal regulation and only run termination leaves.
+  inside:
+    - agent step loop and step counter        # service.py L2603-2636
+    - AgentState (consecutive_failures, plan, paused, stopped)  # views.py L251-275
+    - ActionLoopDetector window and nudge thresholds            # views.py L200-248
+    - message manager context-message injection                 # service.py L1472, L1488, L1500
+  outside:
+    - the LLM that produces model output and the done sentinel
+    - the browser session, pages and downloads
+    - the external caller that sets the pause / stop flags      # service.py L2607-2624
+
+goal:
+  task_completion:
+    keep: reached via a done result with success before max_steps  # service.py L1239-1246, L2627-2636
+    from: [action_results, model_output]
+  consecutive_failures:
+    keep: below max_failures + int(final_response_after_failure)   # service.py L2613-2618
+    unit: consecutive single-action steps ending in error
+    from: [action_results]
+  action_repetition:
+    keep: below 5 similar action hashes in the recent action window  # views.py L216-236
+    unit: repetitions of the most repeated action hash
+    from: [recorded_action_history]
+  page_progress:
+    keep: consecutive_stagnant_pages below 5   # views.py L239-244
+    unit: consecutive actions with unchanged page content
+    from: [browser_state_summary]
+  plan_coverage:
+    keep: a plan exists before planning_exploration_limit steps  # service.py L1476-1488
+    unit: steps taken without a plan
+
+beliefs:
+  agent_is_looping:
+    question: Is the agent repeating a similar action or sitting on an unchanging page without progress?
+    how: >
+      Count hashes in the recent-action window and recompute max_repetition_count; count
+      consecutive stagnant page fingerprints built from url, DOM text representation and
+      element count.  # views.py L200-209; service.py L1502-1534
+    explains: action_repetition
+    settled_by: browser_state_summary
+    known_bias: >
+      wait, done and go_back are never recorded, so loops made of those are invisible; a
+      genuinely progressing repeat with identical params still reads as repetition.  # service.py L1508-1515
+  plan_needs_revision:
+    question: Has the current plan stopped working and needs replacing?
+    how: consecutive_failures >= settings.planning_replan_on_stall, with planning enabled and a plan present  # service.py L1460-1470
+    explains: task_completion
+  step_budget_risk:
+    question: Will the agent exhaust its step budget before saving any result?
+    how: steps_used (step_number + 1) measured against max_steps, warning at >= 75% of budget  # service.py L1536-1545
+    explains: task_completion
+
+observes:
+  model_output:
+    informs: [task_completion, plan_coverage]
+    every: per step
+    origin: outside
+    how: reported
+    reported_by: llm
+    source: AgentOutput.action / plan_update  # service.py L1210, L1221-1222
+  action_results:
+    informs: [consecutive_failures, task_completion]
+    every: per step
+    origin: ourselves
+    produced_by: execute_browser_actions
+    how: measured
+    source: ActionResult list from multi_act (error, is_done, success, extracted_content)  # service.py L1210-1211, L1229-1246; views.py L307-315
+  browser_state_summary:
+    informs: [page_progress, agent_is_looping]
+    every: per step
+    origin: outside
+    how: measured
+    source: url, dom_state.selector_map, dom_state.llm_representation()  # service.py L1521-1534
+  recorded_action_history:
+    informs: [action_repetition, agent_is_looping]
+    every: per step
+    origin: ourselves
+    produced_by: execute_browser_actions
+    how: calculated
+    source: loop_detector.record_action over non-exempt actions  # service.py L1502-1519
+  download_events:
+    informs: task_completion
+    every: after each step's actions
+    origin: ourselves
+    produced_by: execute_browser_actions
+    how: measured
+    source: _check_and_update_downloads('after executing actions')  # service.py L1217-1218
+  step_progress:
+    informs: step_budget_risk
+    every: per step
+    origin: ourselves
+    how: calculated
+    source: AgentStepInfo(step_number, max_steps)  # service.py L2626; views.py L278-285
+
+actions:
+  execute_browser_actions:
+    # reversibility is request-bound; see action_profiles
+    moves: [task_completion, consecutive_failures]
+    effects:
+      task_completion: increase
+      consecutive_failures: unknown
+    through: browser_page
+    consumes: [steps, failure_allowance]
+    effect_after: same step; results and downloads are read immediately after execution
+    # multi_act over model_output.action; raises ValueError with no model output  # service.py L1205-1211
+  execute_initial_actions:
+    moves: task_completion
+    effect: increase
+    through: browser_page
+    can_undo: unknown
+    consumes: [initial_action_time, failure_allowance]
+    # wrapped in asyncio.wait_for(step_timeout); TimeoutError records an ActionResult error and
+    # increments consecutive_failures, then the main loop proceeds  # service.py L2582-2598
+  inject_replan_nudge:
+    moves: [plan_needs_revision, task_completion]
+    effects:
+      plan_needs_revision: decrease
+      task_completion: increase
+    through: model_policy
+    can_undo: unknown
+    effect_after: next model output
+    # UserMessage asking for a new plan_update after N consecutive failures  # service.py L1458-1472
+  inject_exploration_nudge:
+    moves: plan_coverage
+    effect: increase
+    through: model_policy
+    can_undo: unknown
+    effect_after: next model output
+    # asks for a plan_update, or done if the task is already finished  # service.py L1474-1488
+  inject_loop_detection_nudge:
+    moves: [action_repetition, page_progress, agent_is_looping]
+    effect: decrease
+    through: model_policy
+    can_undo: unknown
+    effect_after: next model output
+    # escalating awareness text at repetition 5/8/12 and stagnation 5  # service.py L1490-1500; views.py L211-248
+  inject_budget_warning:
+    moves: [task_completion, step_budget_risk]
+    effects:
+      task_completion: increase
+      step_budget_risk: decrease
+    through: model_policy
+    can_undo: unknown
+    effect_after: next model output
+    # advance notice to wrap up, save partial results and call done  # service.py L1536-1545
+
+action_profiles:
+  browser_action_request_bound:
+    action: execute_browser_actions
+    default: true
+    resolved_at: request
+    can_undo: unknown
+    description: >
+      The concrete tool call comes from model output; the excerpts bind no reversibility
+      or approver to any specific browser action.  # service.py L1210
+  skill_backed_action:
+    action: execute_browser_actions
+    when: the executed action is a skill registered when SkillService is configured
+    resolved_at: deployment
+    can_undo: unknown
+    description: >
+      Skills are registered as actions at run start, so the available action set — and its
+      effects — vary by deployment.  # service.py L2575-2576
+
+operations:
+  begin_run:
+    kind: start
+    when: run() is invoked
+    description: >
+      Registers skills as actions, then executes initial actions under step_timeout before
+      entering the main loop.  # service.py L2575-2602
+  pause_stepping:
+    kind: pause
+    when: state.paused is set at the top of a step
+    authorized_by: operator
+    description: >
+      The loop awaits _external_pause_event before starting the step; pause/stop state is kept
+      serialisable for checkpointing.  # service.py L2606-2610; views.py L265-267
+  resume_stepping:
+    kind: resume
+    when: _external_pause_event is set
+    authorized_by: operator
+    description: Stepping continues and the signal handler is reset.  # service.py L2609-2610
+  interrupt_run:
+    kind: interrupt
+    when: state.stopped is observed before a step
+    authorized_by: operator
+    emits: run_failure
+    description: >
+      Breaks the loop with agent_run_error 'Agent stopped programmatically'.  # service.py L2620-2624
+  stop_on_completion:
+    kind: stop
+    when: _execute_step reports is_done (the done sentinel's controller effect)
+    emits: [final_history, demo_progress_event]
+    description: >
+      The done result ends the run; in demo mode the final result text is emitted first.
+      # service.py L2627-2636
+  stop_on_exhaustion:
+    kind: stop
+    when: >
+      consecutive_failures >= max_failures + int(final_response_after_failure), or the while
+      condition n_steps <= max_steps fails
+    emits: run_failure
+    description: >
+      Ends the run with 'Stopped due to N consecutive failures' or, on budget exhaustion,
+      records an AgentHistory error item 'Failed to complete task in maximum steps'.
+      # service.py L2612-2618, L2637-2655
+
+outputs:
+  final_history:
+    kind: final
+    terminates: run
+    description: The completed run's history after the agent marks the task done.  # service.py L2629-2636
+  run_failure:
+    kind: failure
+    terminates: run
+    description: >
+      agent_run_error and the recorded error result for programmatic stop, consecutive-failure
+      stop, or max-steps exhaustion.  # service.py L2616-2655
+  demo_progress_event:
+    kind: status
+    terminates: none
+    description: Final result text pushed to the demo-mode channel when demo mode is enabled.  # service.py L2631-2633
+
+processes:
+  browser_page:
+    location: outside
+    observed_as: [action_results, browser_state_summary, download_events]
+    description: >
+      Executed actions change page state and files on disk; the next step reads results,
+      downloads and a fresh browser state summary.  # service.py L1210-1218, L1521-1534
+  model_policy:
+    location: interface
+    observed_as: [model_output]
+    description: >
+      Injected context messages and prior results reach the LLM, which returns the next
+      actions and plan_update.  # service.py L1472, L1488, L1500, L1221-1222
+
+when:
+  - if: model output contains actions and the run is neither paused nor stopped
+    reads: [task_completion]
+    do: execute_browser_actions
+  - if: planning enabled, a plan exists, and consecutive_failures >= planning_replan_on_stall
+    reads: [consecutive_failures, plan_needs_revision]
+    against: [consecutive_failures]
+    do: inject_replan_nudge
+  - if: planning enabled, no plan exists, and n_steps >= planning_exploration_limit
+    reads: [plan_coverage]
+    against: [plan_coverage]
+    do: inject_exploration_nudge
+  - if: loop detection enabled and max_repetition_count >= 5 or consecutive_stagnant_pages >= 5
+    reads: [agent_is_looping, action_repetition, page_progress]
+    against: [action_repetition, page_progress]
+    do: inject_loop_detection_nudge
+  - if: steps_used >= 75 percent of max_steps
+    reads: [step_budget_risk, steps]
+    do: inject_budget_warning
+
+people:
+  operator:
+    human: true
+    loses_if_wrong: irreversible browser side effects on their sites and accounts; a run that stalls or burns its step budget with nothing saved
+    sees: [task_completion, consecutive_failures]
+  agent:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [task_completion, consecutive_failures, action_repetition, page_progress, plan_coverage]
+  llm:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [task_completion, plan_coverage, action_repetition, page_progress]
+
+spends:
+  steps:
+    limit: max_steps per run  # service.py L2603
+    replenished: not replenished within a run
+    spent_by: [execute_browser_actions]
+  failure_allowance:
+    limit: max_failures + int(final_response_after_failure) consecutive failures  # service.py L2613-2618
+    replenished: reset to 0 after any step that is not a single-action error  # service.py L1234-1236
+    spent_by: [execute_browser_actions, execute_initial_actions]
+  initial_action_time:
+    limit: step_timeout seconds for the initial actions  # service.py L2583-2586
+    spent_by: [execute_initial_actions]
+
+never:
+  - Execute actions when state.last_model_output is None; it raises ValueError instead.  # service.py L1207-1208
+  - Count a multi-action step's error toward consecutive_failures; only single-action steps do.  # service.py L1227-1232
+  - Record wait, done or go_back in the loop detector.  # service.py L1508-1515
+  - Continue stepping past max_steps, or past the failure and stop-flag checks at the top of a step.  # service.py L2603-2624
+
+not_modelling:
+  - Agent-initiated escalation to a human; the excerpts show no ask-human path — pause, resume and stop arrive from outside.
+  - Calibration of agent_is_looping, plan_needs_revision and step_budget_risk; nothing in the excerpts scores these thresholds against outcomes or changes future trust.
+  - JudgementResult trace judgement (views.py L288-315); the excerpts do not show where it is produced or what reads it.
+  - The body of _inject_budget_warning past line 1545 and the run() tail after the loop, including should_delay_close teardown.
+  - Per-tool reversibility and any approval gate for individual browser actions; none is bound in the excerpts.

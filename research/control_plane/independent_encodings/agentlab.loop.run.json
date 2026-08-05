@@ -1,0 +1,13 @@
+{
+  "case": "agentlab",
+  "study_role": "control_plane_holdout",
+  "encoder": "Anthropic Claude CLI",
+  "model_alias": "sonnet",
+  "tool_access": "disabled",
+  "session_persistence": "disabled",
+  "generated_at": "2026-08-04T21:06:15.307283+00:00",
+  "source_repository": "https://github.com/ServiceNow/AgentLab",
+  "source_revision": "cbc35a9bc0facaf731bc858c5825edbe757c719f",
+  "prompt_sha256": "cf401e8d4333ad91aab4755834dacb946424d79019e0dca577a8f6a3d29201fe",
+  "output_sha256": "35160af8f99826f42abdc94ad52037f94390d69d9ec11683ba88db0e4e96d7cc"
+}

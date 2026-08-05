@@ -1,5 +1,5 @@
 import os, json, urllib.request, concurrent.futures as cf, re
-D=os.path.dirname(os.path.abspath(__file__)); R="/Users/morrisclay/Dev/uras"
+D=os.path.dirname(os.path.abspath(__file__)); R=os.path.abspath(os.path.join(D, "..", ".."))
 REF=open(f"{R}/REFERENCE.md").read()
 KEY=os.environ["OPENROUTER_API_KEY"]
 HELD=[("lg_reflection","research/published_study/sources/lg_reflection.ipynb"),

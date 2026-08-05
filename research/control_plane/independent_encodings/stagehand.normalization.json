@@ -1,0 +1,9 @@
+{
+  "raw": "stagehand.raw.yaml",
+  "comparison": "stagehand.loop.yaml",
+  "semantic_edits": [],
+  "mechanical_repairs": [
+    "Removed unsupported goal. and beliefs. prefixes from local references; target identifiers are unchanged."
+  ],
+  "cycle_status": "failed_strict_validation"
+}

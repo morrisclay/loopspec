@@ -1,0 +1,123 @@
+# Skyvern at 6442cdc49dbe031c7d9462c140d9035fd2d6f0cd.
+# Evidence: skyvern/forge/agent.py 850-965, 1058-1079, 1124-1265,
+# 5667-5891, 5893-6011; skyvern/webeye/actions/handler.py 2951-3001;
+# skyvern/webeye/actions/actions.py 264-268, 293-363, 412-425;
+# skyvern/forge/sdk/schemas/tasks.py 230-247.
+
+loop: skyvern_browser_task
+runs: per_browser_task_execution
+
+boundary:
+  drawn_by: task_operator
+  purpose: steer a browser task through model-selected web actions until completion, termination, cancellation, or a configured bound
+  inside: [step orchestrator, task and step state, retry controller, completion verifier, action dispatcher]
+  outside: [task operator, model provider, browser, websites, persistent task client]
+
+goal:
+  browser_task:
+    keep: the requested navigation or extraction goal reaches a verified completed state
+
+beliefs:
+  next_browser_move:
+    question: Which browser action or decisive completion state should follow from the current page and goal?
+    how: agent-step inference plus completion verification over the scraped page and prior results
+    explains: browser_task
+    settled_by: action_result
+
+observes:
+  task_request:
+    informs: [browser_task, next_browser_move]
+    origin: outside
+    how: reported
+    reported_by: task_operator
+  page_state:
+    informs: [browser_task, next_browser_move]
+    origin: outside
+    how: measured
+    source: browser scrape and current page
+  action_result:
+    informs: [browser_task, next_browser_move]
+    origin: ourselves
+    how: measured
+    produced_by: execute_browser_action
+
+processes:
+  browser_and_website:
+    location: outside
+    description: concrete click, input, upload, download, and other web actions change or query the current browser and website
+    observed_as: [page_state, action_result]
+
+actions:
+  execute_browser_action:
+    moves: browser_task
+    through: browser_and_website
+    effect: unknown
+
+action_profiles:
+  concrete_web_request:
+    action: execute_browser_action
+    default: true
+    resolved_at: request
+    can_undo: unknown
+    description: consequence and reversibility depend on the selected action, page, site, and arguments
+
+outputs:
+  task_completion:
+    kind: final
+    terminates: run
+    description: completed task state and any extracted information returned across the task boundary
+  canceled_or_timed_out_status:
+    kind: status
+    terminates: run
+    description: terminal canceled or timed-out task status observed by the task client
+  task_failure:
+    kind: failure
+    terminates: run
+    description: failed or terminated task state with its recorded reason and errors
+
+operations:
+  interrupt_from_external_status:
+    kind: interrupt
+    when: the persisted workflow or task is asynchronously marked canceled or timed out
+    emits: canceled_or_timed_out_status
+  retry_failed_step:
+    kind: retry
+    when: a step fails without terminal user errors and its retry index remains below the configured maximum
+  stop_completed_task:
+    kind: stop
+    when: completion is verified, a completion action succeeds, or the configured download completion condition is met
+    emits: task_completion
+  stop_failed_task:
+    kind: stop
+    when: a terminate action is selected, terminal user errors occur, or step or retry budgets are exhausted
+    emits: task_failure
+
+when:
+  - if: the task is running and the agent step selects an executable browser action
+    reads: [next_browser_move, browser_task]
+    against: [browser_task]
+    do: execute_browser_action
+
+people:
+  task_operator:
+    human: true
+    loses_if_wrong: account state, submitted data, money, time, and trust in the task result
+    sees: [browser_task, next_browser_move]
+  model_provider:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [next_browser_move]
+
+spends:
+  task_step_budget:
+    limit: the resolved maximum steps per task or workflow run
+    replenished: a new task execution
+    spent_by: execute_browser_action
+  step_retry_budget:
+    limit: the organization maximum retries per step or configured default
+    replenished: a new step order
+    spent_by: execute_browser_action
+
+not_modelling:
+  - concrete authorization and approval policy for browser actions
+  - browser and website behavior outside the supplied action-handler interface

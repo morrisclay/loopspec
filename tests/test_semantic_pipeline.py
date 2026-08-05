@@ -110,6 +110,287 @@ class SemanticPipelineTests(unittest.TestCase):
         self.assertFalse(report.ok)
         self.assertTrue(any("kind signature" in error for error in report.errors))
 
+    def test_control_plane_nodes_are_not_world_interventions(self):
+        spec = minimal_spec(
+            actions={"execute tool": {"moves": "level"}},
+            action_profiles={
+                "approved write": {
+                    "action": "execute tool",
+                    "when": "the request matches deployment approval policy",
+                    "resolved_at": "request",
+                    "can_undo": "unknown",
+                    "needs_approval": "operator",
+                },
+                "unmatched tool request": {
+                    "action": "execute tool",
+                    "default": True,
+                    "resolved_at": "request",
+                    "can_undo": "unknown",
+                },
+            },
+            operations={
+                "interrupt turn": {
+                    "kind": "interrupt",
+                    "authorized_by": "operator",
+                },
+                "finish turn": {
+                    "kind": "stop",
+                    "when": "the model returns a final response",
+                    "emits": "final response",
+                },
+            },
+            outputs={
+                "final response": {"kind": "final", "terminates": "turn"},
+            },
+            people={
+                "operator": {"human": True, "loses_if_wrong": "repository integrity"},
+            },
+            when=[{"if": "level below 1", "do": "execute tool"}],
+        )
+
+        doc = expand_spec(spec)
+        nodes = {node["id"]: node for node in doc["nodes"]}
+        findings, failures = derive.analyze_document(doc)
+
+        self.assertEqual("2.2", doc["ir_revision"])
+        self.assertEqual("loop-v1.2", doc["source_format"])
+        self.assertEqual("Intervention", nodes["execute_tool"]["kind"])
+        self.assertEqual("ActionProfile", nodes["approved_write"]["kind"])
+        self.assertEqual("ControlOperation", nodes["interrupt_turn"]["kind"])
+        self.assertEqual("Output", nodes["final_response"]["kind"])
+        self.assertIn({"from": "approved_write", "to": "execute_tool", "rel": "profiles"},
+                      doc["edges"])
+        self.assertIn({"from": "operator", "to": "approved_write", "rel": "authorizes"},
+                      doc["edges"])
+        self.assertIn({"from": "finish_turn", "to": "final_response", "rel": "emits"},
+                      doc["edges"])
+        self.assertEqual([], failures)
+        self.assertFalse(any(
+            finding["pattern"] == "reversibility_unspecified" and
+            finding["evidence"].get("action") in {
+                "execute_tool", "approved_write", "unmatched_tool_request"
+            }
+            for finding in findings
+        ))
+        self.assertTrue(self.validate_canonical(doc).ok)
+
+    def test_action_profiles_require_an_explicit_fallback_for_unmatched_requests(self):
+        doc = expand_spec(minimal_spec(
+            actions={"execute tool": {"moves": "level"}},
+            action_profiles={
+                "approved write": {
+                    "action": "execute tool",
+                    "when": "the deployment policy requires approval",
+                    "resolved_at": "request",
+                    "can_undo": "unknown",
+                },
+            },
+            when=[{"if": "level below 1", "do": "execute tool"}],
+        ))
+
+        findings, failures = derive.analyze_document(doc)
+
+        self.assertEqual([], failures)
+        self.assertIn("action_profiles_without_fallback",
+                      {finding["pattern"] for finding in findings})
+
+    def test_explicit_unknown_reversibility_is_valid_and_never_treated_as_safe(self):
+        doc = expand_spec(minimal_spec(actions={
+            "raise level": {"moves": "level", "can_undo": "unknown"},
+        }))
+        nodes = {node["id"]: node for node in doc["nodes"]}
+        findings, failures = derive.analyze_document(doc)
+
+        self.assertEqual("unknown", nodes["raise_level"]["reversibility"])
+        self.assertEqual([], failures)
+        self.assertNotIn("reversibility_unspecified",
+                         {finding["pattern"] for finding in findings})
+        self.assertNotIn("irreversible_without_approval",
+                         {finding["pattern"] for finding in findings})
+
+    def test_control_plane_references_and_profile_precedence_fail_closed(self):
+        bad_profile = minimal_spec(
+            action_profiles={
+                "missing": {
+                    "action": "not an action",
+                    "default": True,
+                    "resolved_at": "deployment",
+                    "can_undo": "unknown",
+                },
+            },
+        )
+        with self.assertRaisesRegex(loop_language.SpecError, "names no entry in `actions`"):
+            expand_spec(bad_profile)
+
+        bad_output = minimal_spec(
+            operations={"finish": {"kind": "stop", "emits": "missing output"}},
+        )
+        with self.assertRaisesRegex(loop_language.SpecError, "names no entry in `outputs`"):
+            expand_spec(bad_output)
+
+        mixed = minimal_spec(
+            action_profiles={
+                "fallback": {
+                    "action": "raise level",
+                    "default": True,
+                    "resolved_at": "design",
+                    "can_undo": "yes",
+                },
+            },
+        )
+        with self.assertRaisesRegex(loop_language.SpecError, "cannot be mixed"):
+            expand_spec(mixed)
+
+    def test_control_plane_identity_is_canonical_and_machine_checked(self):
+        duplicate_outputs = minimal_spec(outputs={
+            "first failure": {"kind": "failure", "terminates": "run"},
+            "second failure": {"kind": "failure", "terminates": "run"},
+        })
+        with self.assertRaisesRegex(loop_language.SpecError, "duplicates output role"):
+            expand_spec(duplicate_outputs)
+
+        duplicate_operations = minimal_spec(
+            outputs={"failure": {"kind": "failure", "terminates": "run"}},
+            operations={
+                "budget stop": {"kind": "stop", "when": "budget exhausted", "emits": "failure"},
+                "error stop": {"kind": "stop", "when": "terminal error", "emits": "failure"},
+            },
+        )
+        with self.assertRaisesRegex(loop_language.SpecError, "duplicates controller role"):
+            expand_spec(duplicate_operations)
+
+        duplicate_profiles = minimal_spec(
+            action_profiles={
+                "remote tool": {
+                    "action": "raise level", "when": "remote deployment",
+                    "resolved_at": "deployment", "can_undo": "unknown",
+                },
+                "fallback": {
+                    "action": "raise level", "default": True,
+                    "resolved_at": "deployment", "can_undo": "unknown",
+                },
+            },
+        )
+        with self.assertRaisesRegex(loop_language.SpecError, "duplicates the typed properties"):
+            expand_spec(duplicate_profiles)
+
+        lone_default = minimal_spec(
+            actions={"raise level": {"moves": "level"}},
+            action_profiles={
+                "fallback": {
+                    "action": "raise level", "default": True,
+                    "resolved_at": "request", "can_undo": "unknown",
+                },
+            },
+        )
+        lone_default_findings, _ = derive.analyze_document(expand_spec(lone_default))
+        self.assertIn("action_profiles_without_safety_variation",
+                      {finding["pattern"] for finding in lone_default_findings})
+
+        stage_only_variation = minimal_spec(
+            actions={"raise level": {"moves": "level"}},
+            action_profiles={
+                "configured": {
+                    "action": "raise level", "when": "configured tool",
+                    "resolved_at": "deployment", "can_undo": "unknown",
+                },
+                "fallback": {
+                    "action": "raise level", "default": True,
+                    "resolved_at": "request", "can_undo": "unknown",
+                },
+            },
+        )
+        with self.assertRaisesRegex(loop_language.SpecError,
+                                    "binding stage alone is not a safety distinction"):
+            expand_spec(stage_only_variation)
+
+    def test_known_section_qualified_local_references_normalize_to_canonical_names(self):
+        canonical = minimal_spec(
+            goal={"level": {"keep": "above 1", "from": ["level reading"]}},
+            beliefs={
+                "risk": {
+                    "from": ["risk report"],
+                    "checked_against": "risk outcome",
+                    "explains": "level",
+                    "settled_by": "risk outcome",
+                },
+            },
+            observes={
+                "level reading": {
+                    "informs": "level", "origin": "outside", "how": "reported",
+                    "reported_by": "operator",
+                },
+                "risk report": {"informs": "risk", "origin": "outside"},
+                "risk outcome": {"informs": "risk", "origin": "ourselves",
+                                 "produced_by": "raise level"},
+            },
+            actions={
+                "raise level": {
+                    "moves": ["level", "risk"], "can_undo": "unknown",
+                    "needs_approval": "operator", "consumes": ["energy"],
+                    "through": "reservoir",
+                },
+            },
+            operations={
+                "finish": {"kind": "stop", "authorized_by": "operator",
+                           "emits": "final result"},
+            },
+            outputs={"final result": {"kind": "final", "terminates": "run"}},
+            processes={"reservoir": {"observed_as": ["level reading"]}},
+            people={
+                "operator": {"human": True, "loses_if_wrong": "overflow",
+                             "sees": ["level", "risk"]},
+            },
+            spends={"energy": {"spent_by": "raise level"}},
+            boundary={"drawn_by": "operator", "purpose": "regulate level"},
+            asks_human="operator",
+            when=[{
+                "if": "level below 1", "reads": ["level", "risk", "energy"],
+                "against": ["level"], "do": "raise level", "escalate": "operator",
+            }],
+        )
+        qualified = copy.deepcopy(canonical)
+        qualified["goal"]["level"]["from"] = ["observes.level reading"]
+        qualified["beliefs"]["risk"].update({
+            "from": ["observes.risk report"],
+            "checked_against": "observes.risk outcome",
+            "explains": "goal.level",
+            "settled_by": "observes.risk outcome",
+        })
+        qualified["observes"]["level reading"].update({
+            "informs": "goal.level", "reported_by": "people.operator",
+        })
+        qualified["observes"]["risk report"]["informs"] = "beliefs.risk"
+        qualified["observes"]["risk outcome"].update({
+            "informs": "beliefs.risk", "produced_by": "actions.raise level",
+        })
+        qualified["actions"]["raise level"].update({
+            "moves": ["goal.level", "beliefs.risk"],
+            "needs_approval": "people.operator",
+            "consumes": ["spends.energy"],
+            "through": "processes.reservoir",
+        })
+        qualified["operations"]["finish"].update({
+            "authorized_by": "people.operator", "emits": "outputs.final result",
+        })
+        qualified["processes"]["reservoir"]["observed_as"] = [
+            "observes.level reading"
+        ]
+        qualified["people"]["operator"]["sees"] = ["goal.level", "beliefs.risk"]
+        qualified["spends"]["energy"]["spent_by"] = "actions.raise level"
+        qualified["boundary"]["drawn_by"] = "people.operator"
+        qualified["asks_human"] = "people.operator"
+        qualified["when"][0].update({
+            "reads": ["goal.level", "beliefs.risk", "spends.energy"],
+            "against": ["goal.level"], "do": "actions.raise level",
+            "escalate": "people.operator",
+        })
+
+        self.assertEqual(
+            semantic_signature(expand_spec(canonical)),
+            semantic_signature(expand_spec(qualified)),
+        )
+
     def test_loop_membership_is_lossless_and_not_order_dependent(self):
         first = minimal_spec(
             observes={
@@ -547,7 +828,7 @@ class SemanticPipelineTests(unittest.TestCase):
         with self.assertRaisesRegex(loop_language.SpecError, "through: missing process"):
             expand_spec(invalid)
 
-    def test_reference_use_is_explicit_and_must_be_read_by_the_same_rule(self):
+    def test_reference_use_is_explicit_and_implies_a_read_by_the_same_rule(self):
         partial = minimal_spec()
         partial_findings, failures = derive.analyze_document(expand_spec(partial))
 
@@ -570,15 +851,21 @@ class SemanticPipelineTests(unittest.TestCase):
                        "rel": "uses_reference"}, complete_doc["edges"])
         self.assertNotIn("reference_not_used", complete_patterns)
 
-        invalid = minimal_spec(when=[{
+        nonredundant = minimal_spec(when=[{
             "if": "level below 1",
             "reads": [],
             "against": ["level"],
             "do": "raise level",
         }])
-        with self.assertRaisesRegex(loop_language.SpecError,
-                                    "must also appear in this rule's `reads:`"):
-            expand_spec(invalid)
+        nonredundant_doc = expand_spec(nonredundant)
+        nonredundant_policy = next(
+            node for node in nonredundant_doc["nodes"] if node["kind"] == "Policy"
+        )
+        self.assertEqual(["level"], nonredundant_policy["inputs"])
+        self.assertIn(
+            {"from": nonredundant_policy["id"], "to": "level", "rel": "reads"},
+            nonredundant_doc["edges"],
+        )
 
     def test_accepted_operational_metadata_survives_expansion(self):
         spec = minimal_spec(
@@ -789,6 +1076,32 @@ class SemanticPipelineTests(unittest.TestCase):
             "do": "raise level",
         }]
 
+        profiles_without_fallback = copy.deepcopy(base)
+        profiles_without_fallback["actions"] = {"raise level": {"moves": "level"}}
+        profiles_without_fallback["people"] = {
+            "operator": {"human": True, "loses_if_wrong": "overflow"},
+        }
+        profiles_without_fallback["action_profiles"] = {
+            "approved": {
+                "action": "raise level", "when": "remote request",
+                "resolved_at": "request", "can_undo": "unknown",
+                "needs_approval": "operator",
+            },
+            "local": {
+                "action": "raise level", "when": "local request",
+                "resolved_at": "request", "can_undo": "yes",
+            },
+        }
+
+        profile_without_variation = copy.deepcopy(base)
+        profile_without_variation["actions"] = {"raise level": {"moves": "level"}}
+        profile_without_variation["action_profiles"] = {
+            "fallback": {
+                "action": "raise level", "default": True,
+                "resolved_at": "request", "can_undo": "unknown",
+            },
+        }
+
         split_open_loop = [
             {
                 "loop": "actuation",
@@ -820,6 +1133,8 @@ class SemanticPipelineTests(unittest.TestCase):
             [incomplete_boundary],
             [unlocated_process],
             [partly_blind_policy],
+            [profiles_without_fallback],
+            [profile_without_variation],
             split_open_loop,
             inverted_cascade,
         ]
@@ -971,7 +1286,7 @@ class SemanticPipelineTests(unittest.TestCase):
         output = __import__("json").loads(result.stdout)
         self.assertTrue(output["valid"])
         self.assertEqual(2, output["ir_version"])
-        self.assertEqual("2.1", output["ir_revision"])
+        self.assertEqual("2.2", output["ir_revision"])
         self.assertTrue(all("assurance" in finding for finding in output["findings"]))
         self.assertTrue(all(finding.get("repair") for finding in output["findings"]))
         self.assertTrue(all(finding.get("evidence_status") in
@@ -1091,8 +1406,8 @@ class SemanticPipelineTests(unittest.TestCase):
         relative_paths = {os.path.relpath(path, ROOT) for path in paths}
 
         self.assertEqual(1, manifest["manifest_version"])
-        self.assertEqual("1.1", manifest["authoring_version"])
-        self.assertEqual("2.1", manifest["ir_revision"])
+        self.assertEqual("1.2", manifest["authoring_version"])
+        self.assertEqual("2.2", manifest["ir_revision"])
         self.assertEqual(relative_paths, set(manifest["fixtures"]))
 
         for relative_path, expected in manifest["fixtures"].items():
@@ -1102,7 +1417,7 @@ class SemanticPipelineTests(unittest.TestCase):
                 )
                 self.assertEqual([], warnings)
                 self.assertTrue(report.ok, report.errors)
-                self.assertEqual("loop-v1.1", document["source_format"])
+                self.assertEqual("loop-v1.2", document["source_format"])
                 self.assertEqual(manifest["ir_revision"], document["ir_revision"])
                 self.assertEqual(expected["encodes"], document["encodes"])
                 self.assertEqual(expected["semantic_hash"],

@@ -39,11 +39,11 @@ Order is not significant. Research encodings carry provenance (`domain`, `encode
 
 ```yaml
 loopspec_version: 2
-ir_revision: "2.1"
+ir_revision: "2.2"
 encodes: <system-slug>              # required
 set: seed | adversarial | held_out | negative | field
 shape: canonical-graph
-source_format: loop-v1.1            # generated design artifacts
+source_format: loop-v1.2            # generated design artifacts
 domain: <slug>                      # research encodings
 encoded_by: <model-or-person>       # research encodings
 encoder_role: author-intent | independent  # research encodings
@@ -58,7 +58,7 @@ nodes:                              # ALL nodes, flat, one list
     kind: System | Boundary | Party | Estimand | Signal | Estimate | Evidence |
           Estimator | DesiredCondition | PreferenceOrdering | Consequence |
           Intervention | Policy | Loop | Delay | TimeScale | Resource |
-          Constraint | Revision
+          Constraint | Revision | ActionProfile | ControlOperation | Output
     # kind-specific fields, max 2 levels below this point
 edges:
   - from: <id>
@@ -66,7 +66,7 @@ edges:
     rel: measures | estimates | holds | targets | closes | delays | constrains |
          authorizes | consumes | revises | contains | bears |
          asserts | replenishes | produces | reads | compares | causes | frames | bounds |
-         samples_at | reviews_at | sets | uses_reference
+         samples_at | reviews_at | sets | uses_reference | profiles | emits
   ...
 loops:                              # derived view, but declared explicitly
   - id: <slug>
@@ -77,6 +77,9 @@ loops:                              # derived view, but declared explicitly
     desired_conditions: [<ids of DesiredCondition nodes>]
     policies: [<ids of Policy nodes>]
     processes: [<ids of System nodes with role: controlled_process>]
+    action_profiles: [<ids of ActionProfile nodes>]
+    operations: [<ids of ControlOperation nodes>]
+    outputs: [<ids of Output nodes>]
     boundary: <id of a Boundary node> | null
 excluded_variables: [...]
 breaks_declared: [...]
@@ -113,6 +116,8 @@ edge vocabulary had been too weak to express closure and provenance.
 | `reviews_at` | Calibration → TimeScale | Gives belief-calibration and attention-review loops an explicit cadence distinct from their scoring window. |
 | `sets` | Estimand → DesiredCondition | Makes a cascade's outer quantity structurally set the inner reference instead of leaving `set_by` as an opaque string. |
 | `uses_reference` | Policy → DesiredCondition | Records which ordered decision rule actually compares its input with a declared target; the comparator is no longer inferred from co-presence alone. |
+| `profiles` | ActionProfile → Intervention | Attaches a late-bound safety/approval variant to a world action without turning controller transitions into interventions. |
+| `emits` | ControlOperation → Output | Separates a controller transition from the value it exposes across the represented boundary. |
 
 A **fully represented structural ring** for a controlled quantity is traversable as
 `Policy →uses_reference→ DesiredCondition →targets→ Estimand ←measures← Signal ←produces←
@@ -201,3 +206,9 @@ IR revision 2.1 is backward-compatible within major version 2. It adds optional 
 controlled-process membership, `frames`/`bounds`/`causes` edges, action effect direction, and
 distinct belief/attention review contracts. Older v2 graphs remain readable; new authoring
 expansions emit the richer fields and receive explicit findings when they are absent.
+
+IR revision 2.2 adds optional `ActionProfile`, `ControlOperation`, and `Output` nodes plus
+`profiles` and `emits` edges. Existing v1.1 authoring documents and earlier v2 graphs remain
+readable. The additions are experimental: an eight-cycle independent-encoding study did not meet
+its preregistered convergence threshold, so these types are implemented and testable but not yet
+claimed as a settled cross-encoder vocabulary.

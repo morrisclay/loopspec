@@ -323,7 +323,7 @@ def validate(study, records):
             errors.append(f"{where}.spec_path cannot be analyzed: {error}")
             continue
         if warnings or not report.ok:
-            errors.append(f"{where}.spec_path must be warning-free valid v1.1 input")
+            errors.append(f"{where}.spec_path must be warning-free valid LoopSpec input")
             continue
         expected_signature = _presented_signature(document, generated_findings)
         recorded_signature = _recorded_signature(record)

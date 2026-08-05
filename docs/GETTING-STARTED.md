@@ -262,7 +262,7 @@ blog posts. You can diff two specs.**
 
 ## 8. Compile it
 
-Compilation is experimental and is not part of the v1.1 release claim. If you use an LLM as an
+Compilation is experimental and is not part of the language claim. If you use an LLM as an
 adapter, give it the spec and the target's actual API:
 
 > Here is a loop spec. Emit a working implementation for **LangGraph**.

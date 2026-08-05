@@ -1,0 +1,8 @@
+{
+  "source": "openai_agents_sdk.raw.yaml",
+  "output": "openai_agents_sdk.loop.yaml",
+  "semantic_edits": [
+    "change tool_result origin from outside to ourselves while retaining how: measured and produced_by: execute_tool"
+  ],
+  "reason": "LoopSpec origin records causal production. The raw output simultaneously declared origin: outside and produced_by an in-loop action, which the fail-closed validator rejects. The measurement can still pass through an outside tool process and surprise the loop."
+}

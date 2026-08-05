@@ -50,6 +50,8 @@ linter — not written by hand.
 | [`incomplete_calibration_contract`](#incomplete-calibration-contract) | 1/23 | structural | calibration | *"we have a review called calibration, but it never changes trust"* |
 | [`reversibility_unspecified`](#reversibility-unspecified) | 1/23 | structural | — | *"nobody knows whether this action can be taken back"* |
 | [`unowned_act`](#unowned-act) | 1/23 | structural | — | *"two agents can do the same thing under different rules"* |
+| [`action_profiles_without_fallback`](#action-profiles-without-fallback) | 0/23 | structural | — | *"the safe cases are described and everything else disappears"* |
+| [`action_profiles_without_safety_variation`](#action-profiles-without-safety-variation) | 0/23 | structural | — | *"the profile table is longer, but every row has the same safety answer"* |
 | [`cascade_cadence_inversion`](#cascade-cadence-inversion) | 0/23 | qualitative-proxy | — | *"the two loops fight each other"* |
 | [`frozen_setpoint`](#frozen-setpoint) | 0/23 | structural | — | *"the target has not changed in a year and nobody owns it"* |
 | [`incomplete_attention_contract`](#incomplete-attention-contract) | 0/23 | structural | attention | *"we review the source, but the review cannot change what we look at"* |
@@ -131,7 +133,7 @@ linter — not written by hand.
 
 **What it looked at.** A desired condition exists while no ordered policy rule declares that it uses the reference.
 
-**How to fix it.** Add `against: [goal_quantity]` to the `when` rule that compares its observed input with that goal's `keep:` condition. The quantity must also be in `reads:`.
+**How to fix it.** Add `against: [goal_quantity]` to the `when` rule that compares its observed input with that goal's `keep:` condition. This also declares that the rule reads the quantity.
 
 **Status.** fires on **22 of 23** specs here · motivated · **structural assurance**. Structural comparator closure. It establishes a declared reference-use path, not a numeric error calculation, controller gain, or runtime implementation.
 
@@ -299,7 +301,7 @@ linter — not written by hand.
 
 **Real finding**, from `examples/customer_acquisition.loop.yaml`:
 
-> Intervention `exit_channel` is marked `irreversible` and declares no `requires_approval_from`. The loop may take an act it cannot undo with no human gate. Runtime approval features may exist, but this design does not bind one to the action.
+> Action `exit_channel` is marked `irreversible` and declares no `requires_approval_from`. The loop may take an act it cannot undo with no human gate. Runtime approval features may exist, but this design does not bind one to the action.
 
 ---
 
@@ -517,13 +519,13 @@ linter — not written by hand.
 
 **What it looked at.** A generated action omits `can_undo`, so the analyzer cannot determine whether an approval gate is required.
 
-**How to fix it.** Add `can_undo: yes`, `costly`, or `no`. Omission is unknown, not reversible.
+**How to fix it.** Add `can_undo: yes`, `costly`, `no`, or `unknown`. Explicit unknown is reviewable and never treated as reversible.
 
 **Status.** fires on **1 of 23** specs here · motivated · **structural assurance**. Safety-relevant declaration completeness. It does not establish whether the author's classification matches the real action.
 
 **Real finding**, from `examples/research_group.loop.yaml`:
 
-> Action `dispatch_worker` does not say whether it can be undone. Approval requirements depend on that distinction, so omission is not treated as reversible. Add `can_undo: yes`, `costly`, or `no`.
+> Action `dispatch_worker` does not say whether it can be undone. Approval requirements depend on that distinction, so omission is not treated as reversible. Add `can_undo: yes`, `costly`, `no`, or an explicit profile value of `unknown`.
 
 ---
 
@@ -540,6 +542,30 @@ linter — not written by hand.
 **Real finding**, from `examples/research_group.loop.yaml`:
 
 > Intervention `emit_report` is selected by 2 policies — ['verifier_policy_0', 'worker_policy_0'] — belonging to loops ['verifier', 'worker']. Nothing says which one owns it, so its approval rule is whichever loop reaches it first. Authority decided by scheduling is not authority.
+
+---
+
+## `action_profiles_without_fallback`
+
+> *"the safe cases are described and everything else disappears"*
+
+**What it looked at.** A generic action has one or more conditional `action_profiles` but no default profile for unmatched requests.
+
+**How to fix it.** Add one `default: true` profile with the honest fallback properties. Use `can_undo: unknown` when deployment or request details have not bound reversibility.
+
+**Status.** fires on **0 of 23** specs here · motivated · **structural assurance**. Totality of a conditional safety contract. It establishes declared coverage, not that profile predicates are mutually exclusive or operationally correct.
+
+---
+
+## `action_profiles_without_safety_variation`
+
+> *"the profile table is longer, but every row has the same safety answer"*
+
+**What it looked at.** Action profiles exist even though reversibility and approver do not vary, including a lone default profile.
+
+**How to fix it.** Put non-varying `can_undo` and `needs_approval` on the base action. Keep profiles only when at least one of those safety properties differs.
+
+**Status.** fires on **0 of 23** specs here · motivated · **structural assurance**. Canonical conditional-safety representation. It removes redundant partitions; it does not establish that the remaining selectors are correct.
 
 ---
 

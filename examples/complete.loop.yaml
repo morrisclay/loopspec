@@ -1,5 +1,5 @@
-# A compact, fully explicit URAS v1.1 authoring example.
-# It expands to IR v2.1 and intentionally has no active design findings.
+# A compact, fully explicit LoopSpec v1.1-compatible authoring example.
+# The current producer expands it to IR v2.2 with no active design findings.
 
 loop: support_triage
 runs: per_ticket

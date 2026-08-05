@@ -1,0 +1,134 @@
+# OpenAI Agents SDK at 19e364c17344905ce6d17f41ea4fe084cba20388.
+# Evidence: src/agents/run.py 203-280, 793-825, 1091-1168, 1440-1585;
+# src/agents/tool.py 473-505; src/agents/result.py 414-495;
+# src/agents/run_state.py 356-390.
+
+loop: openai_agents_runner
+runs: per_runner_invocation
+
+boundary:
+  drawn_by: sdk_caller
+  purpose: run model, tool, handoff, and approval steps until a final output, interruption, or bounded failure leaves the runner
+  inside: [runner state, current agent, turn counter, tool dispatch, handoff dispatch, approval records]
+  outside: [SDK caller, model provider, tool environments, handed-off agent implementations]
+
+goal:
+  final_output_ready:
+    keep: the runner returns the requested final output within the configured turn limit
+
+beliefs:
+  next_step:
+    question: Should the current response finish, call a tool, hand off, request approval, or run again?
+    how: model response processing plus runner dispatch rules
+    explains: final_output_ready
+    settled_by: step_result
+
+observes:
+  runner_input:
+    informs: [final_output_ready, next_step]
+    origin: outside
+    how: reported
+    reported_by: sdk_caller
+  model_response:
+    informs: next_step
+    origin: outside
+    how: reported
+    reported_by: model_provider
+  step_result:
+    informs: [final_output_ready, next_step]
+    origin: ourselves
+    how: measured
+    produced_by: execute_tool_call
+
+processes:
+  tool_environment:
+    location: outside
+    description: the concrete enabled tool and its arguments read or change an external environment and return a result
+    observed_as: [step_result]
+
+actions:
+  execute_tool_call:
+    moves: final_output_ready
+    through: tool_environment
+    effect: unknown
+
+action_profiles:
+  request_requiring_approval:
+    action: execute_tool_call
+    when: the configured approval predicate returns true for this call and its parameters
+    resolved_at: request
+    can_undo: unknown
+    needs_approval: sdk_caller
+  request_not_matched_by_approval_policy:
+    action: execute_tool_call
+    default: true
+    resolved_at: request
+    can_undo: unknown
+
+outputs:
+  final_output:
+    kind: final
+    terminates: run
+    description: the typed final output returned by the last agent
+  approval_request:
+    kind: approval_request
+    terminates: run
+    description: a resumable result that ends this Runner.run invocation with pending tool approval items
+  max_turns_failure:
+    kind: failure
+    terminates: run
+    description: the configured maximum-turn failure result or exception
+
+operations:
+  pause_for_approval:
+    kind: pause
+    when: a tool call needs approval that has not yet been recorded
+    emits: approval_request
+  resume_approved_state:
+    kind: resume
+    when: the caller approves or rejects an interruption and passes the RunState back to Runner.run
+    authorized_by: sdk_caller
+  handoff_agent:
+    kind: handoff
+    when: the processed response selects NextStepHandoff
+  run_again:
+    kind: retry
+    when: the processed response selects NextStepRunAgain
+  stop_with_final_output:
+    kind: stop
+    when: the processed response selects NextStepFinalOutput
+    emits: final_output
+  stop_at_max_turns:
+    kind: stop
+    when: the current turn exceeds max_turns
+    emits: max_turns_failure
+
+when:
+  - if: the model response requests an enabled tool call whose approval state permits execution
+    reads: [next_step, final_output_ready]
+    against: [final_output_ready]
+    do: execute_tool_call
+
+asks_human_when:
+  - the configured per-call approval predicate returns true and no approval record exists
+asks_human: sdk_caller
+
+people:
+  sdk_caller:
+    human: true
+    loses_if_wrong: external state changed by configured tools and trust in the runner result
+    sees: [final_output_ready, next_step]
+  model_provider:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [next_step]
+
+spends:
+  turn_budget:
+    limit: max_turns, 10 by default
+    replenished: a new runner invocation
+    spent_by: execute_tool_call
+
+not_modelling:
+  - whether the SDK caller is a human, service, or automatic approval callback in a concrete deployment
+  - concrete tool reversibility, consequence, and enabled-tool configuration

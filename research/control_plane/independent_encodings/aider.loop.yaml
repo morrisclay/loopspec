@@ -1,0 +1,350 @@
+# Encoded from blinded excerpts of aider/coders/base_coder.py (lines 876-944, 986-1000,
+# 1419-1623, 2296-2336, 2375-2409) and aider/coders/architect_coder.py (lines 6-48).
+loop: aider_coding_session
+
+# base_coder.py:876-887, 924-944
+runs: per_question
+
+boundary:
+  drawn_by: user
+  purpose: >
+    Separate the local coding session under the user's control (message loop,
+    file edits, git commits, lint/test feedback) from the external model
+    service, shell environment, linter, and test runner it invokes.
+  inside:
+    - run/run_one message loop (base_coder.py:876-944)
+    - apply_edits, commit_changes, lint_edited, run_tests actions
+    - reflection retries and keyboard-interrupt handling
+  outside:
+    - main_model / LiteLLM service (base_coder.py:1419-1459)
+    - shell environment invoked by run_shell_commands (base_coder.py:1609)
+    - external linter (base_coder.py:1599-1602)
+    - external test runner (base_coder.py:1616-1621)
+
+goal:
+  task_resolved:
+    # base_coder.py:932-944, 1596-1623
+    keep: >
+      reflected_message is empty, edited files are committed, and any
+      lint/test errors found on edited files are resolved, within
+      max_reflections re-sends of the same user message
+    from: [llm_reply, lint_result, test_result, commit_result]
+
+observes:
+  user_request:
+    # base_coder.py:886, 898-910
+    origin: outside
+    how: reported
+    reported_by: user
+    informs: task_resolved
+    every: per_message
+  llm_reply:
+    # base_coder.py:1419-1459, 1549-1558
+    origin: outside
+    how: reported
+    reported_by: main_model
+    informs: task_resolved
+    cost: medium
+  lint_result:
+    # base_coder.py:1599-1602
+    origin: ourselves
+    how: calculated
+    produced_by: lint_edited
+    informs: task_resolved
+  test_result:
+    # base_coder.py:1616-1621
+    origin: ourselves
+    how: calculated
+    produced_by: run_tests
+    informs: task_resolved
+  commit_result:
+    # base_coder.py:2375-2395
+    origin: ourselves
+    how: calculated
+    produced_by: commit_changes
+    informs: task_resolved
+  shell_output:
+    # base_coder.py:1609-1614 (run_shell_commands body not shown in excerpt)
+    origin: outside
+    how: measured
+    source: "shell command execution via run_shell_commands"
+    informs: task_resolved
+
+actions:
+  apply_edits:
+    # base_coder.py:2296-2336
+    moves: task_resolved
+    through: file_write
+    effect: unknown
+  commit_changes:
+    # base_coder.py:2375-2395
+    moves: task_resolved
+    through: git_repo
+    effect: unknown
+  lint_edited:
+    # base_coder.py:1599-1602
+    moves: task_resolved
+    through: lint_tool
+    effect: unknown
+    can_undo: yes
+  run_tests:
+    # base_coder.py:1616-1621
+    moves: task_resolved
+    through: test_runner
+    effect: unknown
+  run_shell_commands:
+    # base_coder.py:1609-1610 (only call site shown, not the implementation)
+    moves: task_resolved
+    through: shell_env
+    effect: unknown
+
+action_profiles:
+  apply_edits_dry_run:
+    action: apply_edits
+    when: "self.dry_run is true"
+    resolved_at: request
+    can_undo: yes
+    description: >
+      Dry-run mode announces intended edits without writing them
+      ("Did not apply edit to {path} (--dry-run)"), base_coder.py:2331-2332.
+  apply_edits_live:
+    action: apply_edits
+    default: true
+    resolved_at: request
+    can_undo: unknown
+    description: >
+      Edits are written directly to working-tree files (base_coder.py:2334);
+      the excerpt shows no rollback path prior to a later commit.
+  commit_default:
+    action: commit_changes
+    default: true
+    resolved_at: request
+    can_undo: costly
+    description: >
+      Commit is created automatically when a repo is present, auto_commits
+      is enabled, and dry_run is false (base_coder.py:2376); the user can
+      discard it afterward via /undo (show_undo_hint, base_coder.py:2405-2409).
+  run_tests_default:
+    action: run_tests
+    default: true
+    resolved_at: request
+    can_undo: unknown
+    description: >
+      test_cmd is a user-configured command (base_coder.py:1616-1618); its
+      side effects are not constrained by the excerpt.
+  run_shell_commands_default:
+    action: run_shell_commands
+    default: true
+    resolved_at: request
+    can_undo: unknown
+    description: >
+      Shell commands are executed via run_shell_commands (base_coder.py:1609);
+      effects depend on the concrete command and are not established here.
+
+operations:
+  retry_llm_call:
+    kind: retry
+    # base_coder.py:1449, 1461-1488
+    when: >
+      a retryable LiteLLM exception occurs and the doubled retry_delay
+      remains <= RETRY_TIMEOUT
+    description: >
+      Resends the same messages after sleeping retry_delay seconds,
+      doubling the delay each time.
+  interrupt_llm_call:
+    kind: interrupt
+    # base_coder.py:1489-1491, 1560, 1572-1583
+    when: "the user presses Ctrl-C while send_message is awaiting the model"
+    authorized_by: user
+    description: >
+      Breaks out of the send loop and marks the turn interrupted; a synthetic
+      '^C KeyboardInterrupt' / acknowledgement exchange is appended instead
+      of applying edits.
+  retry_reflection:
+    kind: retry
+    # base_coder.py:932-944
+    when: >
+      reflected_message is set after send_message and
+      num_reflections < max_reflections
+    description: >
+      Re-invokes send_message with the reflected message (e.g. added file
+      mentions, a malformed-edit error, lint errors, or test errors) instead
+      of returning control to the user.
+  stop_reflection_limit:
+    kind: stop
+    # base_coder.py:939-941
+    when: "num_reflections >= max_reflections"
+    emits: reflection_limit_warning
+    description: "Logs a warning and returns without further reflection."
+  interrupt_input_wait:
+    kind: interrupt
+    # base_coder.py:882-890
+    when: "the user presses Ctrl-C while get_input() is awaiting a new message"
+    authorized_by: user
+    description: "Caught by run()'s outer loop and dispatched to keyboard_interrupt()."
+  stop_on_double_interrupt:
+    kind: stop
+    # base_coder.py:986-1000
+    when: >
+      a second Ctrl-C arrives within 2 seconds (thresh) of the previous
+      recorded interrupt
+    authorized_by: user
+    emits: exit_status
+    description: >
+      Logs an "exit" event with reason "Control-C" and calls sys.exit().
+  handoff_to_editor:
+    kind: handoff
+    # architect_coder.py:11-48
+    when: >
+      architect mode produced non-empty content and
+      (auto_accept_architect is true or the user confirms "Edit the files?")
+    authorized_by: user
+    description: >
+      Creates a new editor_coder (Coder.create) sharing io/model/cost state,
+      runs it against the architect's content with preproc disabled, then
+      merges its total_cost and aider_commit_hashes back into this coder.
+
+outputs:
+  assistant_reply:
+    kind: final
+    terminates: turn
+    description: >
+      The model's textual reply (base_coder.py:1555-1558), closing the
+      current message exchange absent reflection or interruption.
+  apply_edits_status:
+    kind: status
+    terminates: none
+    description: "Per-file 'Applied edit to {path}' / dry-run notice, base_coder.py:2330-2335."
+  malformed_edit_error:
+    kind: failure
+    terminates: none
+    description: >
+      Edit-format ValueError reported to the user and fed back as
+      reflected_message, base_coder.py:2305-2316.
+  commit_error:
+    kind: failure
+    terminates: none
+    description: "'Unable to commit' error when the git commit raises, base_coder.py:2393-2395."
+  exhausted_context_error:
+    kind: failure
+    terminates: turn
+    description: >
+      Context-window-exceeded or non-prefillable FinishReasonLength ends the
+      exchange without applying edits, base_coder.py:1536-1547.
+  reflection_limit_warning:
+    kind: status
+    terminates: turn
+    description: "'Only N reflections allowed, stopping.', base_coder.py:939-941."
+  undo_hint:
+    kind: status
+    terminates: none
+    description: "Reminder that /undo can discard the last aider commit, base_coder.py:2405-2409."
+  exit_status:
+    kind: status
+    terminates: run
+    description: "Logged exit event before process termination on double Ctrl-C, base_coder.py:994-996."
+  lint_fix_confirmation:
+    kind: approval_request
+    terminates: none
+    description: "'Attempt to fix lint errors?' after auto_lint finds lint_errors, base_coder.py:1603-1604."
+  test_fix_confirmation:
+    kind: approval_request
+    terminates: none
+    description: "'Attempt to fix test errors?' after auto_test finds test_errors, base_coder.py:1619-1620."
+  architect_edit_confirmation:
+    kind: approval_request
+    terminates: none
+    description: "'Edit the files?' before handing content to an editor_coder, architect_coder.py:17."
+
+processes:
+  file_write:
+    location: inside
+    observed_as: [lint_result, test_result]
+    description: >
+      Parsed edits are written to working-tree files (base_coder.py:2296-2336);
+      consequences are later observed via lint and test runs.
+  git_repo:
+    location: interface
+    observed_as: [commit_result]
+    description: "Local git repository into which edited files are committed, base_coder.py:2375-2395."
+  lint_tool:
+    location: outside
+    observed_as: [lint_result]
+    description: "External linter invoked against edited files, base_coder.py:1599-1602."
+  test_runner:
+    location: outside
+    observed_as: [test_result]
+    description: "External test command invoked against edited files, base_coder.py:1616-1621."
+  shell_env:
+    location: outside
+    observed_as: [shell_output]
+    description: "Local shell in which suggested commands run, base_coder.py:1609-1614."
+
+when:
+  # base_coder.py:2296-2304
+  - if: "the model's reply parses into edits without a ValueError/git error"
+    reads: [task_resolved]
+    against: [task_resolved]
+    do: apply_edits
+  # base_coder.py:1585-1589 (guarded inside auto_commit, line 2376)
+  - if: "files were edited, a repo is present, auto_commits is enabled, and dry_run is false"
+    reads: [task_resolved]
+    against: [task_resolved]
+    do: commit_changes
+  # base_coder.py:1599-1602
+  - if: "files were edited and auto_lint is enabled"
+    reads: [task_resolved]
+    against: [task_resolved]
+    do: lint_edited
+  # base_coder.py:1616-1621
+  - if: "files were edited and auto_test is enabled"
+    reads: [task_resolved]
+    against: [task_resolved]
+    do: run_tests
+  # base_coder.py:1609
+  - if: "the model's reply includes shell commands and shell suggestions are not disabled"
+    do: run_shell_commands
+
+asks_human_when:
+  - "auto_lint is enabled and lint_edited returns errors on the just-edited files (base_coder.py:1603-1604)"
+  - "auto_test is enabled and cmd_test returns errors on the just-edited files (base_coder.py:1619-1620)"
+  - "architect edit_format produced content and auto_accept_architect is false (architect_coder.py:17)"
+asks_human: user
+
+people:
+  user:
+    human: true
+    # base_coder.py:1604, 1620; architect_coder.py:17; base_coder.py:986-1000
+    loses_if_wrong:
+      - unwanted or incorrect file edits
+      - wasted review/debugging time
+      - git history requiring manual /undo to discard
+    sees: [task_resolved]
+  main_model:
+    agent: true
+    loses_if_wrong: nothing
+
+spends:
+  reflection_budget:
+    # base_coder.py:932-944
+    limit: "max_reflections re-sends per user message (self.max_reflections)"
+    replenished: "reset at the start of each run_one call (init_before_message)"
+  llm_retry_backoff:
+    # base_coder.py:1449, 1469-1472
+    limit: "retry_delay doubling from 0.125s, capped by RETRY_TIMEOUT"
+    replenished: "reset to 0.125s at the start of each send_message call"
+
+never:
+  # base_coder.py:1468-1472
+  - "retry an LLM call once the doubled retry_delay exceeds RETRY_TIMEOUT"
+  # base_coder.py:2376
+  - "commit edited files when dry_run is true"
+  # base_coder.py:939-941
+  - "continue reflecting past max_reflections without warning the user"
+
+not_modelling:
+  - "the content or quality of the LLM's proposed edits"
+  - "which concrete shell command text is generated or its real-world effects"
+  - "internals of the configured linter or test_cmd tool"
+  - "token/cost accounting and cache-warming details (warm_cache, show_usage_report)"
+  - "the diff review UI (cmd_diff) shown after a commit"

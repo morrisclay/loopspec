@@ -345,6 +345,35 @@ primitives:
     x Party rather than a primitive — real, checkable, and not costing budget.
 
     '
+- name: ActionProfile
+  tier: extension
+  depth: 2
+  definition: >
+    A conditional variant of a generic Intervention whose reversibility and authority become
+    known at design, deployment, or request time. It prevents a runtime capability from being
+    mistaken for a selected deployment policy and prevents one generic tool family from
+    receiving a fictitious universal safety value.
+  demanded_by: [codex, goose, openhands_sdk, openai_agents_sdk, aider, agentlab]
+  attributes:
+    - binding_stage: design | deployment | request
+    - reversibility: reversible | costly | irreversible | unknown
+    - default: whether this is the explicit fallback for unmatched instances
+- name: ControlOperation
+  tier: extension
+  depth: 2
+  definition: >
+    A transition in execution of the regulator itself: start, pause, resume, interrupt, retry,
+    compact, hand off, or stop. It does not act through the represented controlled process and
+    therefore is not an Intervention.
+  demanded_by: [codex, goose, openhands_sdk, aider, agentlab, openai_agents_sdk]
+- name: Output
+  tier: extension
+  depth: 2
+  definition: >
+    A value emitted across the represented loop boundary. It may terminate a turn or run, or be
+    a non-terminal approval request. It is neither an observation arriving into the loop nor an
+    Intervention on the controlled process.
+  demanded_by: [swe_agent, browser_use, codex, aider, agentlab, openai_agents_sdk]
 - name: Policy
   tier: core
   depth: 3

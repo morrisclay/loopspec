@@ -1,0 +1,10 @@
+{
+  "raw": "pydantic_ai.raw.yaml",
+  "comparison": "pydantic_ai.loop.yaml",
+  "semantic_edits": [],
+  "mechanical_repairs": [
+    "Removed the redundant base can_undo value because the same action declares action_profiles.",
+    "Changed tool_results origin from outside to ourselves because produced_by names this loop's execute_tool_call action."
+  ],
+  "cycle_status": "failed_strict_validation"
+}

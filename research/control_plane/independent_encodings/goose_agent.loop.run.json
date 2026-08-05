@@ -1,0 +1,13 @@
+{
+  "case": "goose_agent",
+  "study_role": "control_plane_holdout",
+  "encoder": "Anthropic Claude CLI",
+  "model_alias": "sonnet",
+  "tool_access": "disabled",
+  "session_persistence": "disabled",
+  "generated_at": "2026-08-04T21:56:34.224968+00:00",
+  "source_repository": "https://github.com/block/goose",
+  "source_revision": "7f62ce53e70c49e634ed9ba16a1ef8e02a2d239c",
+  "prompt_sha256": "4208772c33a11660747691e23ec6fea44e88a7ac5036bbf6c6a44cf929b9816a",
+  "output_sha256": "e084aa4d4aec6233380a94963c018a4650e5634b8d621f54f60c3024c89f3dcd"
+}

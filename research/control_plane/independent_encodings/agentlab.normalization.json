@@ -1,0 +1,9 @@
+{
+  "source": "agentlab.raw.yaml",
+  "output": "agentlab.loop.yaml",
+  "semantic_edits": [
+    "materialize send_chat_message under actions, exactly as the raw artifact's own note says",
+    "remove the raw artifact's self-labelled stray placeholder action profile"
+  ],
+  "reason": "The raw encoder described its intended repair in comments but failed to apply it, leaving when.do with a dangling reference. The raw artifact is retained unchanged."
+}

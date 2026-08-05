@@ -1,0 +1,113 @@
+# Notte at 10e0fd35316565cc84bdbe9905d2645972f8b77c.
+# Evidence: packages/notte-agent/src/notte_agent/agent.py 49-121, 123-269, 359-414;
+# packages/notte-agent/src/notte_agent/common/base.py 1-20.
+
+loop: notte_browser_agent_run
+runs: per_arun_invocation
+
+boundary:
+  drawn_by: run_caller
+  purpose: execute browser actions until validated completion or a declared terminal failure returns one AgentResponse
+  inside: [NotteAgent controller, trajectory, model context, completion validator, failure counters]
+  outside: [run caller, model provider, browser session, websites, credential vault]
+
+goal:
+  validated_task_result:
+    keep: the requested task returns a validator-accepted successful response within configured limits
+
+beliefs:
+  next_action:
+    question: Which browser action advances the task, or should the run report completion?
+    how: structured model completion over the request, trajectory, and current perception
+    explains: validated_task_result
+    settled_by: browser_or_validation_result
+
+observes:
+  task_request:
+    informs: [validated_task_result, next_action]
+    origin: outside
+    how: reported
+    reported_by: run_caller
+  model_completion:
+    informs: next_action
+    origin: outside
+    how: reported
+    reported_by: model_provider
+  browser_or_validation_result:
+    informs: [validated_task_result, next_action]
+    origin: ourselves
+    how: measured
+    produced_by: execute_browser_action
+
+processes:
+  browser_session:
+    location: outside
+    description: the configured Notte session locates and executes the concrete browser action
+    observed_as: [browser_or_validation_result]
+
+actions:
+  execute_browser_action:
+    moves: validated_task_result
+    through: browser_session
+    effect: unknown
+
+action_profiles:
+  concrete_browser_request:
+    action: execute_browser_action
+    default: true
+    resolved_at: request
+    can_undo: unknown
+    description: consequence and reversibility depend on the selected action, credentials, browser state, and site
+
+outputs:
+  successful_response:
+    kind: final
+    terminates: run
+    description: an AgentResponse containing the validator-accepted answer and trajectory
+  failed_response:
+    kind: failure
+    terminates: run
+    description: an unsuccessful AgentResponse or a propagated terminal exception
+
+operations:
+  retry_agent_step:
+    kind: retry
+    when: completion validation rejects the answer or a browser action fails below the consecutive-failure limit
+  stop_with_success:
+    kind: stop
+    when: the agent and completion validator agree that the task succeeded
+    emits: successful_response
+  stop_with_failure:
+    kind: stop
+    when: the agent reports failure, asks for unimplemented human help, encounters unsupported captcha, reaches a configured limit, or raises terminally
+    emits: failed_response
+
+when:
+  - if: the structured completion selects a regular browser action rather than a controller-only completion or help sentinel
+    reads: [next_action, validated_task_result]
+    against: [validated_task_result]
+    do: execute_browser_action
+
+people:
+  run_caller:
+    kind: system
+    loses_if_wrong: browser side effects, credentials, time, and confidence in the response
+    sees: [validated_task_result, next_action]
+  model_provider:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [next_action]
+
+spends:
+  step_budget:
+    limit: configured max_steps
+    replenished: a new one-shot agent instance
+    spent_by: execute_browser_action
+  consecutive_failure_budget:
+    limit: configured max_consecutive_failures
+    replenished: a successful action or new run
+    spent_by: execute_browser_action
+
+not_modelling:
+  - human approval because HelpAction explicitly fails when hitl is not implemented
+  - concrete reversibility and approval policy for browser actions and credential use

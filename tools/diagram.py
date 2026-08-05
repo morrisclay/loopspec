@@ -38,6 +38,9 @@ SHAPES = {
     "Estimator":        ('["', '"]'),          # box — a computation
     "Calibration":      ('[\\"', '"\\]'),      # inverted trapezoid — scoring
     "Intervention":     ('>"', '"]'),          # flag — an act on the world
+    "ActionProfile":    ('{{"', '"}}'),        # hexagon — a conditional binding
+    "ControlOperation": ('(["', '"])'),        # stadium — controller transition
+    "Output":           ('[["', '"]]'),        # subroutine — emitted value
     "Policy":           ('{"', '"}'),          # diamond — a decision
     "Party":            ('(("', '"))'),        # circle — a person or agent
     "Consequence":      ('[("', '")]'),        # cylinder — what it costs
@@ -70,6 +73,8 @@ REL_STYLE = {
     "bounds":     "-.->|bounds|",
     "sets":       "-->|sets target|",
     "uses_reference": "-->|uses reference|",
+    "profiles":   "-.->|profile of|",
+    "emits":      "-->|emits|",
 }
 
 # Which node kinds a defect should mark, so the finding lands on the right shape.
@@ -80,6 +85,7 @@ DEFECT_ANCHOR = {
     "uncalibrated_estimator": "Estimator",
     "policy_on_unmeasured_inputs": "Policy",
     "irreversible_without_approval": "Intervention",
+    "action_profiles_without_fallback": "Intervention",
     "accountable_but_blind": "Party",
     "no_escalation_path": "Policy",
     "target_without_actuator": "DesiredCondition",
@@ -113,6 +119,14 @@ def node_label(n):
     elif k == "Intervention" and n.get("reversibility"):
         mark = {"irreversible": " ⚠", "costly": " !"}.get(n["reversibility"], "")
         lab = f"{lab}{mark}"
+    elif k == "ActionProfile":
+        binding = n.get("binding_stage", "binding unstated")
+        undo = n.get("reversibility", "reversibility unstated")
+        lab = f"{lab}<br/><i>{binding} · {undo}</i>"
+    elif k == "ControlOperation":
+        lab = f"{n.get('operation_kind', 'operation')}<br/><i>{lab}</i>"
+    elif k == "Output":
+        lab = f"{n.get('output_kind', 'output')}<br/><i>ends {n.get('terminates', 'unknown')}</i>"
     elif k == "Party":
         lab = f"{'🧑 ' if n.get('party_kind') == 'human' else ''}{lab}"
     elif k == "Boundary":
@@ -145,8 +159,10 @@ def render(path):
                               (("Signal",), "observed"),
                               (("Estimand", "Estimator", "Calibration", "Explanation"),
                                "believed"),
-                              (("DesiredCondition", "Policy", "Intervention", "Delay"),
+                              (("DesiredCondition", "Policy", "Intervention", "ActionProfile",
+                                "Delay"),
                                "decided"),
+                              (("ControlOperation", "Output"), "control plane"),
                               (("Party", "Consequence", "Constraint", "Resource"),
                                "accountable")]:
         members = [n for n in doc["nodes"] if n["kind"] in kind_group]

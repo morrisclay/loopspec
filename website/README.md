@@ -1,6 +1,6 @@
 # LoopSpec documentation website
 
-The Astro Starlight site for the LoopSpec v1.1 language and canonical IR v2.1.
+The Astro Starlight site for stable LoopSpec v1.1 compatibility and the experimental v1.2 / IR v2.2 producer.
 
 ## Work locally
 

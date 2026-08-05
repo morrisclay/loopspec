@@ -3,18 +3,23 @@
 LoopSpec versions the human authoring language separately from the canonical graph.
 
 The project was renamed from **URAS** to **LoopSpec** on 2026-08-03. The rename changes the
-package and primary command, not the meaning of authoring v1.1 or canonical IR v2.1. New graphs
+package and primary command, not the meaning of earlier artifacts. New graphs
 emit `loopspec_version`; readers accept the legacy `uras_version` marker throughout LoopSpec
 2.x. The `uras` command remains a deprecated alias and is scheduled for removal in LoopSpec 3.0.
 
-| Artifact | Current | Compatibility promise |
+| Artifact | Current producer | Compatibility promise |
 |---|---:|---|
-| authoring language | 1.1 | 1.x additions are optional and old names remain readable through documented aliases; removing or changing meaning requires 2.0 |
-| canonical graph IR | 2.1 | 2.x readers accept earlier v2 graphs; new producers emit the latest minor revision; incompatible node/edge meaning requires IR 3 |
+| authoring language | 1.2 experimental | v1.1 documents remain accepted without edits; v1.2 adds optional control-plane declarations, but its cross-encoder convergence gate has not passed |
+| canonical graph IR | 2.2 experimental | 2.x readers accept earlier v2 graphs; IR 2.2 adds typed controller operations, outputs, and action profiles |
 | check catalog | generated with the repository | check names and assurance may be narrowed or withdrawn; a stronger claim requires represented premises and new fixtures |
 
-`source_format: loop-v1.1` and `ir_revision: "2.1"` are emitted mechanically. Authors do not
+`source_format: loop-v1.2` and `ir_revision: "2.2"` are emitted mechanically. Authors do not
 write either field.
+
+The v1.2 implementation is internally verified but not yet a converged field claim. Its bounded
+control-plane study stopped at the preregistered ceiling after a fresh independent replication
+scored 0.467 micro-F1 against a 0.80 threshold. The complete negative-result ledger is retained
+under `autoresearch/control-plane-260804-2251/`.
 
 ## Reading older artifacts
 

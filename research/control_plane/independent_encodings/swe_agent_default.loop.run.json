@@ -1,0 +1,13 @@
+{
+  "case": "swe_agent_default",
+  "study_role": "control_plane_holdout",
+  "encoder": "Anthropic Claude CLI",
+  "model_alias": "sonnet",
+  "tool_access": "disabled",
+  "session_persistence": "disabled",
+  "generated_at": "2026-08-04T22:07:18.255907+00:00",
+  "source_repository": "https://github.com/SWE-agent/SWE-agent",
+  "source_revision": "3ea751c087f32b16e039a2233dd6eefecef325d5",
+  "prompt_sha256": "d8808d2f3e5ad4af600bc695aa9d7ff1ff61e351fc53169157180eb14768a42c",
+  "output_sha256": "afb0d065cc2e3891ee9c6114a9802a489ea3f3db1d3f52c4ed749a7adc5a4edc"
+}

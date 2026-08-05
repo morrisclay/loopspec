@@ -1,0 +1,250 @@
+loop: swe_agent_step_loop
+runs: per_run_invocation  # run() drives every step to completion inside one call (sweagent/agent/agents.py:1265-1294)
+
+boundary:
+  drawn_by: operator
+  purpose: >
+    Review how the agent's step loop turns model output into environment actions, which failures
+    are requeried versus end the run, and what leaves the run() call when it stops.
+  inside:
+    - run/step/forward_with_handling control loop  # agents.py:1062-1294
+    - message history and trajectory bookkeeping   # agents.py:1253,1260,1286
+    - exception classification and requery counter # agents.py:1106-1149
+    - info dict assembly (submission, exit_status, model_stats)  # agents.py:1255-1258
+    - run and step hook dispatch                   # agents.py:1248,1262,1282,1287
+  outside:
+    - language model provider
+    - SWEEnv execution environment
+    - problem statement supplied to run()          # agents.py:1265-1279
+    - calling harness that consumes AgentRunResult # agents.py:1294
+    - operator terminal raising KeyboardInterrupt/EOFError  # agents.py:1113-1115
+
+goal:
+  task_resolution:
+    keep: keep stepping until a step reports done with a submission for the problem statement
+    from: [model_response, environment_feedback]  # agents.py:1284-1286
+  submission_recovered:
+    keep: a submission patch captured on every error exit that can still reach the environment
+    from: [extracted_patch]  # attempt_autosubmission_after_error, agents.py:1076-1086
+  step_validity:
+    keep: at most max_requeries recoverable model-output failures within one step
+    from: [action_validity]
+    unit: requeries  # agents.py:1106-1107
+
+beliefs:
+  proposed_next_action:
+    question: which command should be run next to move the problem statement toward resolution?
+    how: language model call on the current message history  # forward(history), agents.py:1109
+    explains: task_resolution
+    settled_by: environment_feedback
+  error_is_recoverable:
+    question: is this failure fixable by requerying the model, or must the run end?
+    how: >
+      exception-type dispatch in forward_with_handling: FormatError, _BlockedActionError,
+      ContentPolicyViolationError, BashIncorrectSyntaxError, _RetryWithOutput and
+      _RetryWithoutOutput requery; the remaining exception classes exit  # agents.py:1118-1210
+    explains: step_validity
+    settled_by: action_validity
+
+observes:
+  model_response:
+    informs: proposed_next_action
+    every: per requery attempt within a step
+    origin: outside
+    how: reported
+    reported_by: language_model
+    cost: medium  # agents.py:1109
+  action_validity:
+    informs: error_is_recoverable
+    every: per model response
+    origin: ourselves
+    how: calculated
+    cost: low
+    source: format / blocklist / shellcheck / content-policy checks raised as exceptions  # agents.py:1120-1141
+  environment_feedback:
+    informs: proposed_next_action
+    every: per executed action
+    origin: ourselves
+    how: measured
+    produced_by: execute_proposed_action
+    cost: low  # observation added to history, agents.py:1239,1253
+  runtime_fault_signal:
+    informs: error_is_recoverable
+    every: on failure
+    origin: outside
+    how: measured
+    cost: low
+    source: >
+      _ExitForfeit, _TotalExecutionTimeExceeded, CommandTimeoutError, ContextWindowExceededError,
+      CostLimitExceededError, RetryError, SwerexException, RuntimeError  # agents.py:1154-1210
+  extracted_patch:
+    informs: submission_recovered
+    every: on error exit and on requery exhaustion
+    origin: ourselves
+    how: measured
+    produced_by: extract_submission_patch
+    cost: low  # agents.py:1079-1086, 1215
+  model_usage_stats:
+    every: per step
+    origin: ourselves
+    how: measured
+    cost: low
+    source: model.stats recorded into info; these excerpts do not feed it back into any decision  # agents.py:1258
+
+actions:
+  query_model:
+    moves: proposed_next_action
+    through: model_inference
+    effect: unknown
+    can_undo: "no"  # tokens and spend are not recoverable
+    consumes: [model_cost, requeries, total_execution_time]
+    effect_after: one model call  # agents.py:1109, 1099-1104
+  execute_proposed_action:
+    moves: task_resolution
+    through: environment_execution
+    effect: unknown
+    consumes: [total_execution_time]
+    effect_after: visible in the next step's observation  # agents.py:1064-1065, 1239
+  extract_submission_patch:
+    moves: submission_recovered
+    through: patch_extraction
+    effect: increase
+    can_undo: unknown
+    consumes: [total_execution_time]
+    effect_after: immediately, before the loop stops  # agents.py:1076-1086
+
+action_profiles:
+  arbitrary_model_command:
+    action: execute_proposed_action
+    default: true
+    resolved_at: request
+    can_undo: unknown
+    description: >
+      The executed command is whatever the model emitted, so reversibility is bound only by the
+      concrete request; these excerpts show validation and blocklist filtering (agents.py:1120-1141)
+      but no approval gate and no reversibility guarantee.
+
+operations:
+  start_run:
+    kind: start
+    when: the harness calls run() with an env and problem statement
+    authorized_by: harness
+    description: setup() then on_run_start before the action/observation loop  # agents.py:1279-1283
+  requery_model_after_recoverable_error:
+    kind: retry
+    when: >
+      FormatError, _BlockedActionError, ContentPolicyViolationError, BashIncorrectSyntaxError,
+      _RetryWithOutput or _RetryWithoutOutput is raised while n_format_fails < max_requeries
+    description: >
+      Rebuilds the requery history with the matching error template (or resamples with the same
+      template) and repeats the same step without touching the environment  # agents.py:1088-1149
+  stop_run:
+    kind: stop
+    when: >
+      a step returns done normally, or an unrecoverable error triggers autosubmission
+      (_ExitForfeit, _TotalExecutionTimeExceeded, CommandTimeoutError, ContextWindowExceededError,
+      CostLimitExceededError, RetryError, SwerexException, RuntimeError, or any other Exception),
+      or max_requeries recoverable failures are exhausted
+    emits: run_result
+    description: >
+      Sets done=True on the step output, ending the `while not step_output.done` loop so run()
+      returns the trajectory-derived result  # agents.py:1076-1086, 1154-1215, 1284-1294
+  abort_on_total_cost_limit:
+    kind: stop
+    when: TotalCostLimitExceededError is raised
+    emits: fatal_exit
+    description: re-raised without autosubmission, so no AgentRunResult is returned  # agents.py:1180-1181
+  interrupt_run:
+    kind: interrupt
+    when: KeyboardInterrupt or EOFError arrives from the operator's terminal
+    authorized_by: operator
+    emits: fatal_exit
+    description: re-raised immediately, bypassing every requery and autosubmission path  # agents.py:1113-1115
+
+outputs:
+  run_result:
+    kind: final
+    terminates: run
+    description: AgentRunResult(info, trajectory) read back from the trajectory file  # agents.py:1291-1294
+  fatal_exit:
+    kind: failure
+    terminates: run
+    description: >
+      TotalCostLimitExceededError, KeyboardInterrupt or EOFError propagating out of run(), leaving
+      no returned result  # agents.py:1113-1115, 1180-1181
+  recovered_submission:
+    kind: submission
+    terminates: none
+    description: >
+      The patch placed in info["submission"] — from a normal submit or from post-error extraction —
+      carried outward for external evaluation  # agents.py:1079-1086, 1255-1257
+  step_record:
+    kind: status
+    terminates: none
+    description: per-step notification to registered run hooks with the step output and updated info  # agents.py:1248,1262
+
+processes:
+  model_inference:
+    location: outside
+    observed_as: [model_response]
+    description: the provider turns the message history into a proposed thought and action
+  environment_execution:
+    location: outside
+    observed_as: [environment_feedback, runtime_fault_signal]
+    description: SWEEnv runs the command and returns output, or fails with a timeout or environment error
+  patch_extraction:
+    location: interface
+    observed_as: [extracted_patch]
+    description: autosubmission reads the accumulated edits out of the environment as a diff
+
+when:
+  - if: a step begins, or a recoverable error requires the model to be requeried
+    reads: [error_is_recoverable, requeries]
+    do: query_model
+  - if: the model output parses into a valid, non-blocked, syntactically correct action
+    reads: [proposed_next_action]
+    do: execute_proposed_action
+  - if: an unrecoverable error is raised, or the requery budget for this step is exhausted
+    reads: [error_is_recoverable, requeries]
+    do: extract_submission_patch
+
+people:
+  operator:
+    human: true
+    loses_if_wrong: cost and wall-clock time spent on a run that ends without a usable patch
+    sees: [task_resolution, submission_recovered]
+  harness:
+    kind: system
+    loses_if_wrong: an aborted invocation with no AgentRunResult to record
+    sees: [task_resolution, submission_recovered, step_validity]
+  language_model:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [task_resolution]
+
+spends:
+  requeries:
+    limit: max_requeries recoverable failures per step
+    replenished: n_format_fails resets to 0 at the start of each forward_with_handling call  # agents.py:1106-1107
+    spent_by: query_model
+  model_cost:
+    limit: per-instance CostLimitExceededError, and a global TotalCostLimitExceededError that aborts
+    spent_by: query_model  # agents.py:1180-1186
+  total_execution_time:
+    limit: total execution budget raising _TotalExecutionTimeExceeded, plus consecutive-command-timeout exit
+    spent_by: [query_model, execute_proposed_action, extract_submission_patch]  # agents.py:1161-1173
+
+never:
+  - execute a model output that failed format, blocklist or bash-syntax validation  # agents.py:1120-1141
+  - continue a step past max_requeries recoverable failures  # agents.py:1107, 1211-1215
+  - exit on an error path without first attempting patch extraction, except for TotalCostLimitExceededError, KeyboardInterrupt and EOFError  # agents.py:1113-1115, 1180-1181
+
+not_modelling:
+  - no step-count ceiling appears in run(); the loop ends only when a step reports done  # agents.py:1284-1286
+  - internals of forward(): parsing, tool dispatch and history construction
+  - hook implementations behind _chook beyond the fact that lifecycle events are dispatched
+  - contents and format of the persisted trajectory file  # agents.py:1286-1293
+  - what the external evaluator does with the submitted patch
+  - nothing in these excerpts scores past proposed actions against outcomes, so no calibration is claimed for proposed_next_action
+  - model_usage_stats is recorded but never read by a decision in these excerpts
+  - no human approval or escalation path appears anywhere in these excerpts

@@ -53,6 +53,8 @@ def _alias_map(section):
 
 SECTION_OF = {"goal": "goal_entry", "beliefs": "beliefs_entry",
               "observes": "observes_entry", "actions": "actions_entry",
+              "action_profiles": "action_profiles_entry",
+              "operations": "operations_entry", "outputs": "outputs_entry",
               "people": "people_entry", "spends": "spends_entry",
               "consider": "consider_entry", "processes": "processes_entry"}
 SINGLETON_OF = {"boundary": "boundary_entry"}
@@ -60,7 +62,9 @@ SINGLETON_OF = {"boundary": "boundary_entry"}
 
 VALUE_ALIASES = {
     ("actions", "can_undo"): {"reversible": "yes", "irreversible": "no", "costly": "costly",
-                              True: "yes", False: "no"},
+                              "unknown": "unknown", True: "yes", False: "no"},
+    ("action_profiles", "can_undo"): {"reversible": "yes", "irreversible": "no",
+                                       "costly": "costly", True: "yes", False: "no"},
     ("observes", "how"): {"measurement": "measured", "report": "reported",
                           "computed": "calculated"},
 }
@@ -93,6 +97,51 @@ def _rename_keys(values, aliases, where):
     return out
 
 
+def _local_refs(value, sections):
+    """Canonicalize an optional, known section prefix on a local name reference."""
+    if isinstance(value, list):
+        return [_local_refs(item, sections) for item in value]
+    if not isinstance(value, str):
+        return value
+    prefix, dot, local = value.partition(".")
+    return local if dot and prefix in sections and local else value
+
+
+# A reference remains strict: only a prefix for a section valid at that field is removed.
+# `goal.*.set_by` is deliberately absent because its `<loop>.<quantity>` form is cross-loop.
+LOCAL_REFERENCE_FIELDS = {
+    "goal": {"from": {"observes"}},
+    "beliefs": {
+        "from": {"observes"},
+        "checked_against": {"observes"},
+        "explains": {"goal", "beliefs"},
+        "settled_by": {"observes"},
+    },
+    "observes": {
+        "informs": {"goal", "beliefs"},
+        "reported_by": {"people"},
+        "produced_by": {"actions"},
+    },
+    "actions": {
+        "moves": {"goal", "beliefs"},
+        "needs_approval": {"people"},
+        "consumes": {"spends"},
+        "through": {"processes"},
+    },
+    "action_profiles": {
+        "action": {"actions"},
+        "needs_approval": {"people"},
+    },
+    "operations": {
+        "authorized_by": {"people"},
+        "emits": {"outputs"},
+    },
+    "processes": {"observed_as": {"observes"}},
+    "people": {"sees": {"goal", "beliefs"}},
+    "spends": {"spent_by": {"actions"}},
+}
+
+
 def normalize(spec):
     """
     Rewrite v0 names to v1 before anything else looks at the spec.
@@ -117,16 +166,46 @@ def normalize(spec):
                 vmap = VALUE_ALIASES.get((sec, k))
                 if vmap and (isinstance(v, bool) or isinstance(v, str)) and v in vmap:
                     b[k] = vmap[v]
+                targets = LOCAL_REFERENCE_FIELDS.get(sec, {}).get(k)
+                if targets:
+                    b[k] = _local_refs(b[k], targets)
             return b
         out[sec] = {nm: fix(nm, body) for nm, body in out[sec].items()}
     for sec, entry in SINGLETON_OF.items():
         if isinstance(out.get(sec), dict):
             out[sec] = _rename_keys(out[sec], _alias_map(entry), sec)
+    if isinstance(out.get("boundary"), dict) and "drawn_by" in out["boundary"]:
+        out["boundary"]["drawn_by"] = _local_refs(
+            out["boundary"]["drawn_by"], {"people"}
+        )
     if isinstance(out.get("when"), list):
         am = _alias_map("when_entry")
-        out["when"] = [_rename_keys(r or {}, am, f"when[{i}]")
-                       if isinstance(r, dict) else r
-                       for i, r in enumerate(out["when"])]
+        rules = []
+        for i, rule in enumerate(out["when"]):
+            if not isinstance(rule, dict):
+                rules.append(rule)
+                continue
+            normalized = _rename_keys(rule or {}, am, f"when[{i}]")
+            for field, sections in {
+                "reads": {"goal", "beliefs", "spends"},
+                "against": {"goal"},
+                "do": {"actions"},
+                "escalate": {"people"},
+            }.items():
+                if field in normalized:
+                    normalized[field] = _local_refs(normalized[field], sections)
+            # `against` already declares that this comparator reads the quantity. Requiring
+            # the same name twice made complete documents fail for redundant syntax alone.
+            if "reads" in normalized and normalized.get("against"):
+                reads = list(normalized.get("reads") or [])
+                for quantity in normalized["against"]:
+                    if quantity not in reads:
+                        reads.append(quantity)
+                normalized["reads"] = reads
+            rules.append(normalized)
+        out["when"] = rules
+    if "asks_human" in out:
+        out["asks_human"] = _local_refs(out["asks_human"], {"people"})
     return out
 
 
@@ -233,6 +312,7 @@ def validate(spec, path="<spec>", scope=None):
 
     # --- referential integrity: a name that points at nothing is a silent hole -------
     acts = set((scope.get("actions") or {}).keys())
+    outputs = set((scope.get("outputs") or {}).keys())
     parties = set((scope.get("people") or {}).keys())
     signals = set((scope.get("observes") or {}).keys())
     processes = set((scope.get("processes") or {}).keys())
@@ -272,6 +352,91 @@ def validate(spec, path="<spec>", scope=None):
             if process not in processes:
                 errs.append(f"actions.{nm}: `through: {process}` names no entry in "
                             f"`processes`.{_near(process, processes)}")
+    profiles_by_action = {}
+    for nm, body in (spec.get("action_profiles") or {}).items():
+        body = body or {}
+        action = body.get("action")
+        if action not in acts:
+            errs.append(f"action_profiles.{nm}: `action: {action}` names no entry in `actions`."
+                        f"{_near(action, acts)}")
+        else:
+            profiles_by_action.setdefault(action, []).append((nm, body))
+        approver = body.get("needs_approval")
+        if approver and approver not in parties:
+            errs.append(f"action_profiles.{nm}: `needs_approval: {approver}` names nobody in "
+                        f"`people`.{_near(approver, parties)}")
+        if bool(body.get("when")) == bool(body.get("default")):
+            errs.append(f"action_profiles.{nm}: declare exactly one of `when:` or `default: true`.")
+    for action, profiles in profiles_by_action.items():
+        defaults = [name for name, body in profiles if body.get("default")]
+        if len(defaults) > 1:
+            errs.append(f"action `{action}` has more than one default profile: {defaults}.")
+        safety_roles = {
+            (body.get("can_undo"), body.get("needs_approval"))
+            for _name, body in profiles
+        }
+        if len(profiles) > 1 and len(safety_roles) == 1:
+            errs.append(
+                f"action `{action}` has multiple profiles but reversibility and approver never "
+                "vary; binding stage alone is not a safety distinction. Merge them into base "
+                "action properties."
+            )
+        typed_profiles = {}
+        for name, body in profiles:
+            identity = (body.get("resolved_at"), body.get("can_undo"),
+                        body.get("needs_approval"))
+            if identity in typed_profiles:
+                previous = typed_profiles[identity]
+                errs.append(
+                    f"action_profiles.{name} duplicates the typed properties of "
+                    f"action_profiles.{previous} for action `{action}`; merge their selectors "
+                    "into one disjunctive `when:` or remove the redundant case."
+                )
+            else:
+                typed_profiles[identity] = name
+        action_body = (spec.get("actions") or {}).get(action) or {}
+        if action_body.get("can_undo") is not None or action_body.get("needs_approval"):
+            errs.append(f"actions.{action}: base `can_undo`/`needs_approval` cannot be mixed with "
+                        "`action_profiles`; put the fallback in one default profile.")
+    output_roles = {}
+    for nm, body in (spec.get("outputs") or {}).items():
+        body = body or {}
+        identity = (body.get("kind"), body.get("terminates"))
+        if identity in output_roles:
+            previous = output_roles[identity]
+            errs.append(
+                f"outputs.{nm} duplicates output role {identity} already declared by "
+                f"outputs.{previous}; merge their producing branches into one output."
+            )
+        else:
+            output_roles[identity] = nm
+    operation_roles = {}
+    for nm, body in (spec.get("operations") or {}).items():
+        body = body or {}
+        actor = body.get("authorized_by")
+        if actor and actor not in parties:
+            errs.append(f"operations.{nm}: `authorized_by: {actor}` names nobody in `people`."
+                        f"{_near(actor, parties)}")
+        emitted = body.get("emits")
+        emitted_names = [emitted] if isinstance(emitted, str) else (emitted or [])
+        for output in emitted_names:
+            if output not in outputs:
+                errs.append(f"operations.{nm}: `emits: {output}` names no entry in `outputs`."
+                            f"{_near(output, outputs)}")
+        emitted_roles = tuple(sorted(
+            ((spec.get("outputs") or {}).get(output) or {}).get("kind", "") + "/" +
+            ((spec.get("outputs") or {}).get(output) or {}).get("terminates", "")
+            for output in emitted_names if output in outputs
+        ))
+        identity = (body.get("kind"), actor, emitted_roles)
+        if identity in operation_roles:
+            previous = operation_roles[identity]
+            errs.append(
+                f"operations.{nm} duplicates controller role {identity} already declared by "
+                f"operations.{previous}; merge their triggers into one disjunctive `when:`."
+            )
+        else:
+            operation_roles[identity] = nm
     for i, r in enumerate(spec.get("when") or []):
         for a in ([r.get("do")] if isinstance(r.get("do"), str) else (r.get("do") or [])):
             if a and a not in acts:
@@ -292,9 +457,6 @@ def validate(spec, path="<spec>", scope=None):
             if item not in targeted_goals:
                 errs.append(f"when[{i}]: `against: {item}` names no targeted quantity in "
                             f"`goal`.{_near(item, targeted_goals)}")
-            if "reads" in r and item not in (r.get("reads") or []):
-                errs.append(f"when[{i}]: `against: {item}` must also appear in this rule's "
-                            "`reads:`; a comparator cannot compare a value the rule does not read")
     asks_human = spec.get("asks_human")
     if asks_human and asks_human not in parties:
         errs.append(f"top level: `asks_human: {asks_human}` names nobody in `people`."
@@ -446,8 +608,8 @@ class Graph:
             self.edges.append(e)
 
     def doc(self, name):
-        d = {"loopspec_version": 2, "ir_revision": "2.1", "encodes": name, "set": "field",
-             "shape": "canonical-graph", "source_format": "loop-v1.1",
+        d = {"loopspec_version": 2, "ir_revision": "2.2", "encodes": name, "set": "field",
+             "shape": "canonical-graph", "source_format": "loop-v1.2",
              "nodes": list(self.nodes.values()), "edges": self.edges,
              "loops": self.loops, "excluded_variables": self.excluded}
         if self.considered:
@@ -471,6 +633,9 @@ def expand_one(g, spec, path="<spec>", scope=None):
     loop_targets = set()
     loop_policies = set()
     loop_processes = set()
+    loop_profiles = set()
+    loop_operations = set()
+    loop_outputs = set()
     target_by_estimand = {}
 
     system_id = g.node(lid + "_system", "System", label=str(name).replace("_", " "),
@@ -613,7 +778,8 @@ def expand_one(g, spec, path="<spec>", scope=None):
         body = body or {}
         # can_undo: yes|costly|no  ->  reversible|costly|irreversible
         undo = {True: "reversible", "yes": "reversible", False: "irreversible",
-                "no": "irreversible", "costly": "costly"}.get(body.get("can_undo"))
+                "no": "irreversible", "costly": "costly", "unknown": "unknown"}.get(
+                    body.get("can_undo"))
         g.node(act, "Intervention",
                target=body.get("moves"),
                effect_direction=body.get("effect"),
@@ -637,6 +803,47 @@ def expand_one(g, spec, path="<spec>", scope=None):
         for r in body.get("consumes") or []:
             g.node(r, "Resource")
             g.edge(act, r, "consumes")
+
+    # --- action profiles: late-bound properties of generic world interventions --------
+    for profile, body in (spec.get("action_profiles") or {}).items():
+        body = body or {}
+        undo = {True: "reversible", "yes": "reversible", False: "irreversible",
+                "no": "irreversible", "costly": "costly", "unknown": "unknown"}.get(
+                    body.get("can_undo"))
+        profile_id = g.node(profile, "ActionProfile",
+                            condition=body.get("when"),
+                            default=bool(body.get("default")),
+                            binding_stage=body.get("resolved_at"),
+                            reversibility=undo,
+                            requires_approval_from=(slug(body["needs_approval"])
+                                                    if body.get("needs_approval") else None),
+                            description=body.get("description"))
+        loop_profiles.add(profile_id)
+        g.edge(profile_id, body["action"], "profiles")
+        if body.get("needs_approval"):
+            g.edge(body["needs_approval"], profile_id, "authorizes")
+
+    # --- outward values and controller-internal transitions ---------------------------
+    for output, body in (spec.get("outputs") or {}).items():
+        body = body or {}
+        output_id = g.node(output, "Output", output_kind=body.get("kind"),
+                           terminates=body.get("terminates"),
+                           description=body.get("description"))
+        loop_outputs.add(output_id)
+    for operation, body in (spec.get("operations") or {}).items():
+        body = body or {}
+        operation_id = g.node(operation, "ControlOperation",
+                              operation_kind=body.get("kind"),
+                              condition=body.get("when"),
+                              authorized_by=(slug(body["authorized_by"])
+                                             if body.get("authorized_by") else None),
+                              description=body.get("description"))
+        loop_operations.add(operation_id)
+        if body.get("authorized_by"):
+            g.edge(body["authorized_by"], operation_id, "authorizes")
+        emitted = body.get("emits")
+        for output in ([emitted] if isinstance(emitted, str) else (emitted or [])):
+            g.edge(operation_id, output, "emits")
 
     # --- spends: what the loop burns, and what stops it -----------------------------
     for res, body in (spec.get("spends") or {}).items():
@@ -729,6 +936,9 @@ def expand_one(g, spec, path="<spec>", scope=None):
                     "desired_conditions": sorted(loop_targets),
                     "policies": sorted(loop_policies),
                     "processes": sorted(loop_processes),
+                    "action_profiles": sorted(loop_profiles),
+                    "operations": sorted(loop_operations),
+                    "outputs": sorted(loop_outputs),
                     "boundary": boundary_id,
                     "asks_human_when": spec.get("asks_human_when") or [],
                     "escalates_to": (spec.get("asks_human") or
@@ -742,8 +952,8 @@ def expand(path):
         docs = [normalize(d) for d in yaml.safe_load_all(source) if d]
     # the file is the scope: build the union of every declared name across the group first
     scope = {}
-    for section in ("actions", "people", "observes", "goal", "beliefs", "spends",
-                    "processes"):
+    for section in ("actions", "action_profiles", "operations", "outputs", "people",
+                    "observes", "goal", "beliefs", "spends", "processes"):
         scope[section] = {k: v for d in docs for k, v in (d.get(section) or {}).items()}
     scope["_loops"] = [str(d.get("loop") or d.get("name")) for d in docs]
     scope["_loop_quantities"] = {

@@ -1,0 +1,216 @@
+{
+  "version": 1,
+  "frozen_at": "2026-08-04T22:51:00+02:00",
+  "cases": {
+    "aider": {
+      "repository": "https://github.com/Aider-AI/aider",
+      "revision": "5dc9490bb35f9729ef2c95d00a19ccd30c26339c",
+      "files": [
+        {
+          "path": "aider/coders/base_coder.py",
+          "ranges": [[876, 944], [986, 1000], [1419, 1623], [2296, 2336], [2375, 2409]]
+        },
+        {
+          "path": "aider/coders/architect_coder.py",
+          "ranges": [[6, 48]]
+        }
+      ]
+    },
+    "agentlab": {
+      "repository": "https://github.com/ServiceNow/AgentLab",
+      "revision": "cbc35a9bc0facaf731bc858c5825edbe757c719f",
+      "files": [
+        {
+          "path": "src/agentlab/experiments/loop.py",
+          "ranges": [[40, 100], [198, 246], [402, 509]]
+        },
+        {
+          "path": "src/agentlab/agents/visualwebarena/agent.py",
+          "ranges": [[185, 279]]
+        }
+      ]
+    },
+    "openai_agents_sdk": {
+      "repository": "https://github.com/openai/openai-agents-python",
+      "revision": "19e364c17344905ce6d17f41ea4fe084cba20388",
+      "files": [
+        {
+          "path": "src/agents/run.py",
+          "ranges": [[203, 280], [793, 825], [1091, 1168], [1440, 1585]]
+        },
+        {
+          "path": "src/agents/tool.py",
+          "ranges": [[473, 505]]
+        },
+        {
+          "path": "src/agents/result.py",
+          "ranges": [[414, 495]]
+        },
+        {
+          "path": "src/agents/run_state.py",
+          "ranges": [[356, 390]]
+        }
+      ]
+    },
+    "smolagents": {
+      "repository": "https://github.com/huggingface/smolagents",
+      "revision": "e3a5b8994b301983b91c0325546e9dc82eab8cf0",
+      "files": [
+        {
+          "path": "src/smolagents/agents.py",
+          "ranges": [[436, 611], [625, 637], [754, 756], [1276, 1439], [1453, 1488]]
+        }
+      ]
+    },
+    "skyvern": {
+      "repository": "https://github.com/Skyvern-AI/skyvern",
+      "revision": "6442cdc49dbe031c7d9462c140d9035fd2d6f0cd",
+      "files": [
+        {
+          "path": "skyvern/forge/agent.py",
+          "ranges": [[850, 965], [1058, 1079], [1124, 1265], [5667, 5891], [5893, 6011]]
+        },
+        {
+          "path": "skyvern/webeye/actions/handler.py",
+          "ranges": [[2951, 3001]]
+        },
+        {
+          "path": "skyvern/webeye/actions/actions.py",
+          "ranges": [[264, 268], [293, 363], [412, 425]]
+        },
+        {
+          "path": "skyvern/forge/sdk/schemas/tasks.py",
+          "ranges": [[230, 247]]
+        }
+      ]
+    },
+    "pydantic_ai": {
+      "repository": "https://github.com/pydantic/pydantic-ai",
+      "revision": "c8bcbb17fd7b490c541ccbb45822c1b25edf2717",
+      "files": [
+        {
+          "path": "pydantic_ai_slim/pydantic_ai/_agent_graph.py",
+          "ranges": [[90, 123], [490, 694], [1788, 1823], [1863, 1932], [1972, 2017], [2031, 2112], [2206, 2240]]
+        },
+        {
+          "path": "pydantic_ai_slim/pydantic_ai/_tool_execution.py",
+          "ranges": [[439, 550], [800, 910]]
+        },
+        {
+          "path": "pydantic_ai_slim/pydantic_ai/toolsets/approval_required.py",
+          "ranges": [[1, 25]]
+        },
+        {
+          "path": "pydantic_ai_slim/pydantic_ai/_deferred.py",
+          "ranges": [[26, 118]]
+        },
+        {
+          "path": "pydantic_ai_slim/pydantic_ai/usage.py",
+          "ranges": [[418, 459], [492, 560]]
+        }
+      ]
+    },
+    "stagehand": {
+      "repository": "https://github.com/browserbase/stagehand",
+      "revision": "7566804ed4b97649706782bccdcab5d80f6fe588",
+      "files": [
+        {
+          "path": "packages/core/lib/v3/handlers/v3AgentHandler.ts",
+          "ranges": [[125, 245], [297, 388], [391, 550], [552, 715], [738, 796], [818, 898]]
+        },
+        {
+          "path": "packages/core/lib/v3/types/public/agent.ts",
+          "ranges": [[285, 388]]
+        }
+      ]
+    },
+    "pocketflow": {
+      "repository": "https://github.com/The-Pocket/PocketFlow",
+      "revision": "f74d023f93607b8c3268133339a5e532a949898c",
+      "files": [
+        {
+          "path": "pocketflow/__init__.py",
+          "ranges": [[1, 51]]
+        },
+        {
+          "path": "cookbook/pocketflow-browser-agent/nodes_dom.py",
+          "ranges": [[1, 112]]
+        },
+        {
+          "path": "cookbook/pocketflow-browser-agent/flow.py",
+          "ranges": [[1, 30]]
+        }
+      ]
+    },
+    "notte": {
+      "repository": "https://github.com/nottelabs/notte",
+      "revision": "10e0fd35316565cc84bdbe9905d2645972f8b77c",
+      "files": [
+        {
+          "path": "packages/notte-agent/src/notte_agent/agent.py",
+          "ranges": [[49, 121], [123, 269], [359, 414]]
+        },
+        {
+          "path": "packages/notte-agent/src/notte_agent/common/base.py",
+          "ranges": [[1, 20]]
+        }
+      ]
+    },
+    "codex_turn": {
+      "repository": "https://github.com/openai/codex",
+      "revision": "2a16af823456712e3dbb030ecf29fb727c2cde66",
+      "files": [
+        {
+          "path": "codex-rs/core/src/session/turn.rs",
+          "ranges": [[140, 185], [260, 505]]
+        },
+        {
+          "path": "codex-rs/core/src/session/mod.rs",
+          "ranges": [[4024, 4030]]
+        },
+        {
+          "path": "codex-rs/core/src/tools/sandboxing.rs",
+          "ranges": [[194, 234]]
+        },
+        {
+          "path": "codex-rs/core/src/tools/runtimes/shell.rs",
+          "ranges": [[139, 178]]
+        }
+      ]
+    },
+    "goose_agent": {
+      "repository": "https://github.com/block/goose",
+      "revision": "7f62ce53e70c49e634ed9ba16a1ef8e02a2d239c",
+      "files": [
+        {
+          "path": "crates/goose/src/agents/agent.rs",
+          "ranges": [[2067, 2205], [2326, 2428], [2845, 3008], [3047, 3085]]
+        }
+      ]
+    },
+    "swe_agent_default": {
+      "repository": "https://github.com/SWE-agent/SWE-agent",
+      "revision": "3ea751c087f32b16e039a2233dd6eefecef325d5",
+      "files": [
+        {
+          "path": "sweagent/agent/agents.py",
+          "ranges": [[1062, 1215], [1235, 1294]]
+        }
+      ]
+    },
+    "browser_use": {
+      "repository": "https://github.com/browser-use/browser-use",
+      "revision": "c561b1f514f1e197580e0c4b75a5bfbc3f1e61f2",
+      "files": [
+        {
+          "path": "browser_use/agent/service.py",
+          "ranges": [[1205, 1246], [1458, 1545], [2575, 2655]]
+        },
+        {
+          "path": "browser_use/agent/views.py",
+          "ranges": [[200, 315]]
+        }
+      ]
+    }
+  }
+}

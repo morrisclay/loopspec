@@ -1,0 +1,152 @@
+# Pydantic AI at c8bcbb17fd7b490c541ccbb45822c1b25edf2717.
+# Evidence: pydantic_ai_slim/pydantic_ai/_agent_graph.py 90-123, 490-694,
+# 1788-1823, 1863-1932, 1972-2017, 2031-2112, 2206-2240;
+# pydantic_ai_slim/pydantic_ai/_tool_execution.py 439-550, 800-910;
+# pydantic_ai_slim/pydantic_ai/toolsets/approval_required.py 1-25;
+# pydantic_ai_slim/pydantic_ai/_deferred.py 26-118;
+# pydantic_ai_slim/pydantic_ai/usage.py 418-459, 492-560.
+
+loop: pydantic_ai_agent_run
+runs: per_agent_run_invocation
+
+boundary:
+  drawn_by: run_caller
+  purpose: drive model requests and configured tools until one run returns final output, deferred work, or a terminal error
+  inside: [agent graph, message history, output validation, tool manager, usage counters]
+  outside: [run caller, human approver, model provider, configured tool environments, deferred tool executors]
+
+goal:
+  valid_result:
+    keep: the run returns schema-valid output or an explicit deferred request within configured usage and retry limits
+
+beliefs:
+  next_transition:
+    question: Should this response execute a tool, request external resolution, retry output, or finish the run?
+    how: typed response processing, output validation, end strategy, and tool-manager dispatch
+    explains: valid_result
+    settled_by: tool_or_output_result
+
+observes:
+  user_prompt:
+    informs: [valid_result, next_transition]
+    origin: outside
+    how: reported
+    reported_by: run_caller
+  model_response:
+    informs: next_transition
+    origin: outside
+    how: reported
+    reported_by: model_provider
+  tool_or_output_result:
+    informs: [valid_result, next_transition]
+    origin: ourselves
+    how: measured
+    produced_by: execute_tool_call
+
+processes:
+  configured_tool_environment:
+    location: outside
+    description: a validated configured function tool executes with concrete arguments and returns a result or retry signal
+    observed_as: [tool_or_output_result]
+
+actions:
+  execute_tool_call:
+    moves: valid_result
+    through: configured_tool_environment
+    effect: unknown
+
+action_profiles:
+  approval_required_request:
+    action: execute_tool_call
+    when: the approval-required predicate matches the concrete tool definition and arguments
+    resolved_at: request
+    can_undo: unknown
+    needs_approval: approver
+  other_tool_request:
+    action: execute_tool_call
+    default: true
+    resolved_at: request
+    can_undo: unknown
+
+outputs:
+  final_result:
+    kind: final
+    terminates: run
+    description: the schema-validated final result returned by this agent run
+  deferred_approval_request:
+    kind: approval_request
+    terminates: run
+    description: the canonical deferred request containing calls that need approval or outside execution
+  external_execution_request:
+    kind: submission
+    terminates: run
+    description: a deferred tool call submitted to an outside executor before a later run supplies its result
+  terminal_failure:
+    kind: failure
+    terminates: run
+    description: an exception that closes this run, including exhausted retry or usage limits
+  stream_event:
+    kind: status
+    terminates: none
+    description: a public model, tool-call, tool-result, or deferred-request event yielded while the node is streamed
+
+operations:
+  pause_for_deferred_work:
+    kind: pause
+    when: a validated call needs human approval or external execution and no capability resolves it inline
+    emits: [deferred_approval_request, external_execution_request]
+  resume_with_deferred_results:
+    kind: resume
+    when: a later run receives matching approval decisions or external call results
+    authorized_by: run_caller
+  resume_suspended_provider_turn:
+    kind: resume
+    when: message history ends in a provider-suspended response and a later run supplies no new prompt
+  retry_invalid_output:
+    kind: retry
+    when: output validation, a tool, or an empty non-actionable response requests correction within its retry budget
+  interrupt_tool_batch:
+    kind: interrupt
+    when: asynchronous cancellation or another BaseException interrupts a tool batch after partial returns exist
+    emits: terminal_failure
+  stop_with_final_result:
+    kind: stop
+    when: a valid output wins under the configured end strategy
+    emits: final_result
+  stop_with_terminal_failure:
+    kind: stop
+    when: a retry, request, tool-call, token, or cost limit is exhausted or processing raises a terminal error
+    emits: terminal_failure
+
+when:
+  - if: the response contains a validated function tool call that is neither deferred nor a controller-only output sentinel
+    reads: [next_transition, valid_result]
+    against: [valid_result]
+    do: execute_tool_call
+
+people:
+  run_caller:
+    kind: system
+    loses_if_wrong: tool-side effects, cost, time, and confidence in the returned result
+    sees: [valid_result, next_transition]
+  approver:
+    human: true
+    loses_if_wrong: consequences of approving a concrete tool call that should not execute
+    sees: [valid_result, next_transition]
+  model_provider:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [next_transition]
+
+spends:
+  request_budget:
+    limit: request_limit, 50 by default
+    replenished: a new run invocation
+    spent_by: execute_tool_call
+  output_retry_budget:
+    limit: max_output_retries
+    replenished: a new run invocation
+
+not_modelling:
+  - concrete effects and reversibility of configured tool implementations
+  - UI adapter policy for who supplies approval decisions in a concrete deployment

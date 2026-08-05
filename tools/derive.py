@@ -1598,20 +1598,18 @@ def q_irreversible_without_approval(d, nodes, edges):
     the effect is hard to reverse. Some runtimes expose execution-time approval controls;
     this query checks whether the design contract names the gate for this action.
     """
-    humans = {i for i, n in nodes.items()
-              if n.get("kind") == "Party" and n.get("kind_of") != "agent"
-              and (n.get("party_kind") or n.get("human") or "") != "agent"}
     out = []
     for i, n in nodes.items():
-        if n.get("kind") != "Intervention":
+        if n.get("kind") not in ("Intervention", "ActionProfile"):
             continue
         if n.get("reversibility") not in ("irreversible", "costly"):
             continue
         if n.get("requires_approval_from"):
             continue
+        label = "Action profile" if n.get("kind") == "ActionProfile" else "Action"
         out.append({
             "pattern": "irreversible_without_approval",
-            "claim": (f"Intervention `{i}` is marked `{n.get('reversibility')}` and declares no "
+            "claim": (f"{label} `{i}` is marked `{n.get('reversibility')}` and declares no "
                       f"`requires_approval_from`. The loop may take an act it cannot undo with "
                       f"no human gate. Runtime approval features may exist, but this design "
                       f"does not bind one to the action."),
@@ -1625,15 +1623,67 @@ def q_reversibility_unspecified(d, nodes, edges):
     if not str(d.get("source_format", "")).startswith("loop-v") or _ir_major(d) != 2:
         return []
     out = []
+    profiled_actions = {action for _profile, action in rel(edges, "profiles")}
     for action, node in nodes.items():
-        if node.get("kind") != "Intervention" or node.get("reversibility"):
+        if node.get("kind") not in ("Intervention", "ActionProfile"):
             continue
+        if node.get("kind") == "Intervention" and action in profiled_actions:
+            continue
+        if node.get("reversibility"):
+            continue
+        subject = "Action profile" if node.get("kind") == "ActionProfile" else "Action"
         out.append({
             "pattern": "reversibility_unspecified",
-            "claim": (f"Action `{action}` does not say whether it can be undone. Approval "
+            "claim": (f"{subject} `{action}` does not say whether it can be undone. Approval "
                       f"requirements depend on that distinction, so omission is not treated "
-                      f"as reversible. Add `can_undo: yes`, `costly`, or `no`."),
+                      f"as reversible. Add `can_undo: yes`, `costly`, `no`, or an explicit "
+                      f"profile value of `unknown`."),
             "evidence": {"action": action, "reversibility": None},
+        })
+    return out
+
+
+def q_action_profiles_without_fallback(d, nodes, edges):
+    """A generic action has conditional profiles but no explicit unmatched-request case."""
+    by_action = {}
+    for profile, action in rel(edges, "profiles"):
+        by_action.setdefault(action, []).append(profile)
+    out = []
+    for action, profiles in by_action.items():
+        if any(nodes.get(profile, {}).get("default") for profile in profiles):
+            continue
+        out.append({
+            "pattern": "action_profiles_without_fallback",
+            "claim": (f"Action `{action}` has conditional profiles {sorted(profiles)} but no "
+                      "default profile. Requests matching none of those conditions have no "
+                      "declared reversibility or approval binding; absence is not safety."),
+            "evidence": {"action": action, "profiles": sorted(profiles), "default": None},
+        })
+    return out
+
+
+def q_action_profiles_without_safety_variation(d, nodes, edges):
+    """Profiles should encode a real safety distinction, not redundant partition labels."""
+    by_action = {}
+    for profile, action in rel(edges, "profiles"):
+        by_action.setdefault(action, []).append(profile)
+    out = []
+    for action, profiles in by_action.items():
+        roles = {
+            (nodes.get(profile, {}).get("reversibility"),
+             nodes.get(profile, {}).get("requires_approval_from"))
+            for profile in profiles
+        }
+        lone_default = len(profiles) == 1 and nodes.get(profiles[0], {}).get("default")
+        if not lone_default and not (len(profiles) > 1 and len(roles) == 1):
+            continue
+        out.append({
+            "pattern": "action_profiles_without_safety_variation",
+            "claim": (f"Action `{action}` has profiles {sorted(profiles)}, but they do not "
+                      "describe different reversibility or approval properties. Put "
+                      "non-varying safety on the action instead of partitioning it."),
+            "evidence": {"action": action, "profiles": sorted(profiles),
+                         "safety_roles": sorted(str(role) for role in roles)},
         })
     return out
 
@@ -1690,8 +1740,8 @@ def q_no_escalation_path(d, nodes, edges):
         return []
     if any(loop.get("asks_human_when") for loop in d.get("loops") or []):
         return []
-    gated = any(n.get("requires_approval_from")
-                for n in nodes.values() if n.get("kind") == "Intervention")
+    gated = any(n.get("requires_approval_from") for n in nodes.values()
+                if n.get("kind") in ("Intervention", "ActionProfile"))
     if gated:
         return []
     return [{
@@ -1742,6 +1792,8 @@ QUERIES = [
     q_unowned_act,
     q_irreversible_without_approval,
     q_reversibility_unspecified,
+    q_action_profiles_without_fallback,
+    q_action_profiles_without_safety_variation,
     q_human_without_signal,
     q_no_escalation_path,
     q_escalation_target_unspecified,
@@ -1818,6 +1870,8 @@ def analyze_document(d):
 
 PLAIN = [
     ("DesiredCondition", "target"), ("Intervention", "action"), ("Estimator", "belief rule"),
+    ("ActionProfile", "action profile"), ("ControlOperation", "controller operation"),
+    ("Output", "output"),
     ("Estimand", "quantity"), ("Calibration", "check"), ("Explanation", "model"),
     ("Signal", "observation"), ("Party", "person"), ("Consequence", "exposure"),
     ("Constraint", "limit"), ("Estimate", "belief"),

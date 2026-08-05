@@ -1,0 +1,110 @@
+# PocketFlow at f74d023f93607b8c3268133339a5e532a949898c.
+# Evidence: pocketflow/__init__.py 1-51;
+# cookbook/pocketflow-browser-agent/nodes_dom.py 1-112;
+# cookbook/pocketflow-browser-agent/flow.py 1-30.
+
+loop: pocketflow_browser_agent_run
+runs: per_flow_run_invocation
+
+boundary:
+  drawn_by: run_caller
+  purpose: operate a browser until the model reports completion, the step cap is reached, or node execution fails
+  inside: [PocketFlow flow, shared state, observe-decide-act controller, retry counter]
+  outside: [run caller, model provider, browser, website]
+
+goal:
+  browser_task:
+    keep: the requested browser task reaches a returned answer within the step cap
+
+beliefs:
+  next_action:
+    question: Which available browser action advances the goal, or is the task done?
+    how: one model call over the goal, DOM observations, and action history
+    explains: browser_task
+    settled_by: browser_observation
+
+observes:
+  task_request:
+    informs: [browser_task, next_action]
+    origin: outside
+    how: reported
+    reported_by: run_caller
+  model_decision:
+    informs: next_action
+    origin: outside
+    how: reported
+    reported_by: model_provider
+  browser_observation:
+    informs: [browser_task, next_action]
+    origin: ourselves
+    how: measured
+    produced_by: interact_with_browser
+
+processes:
+  browser_and_website:
+    location: outside
+    description: Playwright click, fill, select, and keypress operations change the live page
+    observed_as: [browser_observation]
+
+actions:
+  interact_with_browser:
+    moves: browser_task
+    through: browser_and_website
+    effect: unknown
+
+action_profiles:
+  concrete_browser_request:
+    action: interact_with_browser
+    default: true
+    resolved_at: request
+    can_undo: unknown
+    description: consequence and reversibility depend on the selected element, action, text, and site state
+
+outputs:
+  flow_result:
+    kind: final
+    terminates: run
+    description: the last transition action, with the cookbook answer retained in shared state
+  flow_failure:
+    kind: failure
+    terminates: run
+    description: an exception propagated after a node exhausts its retry fallback
+
+operations:
+  retry_node:
+    kind: retry
+    when: node execution raises and its configured retry count has not been exhausted
+  stop_with_result:
+    kind: stop
+    when: the decision is done, the history reaches MAX_STEPS, or the flow has no successor
+    emits: flow_result
+  stop_with_failure:
+    kind: stop
+    when: a node exhausts retries and its default fallback re-raises the exception
+    emits: flow_failure
+
+when:
+  - if: the current decision selects click, type, select, or press before MAX_STEPS
+    reads: [next_action, browser_task]
+    against: [browser_task]
+    do: interact_with_browser
+
+people:
+  run_caller:
+    kind: system
+    loses_if_wrong: browser side effects, time, and confidence in the returned answer
+    sees: [browser_task, next_action]
+  model_provider:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [next_action]
+
+spends:
+  step_budget:
+    limit: MAX_STEPS, 12 in the DOM cookbook
+    replenished: a new flow invocation
+    spent_by: interact_with_browser
+
+not_modelling:
+  - application-specific approval policy for browser actions
+  - reversibility of concrete browser actions and websites

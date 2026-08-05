@@ -1,0 +1,13 @@
+{
+  "case": "smolagents",
+  "study_role": "control_plane_holdout",
+  "encoder": "Anthropic Claude CLI",
+  "model_alias": "sonnet",
+  "tool_access": "disabled",
+  "session_persistence": "disabled",
+  "generated_at": "2026-08-04T21:20:21.185595+00:00",
+  "source_repository": "https://github.com/huggingface/smolagents",
+  "source_revision": "e3a5b8994b301983b91c0325546e9dc82eab8cf0",
+  "prompt_sha256": "61aa21f455ebbea88e9350826c22452cc9bf67af6fe7c18318cbeacea970a3f9",
+  "output_sha256": "e75c1435dc4d030f29ae6b6ea279864d492e9b0e957bd7bc106174360a522a12"
+}

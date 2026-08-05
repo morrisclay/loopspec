@@ -1,0 +1,198 @@
+# LoopSpec: autonomous web-agent episode loop (agentlab)
+# Sources:
+#   src/agentlab/experiments/loop.py:40-100    (EnvArgs.make_env)
+#   src/agentlab/experiments/loop.py:198-246   (StepInfo.from_step/from_action/from_reset/is_done)
+#   src/agentlab/experiments/loop.py:402-509   (ExpArgs.run)
+#   src/agentlab/agents/visualwebarena/agent.py:185-279 (Agent.get_action)
+loop: browser_agent_episode_loop
+runs: per_episode  # one call to run() executes one task episode; loop.py:404-405
+
+boundary:
+  drawn_by: researcher
+  purpose: >
+    Evaluate whether an autonomous browser agent can complete a specified task
+    inside a BrowserGym environment, while capturing step- and episode-level
+    records for later analysis. (loop.py:404-509)
+  inside:
+    - agent action-selection policy (agent.py:185-279)
+    - per-step orchestration and profiling (loop.py:198-246, 402-509)
+    - step/episode logging and summary persistence (loop.py:446-449, 483-504)
+  outside:
+    - the BrowserGym task environment / underlying webpage (loop.py:53-100, 198-217)
+    - the environment's chat interface and whoever/whatever reads it (loop.py:451-453)
+    - the LLM service invoked as chat_model (agent.py:266)
+
+people:
+  agent:
+    kind: agent
+    loses_if_wrong: nothing
+    sees: [task_completion, next_action]
+  researcher:
+    kind: human
+    loses_if_wrong: >
+      wasted compute/time on a failed or silently-mis-terminated episode;
+      invalid experiment results if an early stop is mistaken for success
+      (loop.py:490-497)
+    sees: [task_completion]
+
+goal:
+  task_completion:
+    keep: "reach terminated=True (task judged solved) rather than truncated, within max_steps"  # loop.py:244-246, 437, 40-43
+    from: [step_outcome, initial_observation]
+
+beliefs:
+  next_action:
+    question: "Which browser action best advances the task objective given the current observation?"
+    how: >
+      LLM call over a system prompt plus user messages (few-shot examples,
+      tab list, axtree text, URL, optional screenshot/SoM overlay, and
+      goal_object), parsed via `parser` (agent.py:198-266)
+    explains: task_completion
+    safe_to_repeat: >
+      retry() re-issues the same prompt to the chat model on parse failure
+      before any action is dispatched to the environment, so re-invocation
+      has no world-side effect (agent.py:266)
+    # no checked_by/checked_against found in excerpts: no mechanism scores
+    # next_action predictions against later outcomes.
+
+observes:
+  initial_observation:
+    informs: task_completion
+    origin: outside
+    how: measured
+    source: "BrowserGym env.reset() -> (obs, env_info)"  # loop.py:230-243
+    every: per_episode
+  step_outcome:
+    informs: task_completion
+    origin: outside
+    how: measured
+    source: "BrowserGym env.step() -> (obs, reward, terminated, truncated, env_info)"  # loop.py:198-217
+    every: per_step
+
+processes:
+  browser_environment:
+    location: outside
+    observed_as: [initial_observation, step_outcome]
+    description: >
+      The BrowserGym-wrapped environment (gym.make(...), loop.py:91-100) that
+      executes the agent's action string and returns obs/reward/termination
+      flags and timing info.
+  chat_channel:
+    location: interface
+    description: >
+      env.unwrapped.chat, a Chat interface some tasks expose; the loop writes
+      the executed action and agent_info to it (loop.py:451-453). No return
+      message from this channel is read in the excerpted code.
+
+actions:
+  execute_browser_action:
+    moves: task_completion
+    through: browser_environment
+    effect: unknown
+    effect_after: "same step: action_exec_start to action_exec_stop (plus a recorded timeout window)"  # loop.py:208-210
+    consumes: [step_budget]
+
+action_profiles:
+  browser_action_default:
+    action: execute_browser_action
+    default: true
+    resolved_at: request
+    can_undo: unknown
+    description: >
+      Reversibility depends on which concrete browser action the agent's
+      returned action string encodes (e.g. navigation vs. a submit/write);
+      the generic dispatch in run()/from_step (loop.py:439-464) does not
+      distinguish action kinds, so no safety can be assumed.
+
+  send_chat_message:
+    action: execute_browser_action  # placeholder removed below; see note
+    resolved_at: request
+    when: "unused"
+    can_undo: unknown
+
+# NOTE: send_chat_message is its own action, not a profile of execute_browser_action.
+# Declared as an action below; the stray profile entry above is removed.
+
+when:
+  - if: "episode not done (not terminated, not truncated) and the agent returned a non-null action"
+    reads: [task_completion]
+    against: [task_completion]
+    do: execute_browser_action  # loop.py:437-464
+  - if: "env.unwrapped.chat exists and is a Chat instance"
+    reads: [task_completion]
+    do: send_chat_message  # loop.py:451-453
+
+operations:
+  start:
+    kind: start
+    when: "run() begins"
+    emits: [step_log]
+    description: >
+      Logs package versions, instantiates the agent (agent_args.make_agent())
+      and environment (env_args.make_env()), then resets the environment.
+      (loop.py:407-435)
+  retry:
+    kind: retry
+    when: "the chat model's answer cannot be parsed by `parser`, up to 3 attempts"
+    description: "retry(self.chat_model, messages, n_retry=3, parser=parser)"  # agent.py:266
+  stop:
+    kind: stop
+    when: >
+      the episode reaches terminated/truncated, the agent returns a None
+      action, or an uncaught exception propagates from agent or environment
+      (loop.py:437-480)
+    emits: [episode_outcome, step_log, uncaught_exception_report, tape_record]
+    description: >
+      Saves final step info, synthesizes a KeyboardInterrupt("Early
+      termination??") error if the episode ended without terminated/truncated
+      and no other error was recorded, writes experiment summary info,
+      optionally saves a TapeAgent tape, and closes the environment.
+      (loop.py:482-509)
+
+asks_human_when:
+  - >
+    an uncaught exception occurs while a debugger is attached (_is_debugging())
+    and self.enable_debug is set, in which case the error is re-raised instead
+    of being caught and recorded (loop.py:478-480)
+asks_human: researcher
+
+outputs:
+  step_log:
+    kind: status
+    terminates: none
+    description: >
+      Per-step artifacts (screenshot, set-of-marks, agent_info) persisted via
+      save_step_info after each step, including one final call in the
+      `finally` block. (loop.py:446-449, 483-489)
+  episode_outcome:
+    kind: final
+    terminates: run
+    description: >
+      save_summary_info(episode_info, exp_dir, err_msg, stack_trace): the
+      episode's terminal record (reward, terminated/truncated, any error).
+      (loop.py:498-499)
+  uncaught_exception_report:
+    kind: failure
+    terminates: run
+    description: >
+      err_msg/stack_trace captured from an uncaught agent/environment
+      exception, or a synthesized KeyboardInterrupt("Early termination??")
+      when the loop exits without a terminated/truncated final step.
+      (loop.py:470-497)
+  tape_record:
+    kind: status
+    terminates: none
+    description: >
+      Optional agent tape (final_tape) plus task metadata, saved via
+      save_tape when the agent is a TapeAgent instance. (loop.py:500-502)
+
+spends:
+  step_budget:
+    limit: "max_steps steps per episode (env_args.max_steps, passed as gym max_episode_steps)"  # loop.py:43, 94
+    spent_by: [execute_browser_action]
+
+not_modelling:
+  - "distinguishing agent-caused vs. environment/system-caused errors for possible selective re-run (marked TODO in source, loop.py:402-403)"
+  - "the internal semantics of specific browser action strings (click/type/submit/etc.); action_mapping/agent.action_set is not shown in these excerpts"
+  - "any human or task-side behavior on the receiving end of the chat channel"
+  - "the LLM inference service's own reliability, beyond the 3-attempt parse retry"

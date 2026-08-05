@@ -33,6 +33,7 @@ export default defineConfig({
 					label: 'Work with loops',
 					items: [
 						{ label: 'Lint an existing loop', slug: 'guides/linting-existing' },
+						{ label: 'Model the control plane', slug: 'guides/control-plane' },
 						{ label: 'Read and resolve findings', slug: 'guides/findings' },
 						{ label: 'Draw diagrams', slug: 'guides/diagrams' },
 						{ label: 'Review semantic changes', slug: 'guides/semantic-diff' },

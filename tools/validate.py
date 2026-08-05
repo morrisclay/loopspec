@@ -117,7 +117,7 @@ CANONICAL_RELS = {"measures", "estimates", "holds", "targets", "closes", "delays
                   "asserts", "replenishes", "produces",
                   # causal: the vocabulary previously could not say what causes what
                   "explains", "causes", "reads", "compares", "frames", "bounds",
-                  "samples_at", "reviews_at", "sets", "uses_reference"}
+                  "samples_at", "reviews_at", "sets", "uses_reference", "profiles", "emits"}
 
 IR2_REL_SIGNATURES = {
     "measures": {("Signal", "Estimand")},
@@ -126,7 +126,8 @@ IR2_REL_SIGNATURES = {
     "targets": {("DesiredCondition", "Estimand"), ("Intervention", "Estimand")},
     "delays": {("Intervention", "Delay")},
     "constrains": {("Constraint", "System")},
-    "authorizes": {("Party", "Intervention"), ("Policy", "Intervention")},
+    "authorizes": {("Party", "Intervention"), ("Policy", "Intervention"),
+                    ("Party", "ActionProfile"), ("Party", "ControlOperation")},
     "consumes": {("Intervention", "Resource")},
     "revises": {("Calibration", "Estimator"), ("Calibration", "Signal")},
     "bears": {("Party", "Consequence")},
@@ -144,6 +145,8 @@ IR2_REL_SIGNATURES = {
     "reviews_at": {("Calibration", "TimeScale")},
     "sets": {("Estimand", "DesiredCondition")},
     "uses_reference": {("Policy", "DesiredCondition")},
+    "profiles": {("ActionProfile", "Intervention")},
+    "emits": {("ControlOperation", "Output")},
 }
 
 
@@ -255,7 +258,10 @@ def check_canonical(path, doc, allp, rep):
         for plural, want in (("estimands", "Estimand"),
                              ("desired_conditions", "DesiredCondition"),
                              ("policies", "Policy"),
-                             ("processes", "System")):
+                             ("processes", "System"),
+                             ("action_profiles", "ActionProfile"),
+                             ("operations", "ControlOperation"),
+                             ("outputs", "Output")):
             values = lp.get(plural, [])
             if not isinstance(values, list):
                 rep.err(where, f"loop `{loop_id}` `{plural}` must be a list")

@@ -215,7 +215,7 @@ def command_doctor(_args):
                 finding.get("pattern") for finding in findings
                 if not finding.get("assurance") or not finding.get("repair")
             ]
-            if warnings or not report.ok or document.get("ir_revision") != "2.1":
+            if warnings or not report.ok or document.get("ir_revision") != "2.2":
                 raise RuntimeError("runtime expansion or validation contract did not hold")
             if missing_metadata:
                 raise RuntimeError(
@@ -253,7 +253,7 @@ def parser():
                        help="return status 2 when design findings remain")
     check.set_defaults(run=command_check)
 
-    expand_command = subcommands.add_parser("expand", help="print canonical IR v2.1")
+    expand_command = subcommands.add_parser("expand", help="print canonical IR v2.2")
     expand_command.add_argument("spec")
     expand_command.set_defaults(run=command_expand)
 

@@ -1,0 +1,13 @@
+{
+  "case": "browser_use",
+  "study_role": "control_plane_holdout",
+  "encoder": "Anthropic Claude CLI",
+  "model_alias": "sonnet",
+  "tool_access": "disabled",
+  "session_persistence": "disabled",
+  "generated_at": "2026-08-04T22:06:47.500338+00:00",
+  "source_repository": "https://github.com/browser-use/browser-use",
+  "source_revision": "c561b1f514f1e197580e0c4b75a5bfbc3f1e61f2",
+  "prompt_sha256": "7f65a98213f657fe5136260c922d8ebc4088ae8fcb70d66f00e2b10e70a35912",
+  "output_sha256": "aa48258dc6a257d7490960e2947514592197e5ba215469268cc95d8ae38a6792"
+}

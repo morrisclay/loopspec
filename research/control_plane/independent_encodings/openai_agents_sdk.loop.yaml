@@ -1,0 +1,197 @@
+# Encoded from blinded excerpts:
+#   src/agents/run.py 203-280, 793-825, 1091-1168, 1440-1585
+#   src/agents/tool.py 473-505
+#   src/agents/result.py 414-495
+#   src/agents/run_state.py 356-390
+loop: agent_run_loop
+runs: per Runner.run() call, looping across turns until final output, interruption, or a turn/guardrail stop
+
+boundary:
+  drawn_by: runner
+  purpose: >
+    Trace one Runner.run() call from initial input through model turns, tool
+    execution, and handoffs to a final output, interruption, or turn/guardrail
+    stop; tool implementations' own real-world effects and the approver's
+    reasoning are treated as outside this loop (run.py:203-229).
+  inside:
+    - agent/model invocation per turn
+    - turn counting against max_turns
+    - guardrail evaluation
+    - handoff reassignment of current_agent
+    - tool-call approval gating
+  outside:
+    - what a given tool actually does in the world
+    - the model provider's own processing
+    - the approver's reasoning
+
+goal:
+  task_completion:
+    keep: a final output matching the current agent's output_type is produced
+    from: [model_response]
+
+actions:
+  invoke_agent:
+    # run.py:225-229 "The agent is invoked with the given input."
+    moves: task_completion
+    through: model_invocation
+    effect: increase
+    can_undo: unknown
+  execute_tool:
+    # tool.py:487-494 needs_approval bool|callable gates execution
+    moves: task_completion
+    through: tool_execution
+    effect: unknown
+
+action_profiles:
+  execute_tool_unapproved:
+    action: execute_tool
+    default: true
+    resolved_at: request
+    can_undo: unknown
+    description: >
+      needs_approval resolves False (its default) for this call; the tool
+      executes immediately. Real-world reversibility is not established by
+      the runner (tool.py:487-494).
+  execute_tool_gated:
+    action: execute_tool
+    when: >
+      tool.needs_approval is True, or the needs_approval callable
+      (run_context, tool_parameters, call_id) resolves True for this call
+    resolved_at: request
+    can_undo: unknown
+    needs_approval: approver
+    description: >
+      The run is interrupted (NextStepInterruption) until RunState.approve()
+      or RunState.reject() resolves the call (tool.py:490-494;
+      run_state.py:365-390).
+
+operations:
+  op_handoff:
+    kind: handoff
+    when: turn_result.next_step is NextStepHandoff
+    description: >
+      current_agent is reassigned to next_step.new_agent and the loop
+      continues with the nested/filtered input (run.py:1560-1570).
+  op_interrupt:
+    kind: interrupt
+    when: turn_result.next_step is NextStepInterruption
+    emits: approval_request
+    description: >
+      The run stops and returns pending ToolApprovalItem interruptions
+      instead of continuing (run.py:1503-1559).
+  op_resume:
+    kind: resume
+    when: >
+      Runner.run() is called again with a RunState obtained from a prior
+      interrupted result's to_state()
+    authorized_by: approver
+    description: >
+      Execution continues from the persisted step after RunState.approve()
+      or RunState.reject() resolves the pending call (result.py:473-495;
+      run_state.py:365-390).
+  op_stop_max_turns:
+    kind: stop
+    when: current_turn exceeds max_turns and no error_handlers entry resolves it
+    emits: max_turns_failure
+    description: MaxTurnsExceeded is raised, ending the run (run.py:1097-1122).
+  op_stop_guardrail:
+    kind: stop
+    when: a sequential input guardrail's tripwire triggers on the first turn
+    emits: guardrail_failure
+    description: >
+      InputGuardrailTripwireTriggered aborts the run before sandbox prep
+      (run.py:804-825).
+
+outputs:
+  final_output:
+    kind: final
+    terminates: run
+    description: >
+      Validated final_output returned in RunResult when NextStepFinalOutput
+      is reached, or synthesized by a max_turns error handler
+      (run.py:1124-1163, 1454-1502).
+  approval_request:
+    kind: approval_request
+    terminates: run
+    description: >
+      RunResult carrying pending ToolApprovalItem interruptions
+      (run.py:1503-1559; result.py:483-495).
+  max_turns_failure:
+    kind: failure
+    terminates: run
+    description: MaxTurnsExceeded raised (run.py:1097-1122).
+  guardrail_failure:
+    kind: failure
+    terminates: run
+    description: InputGuardrailTripwireTriggered raised (run.py:804-825).
+
+processes:
+  model_invocation:
+    location: interface
+    observed_as: [model_response]
+    description: >
+      Invoking the current agent's underlying model with the running input;
+      classified into final output, handoff, tool calls, or run-again
+      (run.py:225-229).
+  tool_execution:
+    location: outside
+    observed_as: [tool_result]
+    description: >
+      Invoking a requested tool's implementation, subject to
+      tool_input_guardrails/tool_output_guardrails (tool.py:480-485).
+
+observes:
+  model_response:
+    informs: task_completion
+    origin: outside
+    how: reported
+    reported_by: the running agent's underlying model
+    every: each turn
+  tool_result:
+    informs: task_completion
+    origin: ourselves
+    how: measured
+    produced_by: execute_tool
+  approval_decision:
+    informs: task_completion
+    origin: outside
+    how: reported
+    reported_by: approver
+    every: per gated tool call
+
+people:
+  runner:
+    kind: agent
+    loses_if_wrong: nothing
+  approver:
+    kind: human
+    loses_if_wrong: unknown — depends on the consequences of the tool call they approve or reject
+    sees: [task_completion]
+
+spends:
+  turns:
+    limit: max_turns (default 10 via DEFAULT_MAX_TURNS; None disables the limit)
+    spent_by: [invoke_agent]
+
+when:
+  - if: no pending interruption and no final output yet
+    reads: [task_completion]
+    against: [task_completion]
+    do: invoke_agent
+  - if: model response includes tool calls
+    reads: [task_completion]
+    do: execute_tool
+
+asks_human_when:
+  - a tool call's needs_approval (bool or callable) resolves True for the current call, producing NextStepInterruption
+asks_human: approver
+
+never:
+  - never let sandbox prep, session creation, or live-session mutation run before first-turn sequential input guardrails complete (run.py:804-807)
+
+not_modelling:
+  - internals of individual tool implementations or their real-world reversibility
+  - the model provider's own processing
+  - session/store persistence backends and conversation_id server state
+  - hooks lifecycle callbacks
+  - timeout_behavior handling for individual tool calls

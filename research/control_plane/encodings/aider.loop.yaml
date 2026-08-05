@@ -1,0 +1,118 @@
+# Aider at 5dc9490bb35f9729ef2c95d00a19ccd30c26339c.
+# Evidence: aider/coders/base_coder.py 876-944, 986-1000, 1419-1623,
+# 2296-2336, 2375-2409; aider/coders/architect_coder.py 6-48.
+
+loop: aider_coding_turn
+runs: per_user_message
+
+boundary:
+  drawn_by: operator
+  purpose: turn a user request into reviewable repository edits while retaining control over the interactive coding turn
+  inside: [coder, reflection controller, edit parser, optional lint and test feedback, git integration]
+  outside: [operator, model provider, repository files, lint and test processes]
+
+goal:
+  requested_change:
+    keep: the repository implements the user's requested change without known lint or test failure
+
+beliefs:
+  proposed_edit_useful:
+    question: Will the proposed edit advance the requested repository change?
+    how: model judgement over user input, repository context, and prior correction messages
+    explains: requested_change
+    settled_by: edit_and_check_result
+
+observes:
+  user_message:
+    informs: [requested_change, proposed_edit_useful]
+    origin: outside
+    how: reported
+    reported_by: operator
+  model_reply:
+    informs: proposed_edit_useful
+    origin: outside
+    how: reported
+    reported_by: model_provider
+  edit_and_check_result:
+    informs: [requested_change, proposed_edit_useful]
+    origin: ourselves
+    how: measured
+    produced_by: edit_files
+
+processes:
+  repository_and_checks:
+    location: outside
+    description: parsed edits change repository files and optional lint or test commands report local consequences
+    observed_as: [edit_and_check_result]
+
+actions:
+  edit_files:
+    moves: requested_change
+    through: repository_and_checks
+    effect: unknown
+
+action_profiles:
+  architect_edit_after_confirmation:
+    action: edit_files
+    when: architect mode proposes edits and auto-accept is disabled
+    resolved_at: request
+    can_undo: unknown
+    needs_approval: operator
+  auto_committed_edit:
+    action: edit_files
+    when: changed files were committed by Aider and remain eligible for its undo command
+    resolved_at: request
+    can_undo: "yes"
+  unmatched_edit:
+    action: edit_files
+    default: true
+    resolved_at: request
+    can_undo: unknown
+
+outputs:
+  assistant_response:
+    kind: final
+    terminates: turn
+    description: the completed response for the current user message
+
+operations:
+  interrupt_model_reply:
+    kind: interrupt
+    when: the operator presses Control-C during model generation or reply completion
+    authorized_by: operator
+    description: stop processing the current reply while preserving an interruption record
+  retry_provider_call:
+    kind: retry
+    when: the provider error is classified retryable and the exponential backoff ceiling remains
+  stop_reflection_loop:
+    kind: stop
+    when: the configured maximum number of reflections has been reached
+  finish_turn:
+    kind: stop
+    when: no reflected correction message remains
+    emits: assistant_response
+
+when:
+  - if: the model reply contains edits that parse and pass the edit preparation checks
+    reads: [proposed_edit_useful, requested_change]
+    against: [requested_change]
+    do: edit_files
+
+people:
+  operator:
+    human: true
+    loses_if_wrong: repository integrity, time, and any downstream effect of the edited code
+    sees: [requested_change, proposed_edit_useful]
+  model_provider:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [proposed_edit_useful]
+
+spends:
+  reflection_budget:
+    limit: the configured maximum number of reflections
+    replenished: a new user message
+
+not_modelling:
+  - whether auto-committed edits remain undoable after later repository or remote changes
+  - correctness evidence outside the configured local lint and test commands

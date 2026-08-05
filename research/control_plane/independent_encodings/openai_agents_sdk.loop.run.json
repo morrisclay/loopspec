@@ -1,0 +1,13 @@
+{
+  "case": "openai_agents_sdk",
+  "study_role": "control_plane_holdout",
+  "encoder": "Anthropic Claude CLI",
+  "model_alias": "sonnet",
+  "tool_access": "disabled",
+  "session_persistence": "disabled",
+  "generated_at": "2026-08-04T21:05:54.180219+00:00",
+  "source_repository": "https://github.com/openai/openai-agents-python",
+  "source_revision": "19e364c17344905ce6d17f41ea4fe084cba20388",
+  "prompt_sha256": "2be2d010293147c4dcd4d5722e798b28da659ade211195ee5ac81a276b3acc40",
+  "output_sha256": "e060913698ba3fde8297a1c05667f6c335975990a9f0d62a351e0af629fc02bd"
+}

@@ -1,0 +1,13 @@
+{
+  "case": "pocketflow",
+  "study_role": "control_plane_holdout",
+  "encoder": "Anthropic Claude CLI",
+  "model_alias": "sonnet",
+  "tool_access": "disabled",
+  "session_persistence": "disabled",
+  "generated_at": "2026-08-04T21:45:01.730514+00:00",
+  "source_repository": "https://github.com/The-Pocket/PocketFlow",
+  "source_revision": "f74d023f93607b8c3268133339a5e532a949898c",
+  "prompt_sha256": "6ab67fee7304e9233cf05344b552685d76dd30ffeaa46b7d92e94c44af140b76",
+  "output_sha256": "4bcff5f141fe39f78ab896e84ad300685a30adf3edcf664c66b578a0b10b3de6"
+}

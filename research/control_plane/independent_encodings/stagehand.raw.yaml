@@ -1,0 +1,138 @@
+# packages/core/lib/v3/handlers/v3AgentHandler.ts:125-245, 297-388, 391-550, 552-715, 738-796, 818-898
+# packages/core/lib/v3/types/public/agent.ts:285-388
+loop: v3_agent_tool_loop
+runs: per_run_invocation  # execute()/stream() each internally drive the full tool-call loop to completion before resolving; v3AgentHandler.ts:391-517, 552-715
+
+boundary:
+  drawn_by: caller
+  purpose: >
+    Model the browser-automation controller that repeatedly executes LLM-chosen
+    page-interaction tools until a "done" signal or step ceiling, and returns
+    one consolidated result across the API surface (execute()/stream()).
+  inside:
+    - tool dispatch and prepareAgent setup (v3AgentHandler.ts:158-245)
+    - step handler / action-history bookkeeping (v3AgentHandler.ts:297-388)
+    - stop decision (handleStop, v3AgentHandler.ts:818-827)
+    - forced finalization (ensureDone, v3AgentHandler.ts:833-898)
+    - metrics/result consolidation (v3AgentHandler.ts:738-796)
+  outside:
+    - the browser page/DOM being interacted with
+    - the LLM provider backend
+    - the calling application that invokes execute()/stream()
+
+goal:
+  task_completion:
+    keep: "the run reaches a 'done' tool call with taskComplete true (or a maxSteps ceiling / synthesized fallback) before returning to the caller"
+    from: [step_result, done_result]  # v3AgentHandler.ts:325-341, 833-898
+
+beliefs:
+  task_complete:
+    question: "has the instructed task actually finished on the page?"
+    how: "forced LLM 'done' tool call over the full step history (handleDoneToolCall)"  # v3AgentHandler.ts:833-869
+    explains: goal.task_completion
+    # no checked_by/checked_against: excerpts show no cross-run scoring of this judgment
+
+observes:
+  step_result:
+    informs: [beliefs.task_complete, goal.task_completion]
+    every: "per model step"  # v3AgentHandler.ts:301-388
+    cost: medium
+    origin: outside
+    how: measured
+    source: "AI SDK onStepFinish event over executed browser tool calls"
+  done_result:
+    informs: [beliefs.task_complete, goal.task_completion]
+    every: "once, at forced finalization, or embedded when the model calls 'done' mid-run"  # v3AgentHandler.ts:833-869
+    cost: medium
+    origin: outside
+    how: reported
+    reported_by: llm_agent
+
+actions:
+  browser_tool_call:
+    moves: goal.task_completion
+    through: browser_dom_interaction
+    effect: unknown  # varies by tool; see action_profiles
+    # can_undo intentionally omitted here: reversibility is request-dependent, see action_profiles
+
+action_profiles:
+  read_only_or_query:
+    action: browser_tool_call
+    resolved_at: request
+    when: "toolName is screenshot, extract, ariaTree, think, wait, or search"  # agent.ts:324-337,339-356
+    can_undo: yes
+    description: "read-only inspection of page state or an external search query; no page-state side effect"
+  navigation:
+    action: browser_tool_call
+    resolved_at: request
+    when: "toolName is goto, navback, or scroll"  # agent.ts:324-337,339-356
+    can_undo: costly
+    description: "changes active URL, history position, or scroll position; recoverable by navigating back but not free"
+  default:
+    action: browser_tool_call
+    default: true
+    resolved_at: request
+    can_undo: unknown
+    description: "interactive/mutating calls (act, click, type, dragAndDrop, clickAndHold, fillForm, fillFormVision, keys) and any tool call not otherwise classified; the handler does not bind or gate their reversibility"  # agent.ts:324-356
+
+operations:
+  stop_on_completion:
+    kind: stop
+    when: "the last step's tool calls include 'done' with taskComplete true (handleStop, v3AgentHandler.ts:818-827), the step count reaches maxSteps, or the forced finalization call throws and a fallback completion is synthesized (v3AgentHandler.ts:852-869)"
+    emits: final_result
+  stop_on_error:
+    kind: stop
+    when: "a validation error (streaming callbacks in non-streaming mode, missing required environment variable) is re-thrown, or an unexpected error occurs during preparation/execution and a failure result is returned"  # v3AgentHandler.ts:517-546
+    emits: execution_failure
+  interrupt_on_abort:
+    kind: interrupt
+    when: "the caller's AbortSignal is aborted (execute()) or the stream reports onAbort (stream())"  # v3AgentHandler.ts:397,527-530,690-700
+    authorized_by: caller
+    emits: execution_failure
+
+outputs:
+  final_result:
+    kind: final
+    terminates: run
+    description: "AgentResult returned when execute()/stream() resolves: success, message, actions, completed, output, usage, messages"  # v3AgentHandler.ts:490-516,738-796
+  execution_failure:
+    kind: failure
+    terminates: run
+    description: "either an AgentResult with success:false (non-abort/non-validation errors), or a thrown/rejected error: validation error or AgentAbortError"  # v3AgentHandler.ts:517-546,690-700
+  step_evidence:
+    kind: status
+    terminates: none
+    description: "per-step callbacks reaching the caller: onEvidence (step_finished + post-step probe), onStepFinish, and stream onChunk"  # v3AgentHandler.ts:354-386,616-648
+
+processes:
+  browser_dom_interaction:
+    location: interface
+    observed_as: [step_result]
+    description: "the live browser page through which a dispatched tool call becomes a later tool result and updated page URL"  # v3AgentHandler.ts:342-366
+
+people:
+  caller:
+    kind: system
+    loses_if_wrong: "receives a failure/aborted result, or a low-quality 'completed' result, instead of the intended browser-task outcome"
+    sees: [goal.task_completion]
+  llm_agent:
+    kind: agent
+    loses_if_wrong: nothing
+    sees: [beliefs.task_complete]
+
+spends:
+  step_budget:
+    limit: "maxSteps steps (options.maxSteps, default 20)"  # v3AgentHandler.ts:167,818-827,754-763
+    spent_by: [browser_tool_call]
+  token_budget:
+    spent_by: [browser_tool_call]  # usage tracked but no ceiling shown: v3AgentHandler.ts:768-793
+
+never:
+  - "let the forced 'done' finalization call's failure fail a run whose work already completed"  # v3AgentHandler.ts:852-869
+
+not_modelling:
+  - "individual page-interaction tool implementations (act, fillForm, extract, click, type, dragAndDrop, etc.) beyond their tool names"
+  - "captcha-solver mechanics beyond enable/init/dispose calls"
+  - "cursor-overlay highlighting for hybrid mode"
+  - "prepareStep customization and provider-specific options"
+  - "cross-call conversation continuation via caller-supplied `messages`"

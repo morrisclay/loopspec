@@ -1,0 +1,13 @@
+{
+  "case": "skyvern",
+  "study_role": "control_plane_holdout",
+  "encoder": "Anthropic Claude CLI",
+  "model_alias": "sonnet",
+  "tool_access": "disabled",
+  "session_persistence": "disabled",
+  "generated_at": "2026-08-04T21:20:50.116521+00:00",
+  "source_repository": "https://github.com/Skyvern-AI/skyvern",
+  "source_revision": "6442cdc49dbe031c7d9462c140d9035fd2d6f0cd",
+  "prompt_sha256": "5bed29088f1a75b05c2bda9a14135822f1de99adf6d55e1629913e76ff117987",
+  "output_sha256": "d393757a0a79ee1c5b80e20e4aee21c5e36fd6a0d734b64dfcc5187956b695e3"
+}

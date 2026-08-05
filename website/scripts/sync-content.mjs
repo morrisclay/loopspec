@@ -13,6 +13,12 @@ const documents = [
 		description: 'Turn code, prompts, or a runbook into a source-grounded loop specification without inventing semantics.',
 	},
 	{
+		source: 'docs/CONTROL-PLANE.md',
+		output: 'src/content/docs/guides/control-plane.md',
+		title: 'Model the control plane',
+		description: 'Separate world actions, controller operations, outputs, and conditional tool safety.',
+	},
+	{
 		source: 'docs/COOKBOOK.md',
 		output: 'src/content/docs/patterns/index.md',
 		title: 'Loop pattern cookbook',
@@ -40,7 +46,7 @@ const documents = [
 		source: 'REFERENCE.md',
 		output: 'src/content/docs/reference/language.md',
 		title: 'Language keys',
-		description: 'The generated reference for every accepted authoring key in LoopSpec v1.1.',
+		description: 'The generated reference for every accepted authoring key in experimental LoopSpec v1.2.',
 	},
 	{
 		source: 'docs/CHECKS.md',
@@ -64,7 +70,7 @@ const documents = [
 		source: 'COMPATIBILITY.md',
 		output: 'src/content/docs/reference/compatibility.md',
 		title: 'Versions and compatibility',
-		description: 'Authoring v1.1, canonical IR v2.1, migrations, and the executable conformance target.',
+		description: 'Stable v1.1 compatibility, experimental v1.2 and IR v2.2, migrations, and executable conformance.',
 	},
 ];
 

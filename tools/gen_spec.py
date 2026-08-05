@@ -28,6 +28,12 @@ SECTIONS = [("top_level", "Top level", "One document per loop. `---` separates l
              "What it holds a view on but cannot read off directly."),
             ("observes_entry", "`observes.<name>`", "What data actually arrives."),
             ("actions_entry", "`actions.<name>`", "The levers."),
+            ("action_profiles_entry", "`action_profiles.<name>`",
+             "Late-bound variants of generic actions."),
+            ("operations_entry", "`operations.<name>`",
+             "Transitions in execution of the controller itself."),
+            ("outputs_entry", "`outputs.<name>`",
+             "Values emitted out of the represented loop boundary."),
             ("processes_entry", "`processes.<name>`",
              "The world or system path through which action becomes later observation."),
             ("spends_entry", "`spends.<name>`", "What the loop burns, and what stops it."),
@@ -73,6 +79,10 @@ def markdown():
     o.write("## Referential rules\n\n")
     o.write("Checked at parse time, because a name pointing at nothing is a silent hole:\n\n")
     for a, b in [("`actions.*.needs_approval`", "someone in `people`"),
+                 ("`action_profiles.*.action`", "an entry in `actions`"),
+                 ("`action_profiles.*.needs_approval`", "someone in `people`"),
+                 ("`operations.*.authorized_by`", "someone in `people`"),
+                 ("`operations.*.emits`", "an entry in `outputs`"),
                  ("`actions.*.moves`", "something in `goal` or `beliefs`"),
                  ("`actions.*.through`", "a process in `processes`"),
                  ("`when[].do`", "an action in `actions`"),
@@ -134,6 +144,8 @@ def schema():
     top = props("top_level")
     for k, entry in [("goal", "goal_entry"), ("beliefs", "beliefs_entry"),
                      ("observes", "observes_entry"), ("actions", "actions_entry"),
+                     ("action_profiles", "action_profiles_entry"),
+                     ("operations", "operations_entry"), ("outputs", "outputs_entry"),
                      ("processes", "processes_entry"),
                      ("people", "people_entry"), ("spends", "spends_entry"),
                      ("consider", "consider_entry")]:

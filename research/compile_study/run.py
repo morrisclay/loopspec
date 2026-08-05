@@ -1,6 +1,7 @@
 import os, json, urllib.request, concurrent.futures as cf
 D = os.path.dirname(os.path.abspath(__file__))
-SPEC = open("/Users/morrisclay/Dev/uras/examples/customer_acquisition.loop.yaml").read()
+R = os.path.abspath(os.path.join(D, "..", ".."))
+SPEC = open(os.path.join(R, "examples", "customer_acquisition.loop.yaml")).read()
 KEY = os.environ["OPENROUTER_API_KEY"]
 
 # THE ENTIRE COMPILE CONTRACT. No format document, no primitive catalog, no examples.

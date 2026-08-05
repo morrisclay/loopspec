@@ -1,0 +1,119 @@
+# Encoded from:
+#   pocketflow/__init__.py lines 1-51
+#   cookbook/pocketflow-browser-agent/nodes_dom.py lines 1-112
+#   cookbook/pocketflow-browser-agent/flow.py lines 1-30
+loop: browser_agent_dom_loop
+runs: per_run_invocation  # Flow._run drives Observe->Decide->Act internally in one call (pocketflow/__init__.py:46-50)
+
+boundary:
+  drawn_by: operator
+  purpose: >
+    Separate the agent's own reasoning steps (read elements, decide one action, act)
+    from the live web page they manipulate, so actions on that page can be reasoned
+    about apart from the controller's own execution (nodes_dom.py:1-6; flow.py:6-14).
+  inside:
+    - observe step
+    - decide step
+    - act step
+  outside:
+    - the live browser page/DOM
+    - the target website's server-side state
+
+goal:
+  task_completion:
+    keep: "decision.action reaches 'done' before the 12-step cap is hit"  # nodes_dom.py:81-84
+    from: [next_action, action_history]
+
+beliefs:
+  next_action:
+    question: "given the current elements, page text, and history, what single action moves toward the goal?"
+    how: "one LLM call per step, parsed from a yaml block"  # nodes_dom.py:53-76
+    explains: task_completion
+
+observes:
+  page_state:
+    informs: beliefs.next_action
+    origin: outside
+    how: measured
+    source: "live page via Playwright query_selector_all / evaluate"  # nodes_dom.py:19-39
+    every: per_step
+  action_history:
+    informs: beliefs.next_action
+    origin: ourselves
+    how: reported
+    reported_by: "the Act step's own description of what it just did"
+    produced_by: perform_browser_action
+    every: per_step  # nodes_dom.py:107-111
+
+actions:
+  perform_browser_action:
+    moves: task_completion
+    effect: increase
+    through: browser_dom
+    effect_after: "300ms wait, or 1000ms after a key press, before the next Observe reads the DOM"  # nodes_dom.py:97,106
+    # can_undo/needs_approval omitted: fully described by action_profiles below
+
+action_profiles:
+  generic_click_type_select_press:
+    action: perform_browser_action
+    default: true
+    resolved_at: request
+    can_undo: unknown
+    description: >
+      click/type/select/press is dispatched by element number with no per-target
+      classification; the code cannot tell a reversible nav click from an
+      irreversible submit/delete click (nodes_dom.py:93-107).
+
+processes:
+  browser_dom:
+    location: outside
+    observed_as: [page_state]
+    description: "the live page that perform_browser_action mutates and that Observe re-reads next cycle"
+
+operations:
+  stop:
+    kind: stop
+    when: "decision.action == 'done' or len(history) >= 12 (MAX_STEPS)"  # nodes_dom.py:10,81-84
+    emits: final_answer
+  stop_on_unhandled_exception:
+    kind: stop
+    when: "a node's exec_fallback is reached and re-raises (default: after Decide's 3rd failed attempt, or immediately for Observe/Act which retry only once)"  # pocketflow/__init__.py:28-34; flow.py:15
+    emits: failure
+  retry:
+    kind: retry
+    when: "Decide.exec raises and cur_retry < max_retries-1 (up to 3 attempts)"  # pocketflow/__init__.py:29-34; flow.py:15
+    description: "PocketFlow's Node._exec re-invokes exec on failure; only Decide is constructed with max_retries=3"
+
+outputs:
+  final_answer:
+    kind: final
+    terminates: run
+    description: "shared['answer'] returned when done is signalled or the 12-step cap is reached (may be empty in the cap case)"
+  failure:
+    kind: failure
+    terminates: run
+    description: "unhandled exception propagated after a node's retries are exhausted"
+
+when:
+  - if: "the LLM has not signalled done and history is below the 12-step cap"
+    reads: [beliefs.next_action, spends.step_budget]
+    against: [task_completion]
+    do: perform_browser_action
+
+spends:
+  step_budget:
+    limit: "12 steps (MAX_STEPS)"  # nodes_dom.py:10
+    spent_by: [perform_browser_action]
+
+never:
+  - "exceed 12 Observe/Decide/Act steps in a single run (MAX_STEPS safety cap, nodes_dom.py:10)"
+
+not_modelling:
+  - "the vision-mode variant (nodes_vision.py) referenced by flow.py but not included in these excerpts"
+  - "whether a given click/type/select/press is actually reversible on the live site; the code applies the same dispatch regardless of target semantics"
+
+people:
+  operator:
+    kind: human
+    loses_if_wrong: "the agent takes a wrong or irreversible action on the live page on their behalf, or wastes steps up to the safety cap"
+    sees: [task_completion, next_action]

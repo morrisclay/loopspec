@@ -1,0 +1,109 @@
+# smolagents at e3a5b8994b301983b91c0325546e9dc82eab8cf0.
+# Evidence: src/smolagents/agents.py 436-611, 625-637, 754-756,
+# 1276-1439, 1453-1488.
+
+loop: smolagents_multistep_run
+runs: per_agent_run_invocation
+
+boundary:
+  drawn_by: caller
+  purpose: alternate model decisions and configured tool calls until a final answer, interruption, or step bound ends one run
+  inside: [multi-step controller, agent memory, step counter, tool dispatcher]
+  outside: [caller, model provider, configured tools, managed agents, tool environments]
+
+goal:
+  task_answer:
+    keep: the run returns a useful final answer for the supplied task within its step budget
+
+beliefs:
+  next_tool_use:
+    question: Which configured tool call or final answer should follow from the task and accumulated memory?
+    how: model generation over the current memory messages
+    explains: task_answer
+    settled_by: tool_result
+
+observes:
+  task:
+    informs: [task_answer, next_tool_use]
+    origin: outside
+    how: reported
+    reported_by: caller
+  model_message:
+    informs: next_tool_use
+    origin: outside
+    how: reported
+    reported_by: model_provider
+  tool_result:
+    informs: [task_answer, next_tool_use]
+    origin: ourselves
+    how: measured
+    produced_by: execute_tool_call
+
+processes:
+  configured_tool_environment:
+    location: outside
+    description: the selected configured tool or managed agent executes with concrete arguments and returns an observation
+    observed_as: [tool_result]
+
+actions:
+  execute_tool_call:
+    moves: task_answer
+    through: configured_tool_environment
+    effect: unknown
+
+action_profiles:
+  concrete_tool_request:
+    action: execute_tool_call
+    default: true
+    resolved_at: request
+    can_undo: unknown
+    description: external effect and reversibility depend on the selected tool and concrete arguments
+
+outputs:
+  final_answer:
+    kind: final
+    terminates: run
+    description: the FinalAnswerStep output returned at the end of the run
+  streamed_step:
+    kind: status
+    terminates: none
+    description: an intermediate planning, action, tool, or model-stream event yielded when streaming is enabled
+
+operations:
+  interrupt_run:
+    kind: interrupt
+    when: the caller invokes interrupt and the controller next checks its interrupt switch
+    authorized_by: caller
+  retry_agent_step:
+    kind: retry
+    when: an AgentError attributable to the model is recorded and the bounded loop advances to another attempt
+  finish_run:
+    kind: stop
+    when: a final-answer tool succeeds or the maximum step count is exhausted and a fallback final answer is produced
+    emits: final_answer
+
+when:
+  - if: the model message selects an available non-final tool or managed agent
+    reads: [next_tool_use, task_answer]
+    against: [task_answer]
+    do: execute_tool_call
+
+people:
+  caller:
+    human: true
+    loses_if_wrong: time, tool-side effects, and confidence in the returned answer
+    sees: [task_answer, next_tool_use]
+  model_provider:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [next_tool_use]
+
+spends:
+  step_budget:
+    limit: max_steps, 20 by default
+    replenished: a new run invocation
+    spent_by: execute_tool_call
+
+not_modelling:
+  - the effect, approval policy, and reversibility of each configured tool deployment
+  - whether the caller is a person or an automated integration in a concrete deployment

@@ -1,0 +1,203 @@
+# Encoded from crates/goose/src/agents/agent.rs
+# excerpts: 2067-2205, 2326-2428, 2845-3008, 3047-3085
+loop: goose_agent_reply_loop
+runs: per_run_invocation   # one try_stream! invocation drives every turn until stop (2067-2092)
+
+boundary:
+  drawn_by: maintainer
+  purpose: >
+    Model the single streaming invocation that turns provider responses into
+    tool executions and assistant messages, until a final answer, a spent
+    budget, or an unrecoverable empty/failed turn ends the run.
+  inside:
+    - turn-counting and cancellation check (2092-2096, 2172-2183)
+    - stop-hook gated finish handling (2124-2170)
+    - tool permission classification and dispatch (2372-2428)
+    - empty-turn detection, goal/grind nudges, recipe retry bookkeeping (2864-3008)
+    - message persistence and pending-steer/exit interplay (3057-3085)
+  outside:
+    - the model provider (stream_response_from_provider)
+    - external tools/extensions invoked through the permission check
+    - the pluggable stop-hook implementation
+    - the recipe's own retry/success-check configuration
+    - the human user
+
+goal:
+  stated_goal:
+    keep: "self.goal, when set, is fully met before the run stops (2908-2925)"
+  grind_target:
+    keep: "self.grind, when set, stays worked until fully done before the run stops (2927-2943)"
+
+beliefs:
+  stop_is_safe:
+    question: "is it safe for the run to end on the candidate final answer right now?"
+    how: "external stop-hook plugin decision (Allow/Deny) over the produced text and working dir (2137-2169)"
+  turn_needs_retry:
+    question: >
+      did this turn fail to make progress (no tool calls, no text, no error,
+      no recovery compaction) and warrant a bounded retry instead of ending?
+    how: "calculated from provider-response shape plus recipe retry configuration (2870-2996)"
+
+observes:
+  provider_response:
+    origin: outside
+    how: reported
+    reported_by: provider
+    source: "stream_response_from_provider (2196-2205)"
+    informs: [beliefs.turn_needs_retry, beliefs.stop_is_safe]
+  tool_execution_result:
+    origin: outside
+    how: measured
+    source: "handle_approved_and_denied_tools / handle_approval_tool_requests (2408-2428)"
+    informs: goal.stated_goal
+  stop_hook_decision:
+    origin: outside
+    how: reported
+    reported_by: stop_hook_plugin
+    source: "emit_stop_hook_blocking (2137-2145)"
+    informs: beliefs.stop_is_safe
+  recipe_retry_result:
+    origin: ourselves
+    how: calculated
+    source: "handle_retry_logic (2953-3005)"
+    informs: beliefs.turn_needs_retry
+
+actions:
+  execute_tool:
+    moves: [goal.stated_goal, goal.grind_target]
+    through: tool_execution
+    effect: unknown   # 2372-2428: reversibility not tracked per concrete tool
+
+action_profiles:
+  execute_tool_auto_approved:
+    action: execute_tool
+    default: true
+    resolved_at: request
+    can_undo: unknown
+    description: "permission check classifies the request as approved without a further gate (2383-2413)"
+  execute_tool_needs_approval:
+    action: execute_tool
+    when: "the permission check's needs_approval list includes the request (2383-2423)"
+    resolved_at: request
+    can_undo: unknown
+    needs_approval: user
+  execute_tool_denied:
+    action: execute_tool
+    when: "the permission check's denied list includes the request (2383-2413)"
+    resolved_at: request
+    can_undo: yes   # not executed; the response records a denial instead of an effect
+
+operations:
+  interrupt_cancelled:
+    kind: interrupt
+    when: "the run's cancellation token has been set (2093-2095)"
+  finish_via_stop_hook:
+    kind: stop
+    when: "the final-output tool has produced an answer at the top of a turn and the stop hook allows finishing (2128-2144)"
+    authorized_by: stop_hook_plugin
+    emits: final_response
+  retry:
+    kind: retry
+    when: >
+      the stop hook denies finishing and consecutive denials are within the
+      block cap (2145-2168), or recipe retry logic restarts the turn from the
+      initial messages (2953-2959)
+    emits: status_stream
+  stop_on_failure:
+    kind: stop
+    when: >
+      turns_taken exceeds max_turns (2179-2183), or consecutive stop-hook
+      denials exceed the block cap (2146-2157), or empty-turn retries are
+      exhausted (2960-2982), or recipe retry logic reports max attempts
+      reached or an internal error (2984-3005)
+    emits: turn_failure
+  stop_on_completion:
+    kind: stop
+    when: "the final-output tool yields a completed answer while finishing a tool-call-free turn (2891-2903, 3047-3054)"
+    emits: final_response
+  compact_recovery_continue:
+    kind: compact
+    when: "a recovery compaction already occurred earlier this iteration and no tool was called (2870-2906)"
+    description: "loop continues from the last user message without persisting the empty assistant turn"
+
+outputs:
+  final_response:
+    kind: final
+    terminates: run
+    description: "the assistant's completed final answer, from the final-output tool or produced inline while finishing a turn"
+  turn_failure:
+    kind: failure
+    terminates: run
+    description: "terminal message when the run cannot continue productively: max-turns, stop-hook cap, empty-turn retries, or recipe retry exhaustion/error"
+  status_stream:
+    kind: status
+    terminates: none
+    description: >
+      public per-message events: drained steer messages (2097-2122),
+      tool responses, goal/grind continuation nudges (2908-2943),
+      stop-hook denial notices (2158-2166), usage attachment, and
+      history-replaced notices (2953-2959)
+  tool_approval_request:
+    kind: approval_request
+    terminates: none
+    description: "request surfaced to the approving user for tool calls the permission check flags as needing approval (2383-2423)"
+
+processes:
+  tool_execution:
+    location: interface
+    observed_as: [tool_execution_result]
+    description: "approved/denied tool requests are dispatched to extensions and frontend tools; results return as tool response messages"
+  provider_inference:
+    location: outside
+    observed_as: [provider_response]
+    description: "the configured model provider streams assistant text and/or tool call requests"
+  stop_hook_process:
+    location: interface
+    observed_as: [stop_hook_decision]
+    description: "a pluggable hook is invoked with the candidate final answer and working directory and returns Allow or Deny"
+
+when:
+  - if: "the provider response includes tool call requests and goose_mode is not Chat"
+    reads: [goal.stated_goal]
+    do: execute_tool
+
+asks_human_when:
+  - "a tool call is flagged by the permission check as needing approval before it can run (2383-2423)"
+asks_human: user
+
+people:
+  maintainer:
+    human: true
+    loses_if_wrong: "ships a loop that stalls silently, executes tools without appropriate gating, or overruns its turn budget"
+    sees: [goal.stated_goal, goal.grind_target, beliefs.stop_is_safe, beliefs.turn_needs_retry]
+  user:
+    human: true
+    loses_if_wrong: "receives no answer, an incomplete answer, or must approve risky tool calls under time pressure"
+    sees: [goal.stated_goal, goal.grind_target]
+  stop_hook_plugin:
+    kind: system
+    loses_if_wrong: "nothing directly; a misconfigured hook blocks legitimate completions or allows unsafe ones"
+  provider:
+    kind: system
+    loses_if_wrong: "nothing"
+
+spends:
+  turns:
+    limit: "turns_taken must not exceed max_turns (GOOSE_MAX_TURNS config, default DEFAULT_MAX_TURNS) (2069-2183)"
+  empty_turn_retries:
+    limit: "MAX_EMPTY_TURN_RETRIES consecutive empty provider responses (2960-2982)"
+  stop_hook_denials:
+    limit: "stop_hook_block_cap consecutive stop-hook denials (2146-2157)"
+
+never:
+  - "persist an assistant turn with no text, no tool calls, and no error or recovery compaction to session history (2864-2878)"
+  - "report an unparseable tool call as a successfully skipped call in Chat mode; the parse error must reach the model instead (2356-2371)"
+  - "end the run while pending steer messages have not yet been drained; pending steers cancel a pending exit (3082-3084)"
+
+not_modelling:
+  - "reversibility of individual tools/extensions invoked through execute_tool"
+  - "who is authorized to set the cancellation token"
+  - "mechanics of moim injection and recovery compaction themselves, only their aftermath flags are observed here"
+  - "effects of MANAGE_EXTENSIONS tool calls on available tools/prompt (2399-2406)"
+  - "frontend tool request handling as a distinct action (2343-2354)"
+  - "subdirectory hint reloading (2852-2862)"

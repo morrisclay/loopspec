@@ -1,0 +1,271 @@
+# Encoded from blinded excerpts:
+#   skyvern/forge/agent.py:850-965, 1058-1079, 1124-1265, 5667-5891, 5893-6011
+#   skyvern/webeye/actions/handler.py:2951-3001
+#   skyvern/webeye/actions/actions.py:264-268, 293-363, 412-425
+#   skyvern/forge/sdk/schemas/tasks.py:230-247
+loop: task_step_execution_loop
+runs: per_step   # execute_step recursion, agent.py:1058-1265
+
+boundary:
+  drawn_by: skyvern_agent
+  purpose: >
+    Track one task's step-by-step browser execution — dispatching actions,
+    checking retry/step budgets, and verifying goal completion — until the
+    task reaches a terminal TaskStatus. (agent.py:850-965, 1124-1265)
+  inside:
+    - step execution, retry and budget-check logic (agent.py:951-963, 5764-5877, 5893-6011)
+    - action dispatch to the browser page (handler.py:2951-3001)
+    - parallel goal-verification and speculative next-step planning (agent.py:5757-5891)
+    - task/step status persistence (agent.py:1124-1265, 5667-5755)
+  outside:
+    - the target website/page under automation (handler.py:2975-3001)
+    - the workflow_run orchestrator that can cancel/time out a run (agent.py:886-921)
+    - organization-level step/retry budget configuration (agent.py:951-957, 5893-5899)
+    - the LLM call that selects which action to take next (not shown in these excerpts)
+
+goal:
+  task_completion:
+    keep: "reaches TaskStatus.completed before its step or retry budget is exhausted"
+    from: [workflow_status, task_status_refresh, action_results, step_budget_status]
+    # tasks.py:230-247 (terminal statuses), agent.py:1124-1265
+
+beliefs:
+  goal_achieved:
+    question: "has the task's navigation_goal (and data_extraction_goal, if any) actually been satisfied by the actions taken so far?"
+    how: "LLM-based verification run in parallel with speculative next-step planning; skipped for CUA engines (agent.py:875-879)"
+    explains: task_completion
+    settled_by: task_status_refresh
+    # agent.py:5735-5755 (achieved -> completed), 5684-5725 (unreachable -> terminated)
+  speculative_next_actions:
+    question: "what actions should the next step take, computed before this step's goal-verification result is known?"
+    how: "LLM-based speculative extract-actions call awaited concurrently with verification (agent.py:5757-5812)"
+    explains: task_completion
+    settled_by: step_result
+    # agent.py:5879-5886 (plan stored for use on the next step)
+
+observes:
+  workflow_status:
+    informs: task_completion
+    every: per_step
+    origin: outside
+    how: reported
+    source: workflow_runs table
+    # agent.py:886-921
+  task_status_refresh:
+    informs: task_completion
+    every: per_step
+    origin: outside
+    how: reported
+    source: tasks table
+    # agent.py:923-949
+  action_results:
+    informs: [task_completion, goal_achieved]
+    origin: outside
+    how: measured
+    # agent.py:5676-5679; handler.py:2951-3001
+  step_budget_status:
+    informs: task_completion
+    origin: ourselves
+    how: calculated
+    # agent.py:5764-5785, 5814-5823
+  speculative_plan_result:
+    informs: speculative_next_actions
+    origin: ourselves
+    how: calculated
+    # agent.py:5774-5812, 5879-5886
+
+actions:
+  click:
+    moves: task_completion
+    effect: unknown
+    through: browser_execution
+    # actions.py:293-304; handler.py:2951-3001
+  input_text:
+    moves: task_completion
+    can_undo: unknown
+    effect: unknown
+    through: browser_execution
+    # actions.py:307-332
+  paste_text:
+    moves: task_completion
+    can_undo: unknown
+    effect: unknown
+    through: browser_execution
+    # actions.py:335-346
+  upload_file:
+    moves: task_completion
+    can_undo: unknown
+    effect: unknown
+    through: browser_execution
+    # actions.py:349-355
+  download_file:
+    moves: task_completion
+    can_undo: costly   # a downloaded file persists locally; reversible only by manual deletion
+    effect: unknown
+    through: browser_execution
+    # actions.py:358-363; handler.py:2977-2991
+  complete_task:
+    moves: task_completion
+    can_undo: no        # persists a terminal TaskStatus.completed and runs task cleanup
+    effect: increase
+    through: task_lifecycle
+    # actions.py:417-420; agent.py:5727-5755, 1124-1141, 1186-1198
+  terminate_task:
+    moves: task_completion
+    can_undo: no         # persists a terminal TaskStatus.terminated with classified failure
+    effect: decrease
+    through: task_lifecycle
+    # actions.py:412-414; agent.py:5684-5725
+
+action_profiles:
+  click_download:
+    action: click
+    when: "action.download is true (ClickAction/SelectOptionAction/DownloadFileAction triggering a captured download)"
+    resolved_at: request
+    can_undo: costly
+    description: >
+      Click triggers a file download; handled with a 120s no-signal grace plus a
+      bounded 120s in-flight extension (up to 240s total), or an explicit action
+      timeout as hard cap. (handler.py:2977-2991)
+  click_default:
+    action: click
+    default: true
+    resolved_at: request
+    can_undo: unknown
+    description: >
+      Click not flagged as download-triggering; downstream page effects
+      (navigation, form submission, popups) are not resolved by this excerpt.
+      (handler.py:2984-3001; actions.py:293-304)
+
+operations:
+  retry_step:
+    kind: retry
+    when: "step.status == failed and step.retry_index < max_retries_per_step"
+    authorized_by: skyvern_agent
+    description: "creates a new Step row with retry_index+1 and re-invokes execute_step for it"
+    # agent.py:5999-6011, 1144-1153, 1227-1241
+  stop_task_canceled:
+    kind: stop
+    when: "workflow_run.status == canceled, or the refreshed task.status == canceled"
+    authorized_by: skyvern_agent
+    emits: task_canceled
+    # agent.py:891-905, 929-949
+  stop_task_timed_out:
+    kind: stop
+    when: "workflow_run.status == timed_out"
+    authorized_by: skyvern_agent
+    emits: task_timed_out
+    # agent.py:907-921
+  stop_task_failed:
+    kind: stop
+    when: >
+      step failed with terminal user-defined errors, or step.retry_index reached
+      max_retries_per_step, or step.order+1 reached max_steps_per_run
+    authorized_by: skyvern_agent
+    emits: task_failed
+    # agent.py:1144-1164, 5825-5877, 5900-5998
+  stop_task_completed:
+    kind: stop
+    when: "CompleteAction persisted with goal verified achieved, or handle_completed_step reports is_task_completed"
+    authorized_by: skyvern_agent
+    emits: task_completed
+    # agent.py:5727-5755, 1124-1141, 1186-1198
+  stop_task_terminated:
+    kind: stop
+    when: "TerminateAction persisted (agent determined the goal unreachable)"
+    authorized_by: skyvern_agent
+    emits: task_terminated
+    # agent.py:5684-5725
+  stop_budget_exhausted:
+    kind: stop
+    when: "workflow_run_budget total steps reached max_steps_per_workflow_run"
+    authorized_by: skyvern_agent
+    emits: task_budget_exhausted
+    # agent.py:5784-5823 (exact resulting task status not shown in this excerpt)
+  pause_step_boundary:
+    kind: pause
+    when: "step executed successfully but settings.execute_all_steps() is false and no retry is pending"
+    authorized_by: skyvern_agent
+    emits: step_result
+    description: "returns control to the external caller; resumed by a later invocation of execute_step with next_step"
+    # agent.py:1242-1264
+
+outputs:
+  task_completed:
+    kind: final
+    terminates: run
+    # agent.py:5735-5755, 1124-1141, 1186-1198
+  task_terminated:
+    kind: failure
+    terminates: run
+    # agent.py:5684-5725
+  task_failed:
+    kind: failure
+    terminates: run
+    # agent.py:1144-1164, 5825-5877, 5893-5998
+  task_canceled:
+    kind: status
+    terminates: run
+    # agent.py:891-905, 929-949
+  task_timed_out:
+    kind: status
+    terminates: run
+    # agent.py:907-921
+  task_budget_exhausted:
+    kind: status
+    terminates: run
+    # agent.py:5814-5823
+  step_result:
+    kind: status
+    terminates: none
+    description: "the (step, detailed_output, next_step) tuple returned to the caller each invocation"
+    # agent.py:1199-1264
+
+processes:
+  browser_execution:
+    location: interface
+    observed_as: [action_results]
+    description: >
+      ActionHandler.handle_action dispatches the action against the live page
+      and returns ActionResults; downloads get an extended no-signal/in-flight
+      timeout budget. (handler.py:2951-3001; agent.py:5676-5679)
+  task_lifecycle:
+    location: interface
+    observed_as: [task_status_refresh]
+    description: >
+      CompleteAction/TerminateAction persist a terminal step/task status that
+      a later fetch of the task record reflects. (agent.py:5667-5755, 923-928)
+
+spends:
+  step_budget:
+    limit: "max_steps_per_run steps (override > task > organization > settings default)"
+    spent_by: [click, input_text, paste_text, upload_file, download_file, complete_task, terminate_task]
+    # agent.py:951-963, 5766-5772, 5785, 5825-5877
+  step_retry_budget:
+    limit: "max_retries_per_step retries per step order (organization override or settings default)"
+    spent_by: [click, input_text, paste_text, upload_file, download_file]
+    # agent.py:5893-5931, 5933-5998, 5999-6011
+  workflow_run_step_budget:
+    limit: "max_steps_per_workflow_run, counted across the whole workflow run"
+    spent_by: [click, input_text, paste_text, upload_file, download_file, complete_task, terminate_task]
+    # agent.py:5764-5823
+
+people:
+  organization:
+    human: true
+    loses_if_wrong: "budget spent on steps/retries, and either no completed task or a wrongly-verified 'completed' result"
+    sees: [task_completion]
+  skyvern_agent:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [task_completion, goal_achieved, speculative_next_actions]
+
+never:
+  - "retry a step whose failure is due to user-defined terminal errors — it fails the task immediately regardless of remaining retry budget (agent.py:5900-5931)"
+  - "take another action within a step once a CompleteAction or TerminateAction has been persisted for it — the step is marked is_last and the function returns immediately (agent.py:5684-5699, 5740-5748)"
+
+not_modelling:
+  - "the LLM action-selection logic inside agent_step (body not shown in these excerpts)"
+  - "handle_completed_step / goal-verification internals (not shown)"
+  - "record_fail_fast_shadow loop-stall observability — explicitly shadow-only, never raises or terminates (agent.py:1071-1077)"
+  - "webhook notification delivery and video/artifact archive sync inside clean_up_task"

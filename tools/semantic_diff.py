@@ -31,7 +31,7 @@ def semantic_hash(document):
     """Hash canonical meaning, independent of serialization and collection order."""
     canonical = dict(document)
     if "loopspec_version" in canonical and "uras_version" not in canonical:
-        # The 2026 project rename is metadata, not a semantic change. Preserve the v2.1
+        # The 2026 project rename is metadata, not a semantic change. Preserve the v2
         # conformance hashes by using the historical wire spelling in the hash payload.
         canonical["uras_version"] = canonical.pop("loopspec_version")
     payload = json.dumps(normalize_value(canonical), sort_keys=True,

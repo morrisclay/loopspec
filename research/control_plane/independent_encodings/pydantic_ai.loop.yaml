@@ -1,0 +1,258 @@
+# LoopSpec — pydantic-ai agent graph run (UserPromptNode -> ModelRequestNode -> CallToolsNode -> End)
+# Encoded solely from the excerpts listed below; no unlisted pydantic-ai behavior assumed.
+loop: pydantic_ai_agent_graph_run
+# One `agent.run()` call drives the whole node graph internally until `End` is produced.
+# pydantic_ai_slim/pydantic_ai/_agent_graph.py:1811-1823, 512-514
+runs: per_run_invocation
+
+boundary:
+  drawn_by: agent_developer
+  purpose: >
+    Separate the graph controller (message assembly, tool dispatch, retry/stop decisions,
+    usage accounting) from the external processes it drives for one run() invocation.
+  inside: [UserPromptNode, ModelRequestNode, CallToolsNode, tool_manager, usage_limits]
+  outside: [model_provider, tool_functions, human_approvers, capability_handlers]
+
+goal:
+  produce_valid_output:
+    # _agent_graph.py:1911-1926 (allows_none), 2206-2226 (End), 2062-2106 (tool-call final result),
+    # _tool_execution.py:902-909 (DeferredToolRequests as final result)
+    keep: "a schema-validated final result, DeferredToolRequests, or an allowed-None response — not empty/filtered/exhausted"
+    from: [model_response, tool_results, deferred_resolutions]
+  stay_within_budget:
+    # usage.py:418-459, 492-560
+    keep: "usage stays within request_limit, token limits, cost_limit, and tool_calls_limit"
+    unit: "requests/tokens/USD"
+    from: [usage]
+
+observes:
+  model_response:
+    informs: produce_valid_output
+    origin: outside
+    how: reported
+    reported_by: "the model provider"
+    source: model_provider
+    # _agent_graph.py:1863-1932 (state, parts, finish_reason inspected)
+  tool_results:
+    informs: produce_valid_output
+    origin: ourselves
+    how: measured
+    produced_by: execute_tool_call
+    # _tool_execution.py:511-550 (ToolReturnPart / RetryPromptPart from execution)
+  deferred_resolutions:
+    informs: produce_valid_output
+    origin: outside
+    how: reported
+    reported_by: "capability handler or human approver"
+    # _tool_execution.py:844-901, _deferred.py:99-118 (ToolApproved/ToolDenied)
+  usage:
+    informs: stay_within_budget
+    origin: ourselves
+    how: calculated
+    # usage.py:492-560
+
+actions:
+  call_model:
+    moves: produce_valid_output
+    can_undo: no
+    # a sent request is billed and cannot be recalled, even if oversized: usage.py:439-458
+    through: model_provider
+    effect: increase
+  execute_tool_call:
+    moves: produce_valid_output
+    through: tool_execution
+    effect: unknown
+    # tool side effects vary by tool; runtime does not declare reversibility
+
+action_profiles:
+  execute_tool_call_default:
+    action: execute_tool_call
+    default: true
+    resolved_at: request
+    can_undo: unknown
+    description: >
+      Direct execution (function-kind tools) or delegation to an external executor
+      (external-kind tools) with no human-approval gate.
+    # approval_required.py:1-25 (approval is opt-in via wrapper, not universal)
+  execute_tool_call_approval_required:
+    action: execute_tool_call
+    when: >
+      the toolset is wrapped in ApprovalRequiredToolset and
+      approval_required_func(ctx, tool_def, tool_args) returns True
+      (default predicate always returns True)
+    resolved_at: request
+    can_undo: unknown
+    needs_approval: approver
+    description: >
+      Collected into DeferredToolRequests.approvals and only executes once
+      ToolApproved is supplied.
+    # approval_required.py:15-24, _deferred.py:99-107, _tool_execution.py:444-464
+
+operations:
+  stop_final:
+    kind: stop
+    when: >
+      an output tool call succeeds (first success wins), or under end_strategy='early' a
+      schema-validated text/image output is returned alongside only function-tool calls,
+      or the output schema allows None and the response is empty/thinking-only
+    emits: final_output
+    # _agent_graph.py:100-120, 1911-1926, 1972-1987, 2206-2226, 2231-2240
+  stop_deferred:
+    kind: stop
+    when: >
+      external or unapproved tool calls remain in DeferredToolRequests after inline
+      capability-handler resolution, and DeferredToolRequests is declared among the output types
+    emits: [submission_output, approval_request_output]
+    # _tool_execution.py:823-910, _deferred.py:26-43
+  stop_failure:
+    kind: stop
+    when: >
+      the model's token limit is exceeded before any actionable output (finish_reason=='length'),
+      a provider content filter blocks an empty response, or a configured UsageLimits threshold
+      (requests, tokens, cost, or tool calls) is exceeded
+    emits: failure_output
+    # _agent_graph.py:1886-1909, usage.py:492-560
+  retry_model_request:
+    kind: retry
+    when: >
+      output validation fails (ToolRetryError) on an empty/thinking-only response, on
+      unrecognized response content requiring the model to call a tool/return text/return an
+      image, or a function tool raises ModelRetry (which suppresses the output result under
+      'graceful'/'exhaustive')
+    description: >
+      Consumes one output retry and sends a new ModelRequest carrying the retry prompt;
+      does not leave the represented loop boundary.
+    # _agent_graph.py:107-111, 1927-1931, 2002-2017
+  resume_suspended_turn:
+    kind: resume
+    when: >
+      the message history's trailing ModelResponse has state=='suspended' and no new
+      user prompt is supplied
+    description: >
+      Re-issues the provider's suspended turn (e.g. Anthropic pause_turn, OpenAI background
+      mode) via ModelRequestNode instead of starting a new turn.
+    # _agent_graph.py:577-589
+  interrupt_tool_batch:
+    kind: interrupt
+    when: "a BaseException (e.g. a cancelled stream) occurs while executing a batch of tool calls"
+    description: >
+      Appends the partial tool-return parts collected so far as a ModelRequest with
+      state='interrupted' (never sent to the model) before re-raising.
+    # _agent_graph.py:2088-2102
+
+outputs:
+  final_output:
+    kind: final
+    terminates: run
+    description: >
+      The FinalResult returned via End(): output-tool success, schema-validated text/image,
+      or an allowed-None response; tool-return parts are appended to history first.
+    # _agent_graph.py:2206-2226, 2231-2240
+  submission_output:
+    kind: submission
+    terminates: run
+    description: "DeferredToolRequests.calls: tool calls needing an external executor."
+    # _deferred.py:26-43, _tool_execution.py:834-838
+  approval_request_output:
+    kind: approval_request
+    terminates: run
+    description: "DeferredToolRequests.approvals: tool calls needing human sign-off."
+    # _deferred.py:26-43, _tool_execution.py:834-838
+  failure_output:
+    kind: failure
+    terminates: run
+    description: >
+      An exception ending the run: token-limit exceeded, content-filter block, a
+      UsageLimitExceeded budget breach, or a ToolFailed result raised as ToolFailedError.
+    # _agent_graph.py:1890-1909, usage.py:492-560, _tool_execution.py:538-545
+  tool_stream_status:
+    kind: status
+    terminates: none
+    description: >
+      Per-call/result stream events (FunctionToolCallEvent, FunctionToolResultEvent,
+      DeferredToolRequestsEvent, DeferredToolResultsEvent) yielded while a response is handled.
+    # _tool_execution.py:448-464, 840-851
+
+processes:
+  model_provider:
+    location: outside
+    description: >
+      The external model/provider that turns a ModelRequest into a ModelResponse (text,
+      tool calls, thinking, finish_reason), including providers that suspend a turn mid-flight.
+    observed_as: [model_response]
+  tool_execution:
+    location: interface
+    description: >
+      Tool functions (function/external/unapproved kind) invoked via
+      tool_manager.execute_tool_call, turning a validated call into a ToolReturnPart
+      or RetryPromptPart.
+    observed_as: [tool_results]
+  deferred_resolution:
+    location: outside
+    description: >
+      Capability handlers or human approvers that resolve DeferredToolRequests
+      (approvals/calls) into ToolApproved/ToolDenied/ModelRetry, fed back through the
+      same execution pipeline.
+    observed_as: [deferred_resolutions]
+
+spends:
+  model_requests:
+    limit: "request_limit (default 50), checked before each request"
+    spent_by: [call_model]
+    # usage.py:429-430, 492-496
+  model_tokens:
+    limit: >
+      input_tokens_limit / output_tokens_limit / total_tokens_limit /
+      per_request_input_tokens_limit, checked after each response (or before the
+      request when count_tokens_before_request=True)
+    spent_by: [call_model]
+    # usage.py:433-459, 537-551
+  model_cost:
+    limit: "cost_limit in USD"
+    spent_by: [call_model]
+    # usage.py:427-428, 510-526
+  successful_tool_calls:
+    limit: "tool_calls_limit, checked against projected successful tool call count"
+    spent_by: [execute_tool_call]
+    # usage.py:431-432, 553-560
+
+when:
+  - if: "the pending ModelResponse (or an unresolved trailing one in history) contains tool calls"
+    reads: [produce_valid_output]
+    do: execute_tool_call
+    # _agent_graph.py:599-603, 1972-1987
+  - if: "tool results or a prompt are ready to send and no final result has been produced yet"
+    reads: [produce_valid_output]
+    do: call_model
+    # _agent_graph.py:604-647, 2107-2112
+
+asks_human_when:
+  - >
+    an unapproved tool call remains in DeferredToolRequests.approvals after inline
+    capability-handler resolution, so the run ends and surfaces it for human sign-off
+    # _tool_execution.py:823-910, approval_required.py:15-24
+asks_human: approver
+
+people:
+  agent_developer:
+    kind: human
+    loses_if_wrong: >
+      an agent that spends unbounded requests/tokens/cost, executes unapproved side
+      effects, or returns an invalid result
+    sees: [produce_valid_output, stay_within_budget]
+  approver:
+    kind: human
+    loses_if_wrong: "approving a tool call that shouldn't have executed"
+    sees: [produce_valid_output]
+
+never:
+  - "never allow two deferred (approval/external) tool calls in the same batch to share a tool_call_id"
+    # _tool_execution.py:826-832
+  - "never start a new turn on top of a suspended provider response without resuming it first"
+    # _agent_graph.py:608-615
+  - "never surface DeferredToolRequests as the run's result if DeferredToolRequests is not declared among the output types"
+    # _tool_execution.py:902-909
+
+not_modelling:
+  - "the code path that first sets a ModelResponse.state to 'suspended' (only its resumption is shown)"
+  - "the internal scheduling/parallelism of tool execution across end_strategy variants"

@@ -66,9 +66,27 @@ irreversible_without_approval:
 reversibility_unspecified:
   symptom: "nobody knows whether this action can be taken back"
   means: A generated action omits `can_undo`, so the analyzer cannot determine whether an approval gate is required.
-  fix: "Add `can_undo: yes`, `costly`, or `no`. Omission is unknown, not reversible."
+  fix: "Add `can_undo: yes`, `costly`, `no`, or `unknown`. Explicit unknown is reviewable and never treated as reversible."
   half: neither
   grounded: "Safety-relevant declaration completeness. It does not establish whether the author's classification matches the real action."
+  assurance: structural
+  evidence: motivated
+
+action_profiles_without_fallback:
+  symptom: "the safe cases are described and everything else disappears"
+  means: A generic action has one or more conditional `action_profiles` but no default profile for unmatched requests.
+  fix: "Add one `default: true` profile with the honest fallback properties. Use `can_undo: unknown` when deployment or request details have not bound reversibility."
+  half: neither
+  grounded: "Totality of a conditional safety contract. It establishes declared coverage, not that profile predicates are mutually exclusive or operationally correct."
+  assurance: structural
+  evidence: motivated
+
+action_profiles_without_safety_variation:
+  symptom: "the profile table is longer, but every row has the same safety answer"
+  means: Action profiles exist even though reversibility and approver do not vary, including a lone default profile.
+  fix: "Put non-varying `can_undo` and `needs_approval` on the base action. Keep profiles only when at least one of those safety properties differs."
+  half: neither
+  grounded: "Canonical conditional-safety representation. It removes redundant partitions; it does not establish that the remaining selectors are correct."
   assurance: structural
   evidence: motivated
 
@@ -189,7 +207,7 @@ effect_direction_unspecified:
 reference_not_used:
   symptom: "the system has a target, but none of its rules actually compares against it"
   means: A desired condition exists while no ordered policy rule declares that it uses the reference.
-  fix: "Add `against: [goal_quantity]` to the `when` rule that compares its observed input with that goal's `keep:` condition. The quantity must also be in `reads:`."
+  fix: "Add `against: [goal_quantity]` to the `when` rule that compares its observed input with that goal's `keep:` condition. This also declares that the rule reads the quantity."
   half: neither
   grounded: "Structural comparator closure. It establishes a declared reference-use path, not a numeric error calculation, controller gain, or runtime implementation."
   assurance: structural

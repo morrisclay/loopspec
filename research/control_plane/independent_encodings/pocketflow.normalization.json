@@ -1,0 +1,10 @@
+{
+  "source": "pocketflow.raw.yaml",
+  "comparison": "pocketflow.loop.yaml",
+  "changes": [
+    {
+      "kind": "redundant_comparator_read",
+      "detail": "Added goal.task_completion to reads because the raw rule already names it in against. No control-plane semantics changed."
+    }
+  ]
+}

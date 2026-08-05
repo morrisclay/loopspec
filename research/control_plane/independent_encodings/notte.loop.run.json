@@ -1,0 +1,13 @@
+{
+  "case": "notte",
+  "study_role": "control_plane_holdout",
+  "encoder": "Anthropic Claude CLI",
+  "model_alias": "sonnet",
+  "tool_access": "disabled",
+  "session_persistence": "disabled",
+  "generated_at": "2026-08-04T21:45:32.767798+00:00",
+  "source_repository": "https://github.com/nottelabs/notte",
+  "source_revision": "10e0fd35316565cc84bdbe9905d2645972f8b77c",
+  "prompt_sha256": "5069ac2de5d427afcdc27169dd8e9b97fda0346408c74ef49cf3b6615ba81d00",
+  "output_sha256": "27e8d88e5a6bda45ab763d66e8bc4142b053abbf6a2ed7d60df409f58eb8e1b0"
+}

@@ -1,0 +1,13 @@
+{
+  "case": "pydantic_ai",
+  "study_role": "control_plane_holdout",
+  "encoder": "Anthropic Claude CLI",
+  "model_alias": "sonnet",
+  "tool_access": "disabled",
+  "session_persistence": "disabled",
+  "generated_at": "2026-08-04T21:33:33.364336+00:00",
+  "source_repository": "https://github.com/pydantic/pydantic-ai",
+  "source_revision": "c8bcbb17fd7b490c541ccbb45822c1b25edf2717",
+  "prompt_sha256": "55cb178e3e0b375e2372f7fa2f98419dc8c3241cea8ac3424f1fb2a5b3a0588d",
+  "output_sha256": "d7107de72903a07d7f77c925698418ac372e9a13c49c1eecb0b185c337bf1ea5"
+}

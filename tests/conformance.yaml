@@ -1,51 +1,51 @@
-# Normative release fixtures for LoopSpec authoring v1.1 and canonical IR v2.1.
+# Release fixtures for LoopSpec authoring v1.2 and canonical IR v2.2.
 # Hashes are over normalized semantic values, not YAML serialization order.
 manifest_version: 1
-authoring_version: "1.1"
-ir_revision: "2.1"
+authoring_version: "1.2"
+ir_revision: "2.2"
 fixtures:
   examples/cascade.loop.yaml:
     encodes: cascade
-    semantic_hash: 1c59bdb29f80f41fdd35e68ef8427ce152f9482f8096fc5d43070c9d3f4160a6
-    findings_hash: f23243fd7c1befaff2cf64a970b561d1d2a18b03cf072e13177f3efb4ac54b33
+    semantic_hash: 642eb7187cbfe0ea4459712e6837ced777a6b134d3f9d56d287227940cf2d4f5
+    findings_hash: f290e29073e99e175219e4021f292e57ab221c5ad0e2f8f950c8f7412c1bf29b
     finding_count: 12
   examples/complete.loop.yaml:
     encodes: support_triage
-    semantic_hash: c20813d4c954669243fd6a20dbc15a4274b0e5d68a4541420f65d49e78a10ec1
+    semantic_hash: 2601d82dd978a24232cb56225a255484e658f29f0adfe6590c27ab6df7cd21f3
     findings_hash: 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945
     finding_count: 0
   examples/customer_acquisition.loop.yaml:
     encodes: customer_acquisition
-    semantic_hash: 2a26ae7c4462bfcc3d8e7cb280b5a318c3dfbfe41220039c6b3adf5313190ad9
-    findings_hash: 4bb6a7f7dddabeec9fe6575eb1f140795dc03270450af190e2ac81012c484af2
+    semantic_hash: 0cea292903062ddf42e16a195a2a27272f8433c7517c9a8e9d304ca048becc73
+    findings_hash: 7a3952d0e441166ae72d0fe5962b156f9fafe4a9a78972ef71806ffbd69c17db
     finding_count: 18
   examples/customer_acquisition.v1.loop.yaml:
     encodes: customer_acquisition
-    semantic_hash: 06798d370bb4d7f951c498d0865ad361ce441bd5005834f961d982d6b7c021cb
-    findings_hash: 072c911795547124a65e85aff614a659e9e164ec4caf82b0654eeed8cfd7260e
+    semantic_hash: 3fc9e4e964336eb7b6d40fa71d3eacd844d85f6fbc50221bd47e0e2f8cab5a61
+    findings_hash: 4d0f251d789b1f3d6baea2d3e4edb46c038e0f8b4a1fc73b388b919c2dd0b451
     finding_count: 21
   examples/field/conviction_termination.loop.yaml:
     encodes: conviction_termination
-    semantic_hash: 89fee935ae26550d1b7f25f2fa308e609f432103753d611e7ce3b47d4cd3afe8
-    findings_hash: 1df73c138e8af3f6c9ad02fccb706aa98f5e9bf1bd92c07d1a4297a72f3d2834
+    semantic_hash: 8db98889d1e8771322a119485153225c8fbd547a3cc7f4969b4f210150d5a0bf
+    findings_hash: 835a30c4cb4b49c5e921c8b3b2e33600e1038ab64fe618248751e6e9e2227360
     finding_count: 19
   examples/field/deal_steward.loop.yaml:
     encodes: deal_steward
-    semantic_hash: ae910ed7b2a9cd3acb42751e1e1b2cf48bbe0f4ccbe1e292177b4df414c8ef51
-    findings_hash: 02f6dfbd0705951b7eba7049eb2a7f6d86739633666cb86159d1021225e1db0e
+    semantic_hash: da442e8f25dc7203d6c2930f1b19f2db368425de705b6c23943c990542cbfad2
+    findings_hash: c46eea6f9bb66f7c0f8c6302c4c90656bb3e859e2b7a8d6306c82821ccd10663
     finding_count: 13
   examples/field/meeseeks_sourcing.loop.yaml:
     encodes: meeseeks_sourcing
-    semantic_hash: c7e810a647ce503b5326f2d4a66d0b61787457dc05e76eab623acdf573fa8c1c
-    findings_hash: a7c9f8faddff4ae79148e10562518f30e1c23e8f6672f25385d30ee24cf19bc7
+    semantic_hash: be2873d0a211f5488c8e2ff2eefcf4285c9fdb04f52f39ff5839c7247683e562
+    findings_hash: e1abd6c6dff75bf9fb398333ec9d1f1a577a638f52f0f7bb069045a4156ab8a9
     finding_count: 16
   examples/field/ralph.loop.yaml:
     encodes: ralph
-    semantic_hash: 308f87d066cb7cc2d6991b8143813bba462ca2ca6448321802507afb9c397254
-    findings_hash: 758ef8db90f43e39613264c035c7245d75126496b021b9ea87793d08a20d1b28
+    semantic_hash: 7c2adfe3fb5f3bed5009bd35bbc6de58fdf16740b4ca1a4afbbb04203d7d97b5
+    findings_hash: 36ed39710a251a70a23a4af72c1c2df2487e380d1a3e9d41793593d96c096a35
     finding_count: 15
   examples/research_group.loop.yaml:
     encodes: research_group
-    semantic_hash: a1861d732832a41de9706c93619da579d849430a0797c3336cb8815772c93a99
-    findings_hash: 4f9a509a547b42175f4a0dc70927aaa34b434b737104d96f4d252f9079458ae4
+    semantic_hash: b87b8ae598cf73324b68d1b7aaafe91afc7a273dee94b0bb8208575350339c7b
+    findings_hash: 0144928c3474b04587b0c522ea23bcbee10ab3219c8d8348b291c5f52802dbfc
     finding_count: 38

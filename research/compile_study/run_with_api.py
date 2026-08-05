@@ -1,6 +1,7 @@
 import os, json, urllib.request, concurrent.futures as cf
 D=os.path.dirname(os.path.abspath(__file__))
-SPEC=open("/Users/morrisclay/Dev/uras/examples/customer_acquisition.v1.loop.yaml").read()
+R=os.path.abspath(os.path.join(D, "..", ".."))
+SPEC=open(os.path.join(R, "examples", "customer_acquisition.v1.loop.yaml")).read()
 API=open(f"{D}/flue_api.md").read()
 KEY=os.environ["OPENROUTER_API_KEY"]
 PROMPT="""Here is a loop spec. Emit a working implementation for Flue (TypeScript).

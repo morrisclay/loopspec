@@ -1,0 +1,148 @@
+# Source: sweagent/agent/agents.py
+#   forward_with_handling(): lines 1062-1215
+#   step():                  lines 1235-1263
+#   run():                   lines 1265-1294
+loop: swe_agent_step_loop
+runs: per_run_invocation   # run() (lines 1265-1294) internally drives every step() call until done
+
+boundary:
+  drawn_by: operator
+  purpose: >
+    Distinguish the agent's own control flow (model requery/retry, exit handling,
+    autosubmission) from the external model API and SWE environment it steers,
+    for the purpose of producing a patch submission for a problem statement.
+  inside:
+    - forward_with_handling's requery/exit dispatch (lines 1106-1215)
+    - step()'s trajectory/info bookkeeping (lines 1235-1263)
+    - run()'s step-until-done loop (lines 1265-1294)
+  outside:
+    - the language model queried by forward() (line 1109)
+    - the SWE environment (self._env, line 1247) whose diff is autosubmitted
+
+goal:
+  task_resolved:
+    keep: >
+      the run continues stepping until step_output.done is true, whether via
+      ordinary completion or a handled fatal-error autosubmission (line 1284)
+    from: [step_result]
+
+observes:
+  # step() assembles submission/exit_status/model_stats from the returned StepOutput
+  step_result:
+    informs: task_resolved
+    origin: outside
+    how: calculated
+    every: per_step   # lines 1255-1260
+  # exceptions raised inside forward() that drive the retry/exit dispatch
+  error_signal:
+    informs: task_resolved
+    origin: outside
+    how: reported
+    every: per_step   # lines 1113-1210
+
+actions:
+  attempt_autosubmission:
+    # "Attempts to autosubmit (extract patch from the environment) and stops the loop." (lines 1076-1086)
+    moves: task_resolved
+    through: patch_extraction
+    effect: increase
+    can_undo: unknown
+
+processes:
+  patch_extraction:
+    location: interface
+    observed_as: [step_result]
+    description: >
+      Extracts the current diff/patch from the SWE environment when a fatal
+      error forces early termination (lines 1076-1086).
+
+operations:
+  retry:
+    kind: retry
+    when: >
+      FormatError, _BlockedActionError, BashIncorrectSyntaxError,
+      ContentPolicyViolationError, _RetryWithOutput, or _RetryWithoutOutput is
+      raised while forwarding, and n_format_fails < max_requeries
+      (lines 1106-1150)
+    description: >
+      Re-forwards the model with an error-specific (or unchanged) requery
+      history instead of executing the returned step.
+
+  stop_with_submission:
+    kind: stop
+    when: >
+      step_output.done is true: reached by ordinary completion, by
+      attempt_autosubmission after _ExitForfeit / _TotalExecutionTimeExceeded /
+      CommandTimeoutError / ContextWindowExceededError / CostLimitExceededError /
+      RetryError / SwerexException / RuntimeError / unknown Exception
+      (lines 1154-1210), or after max_requeries is exhausted (lines 1211-1215)
+    emits: final
+    description: Ends the run() step loop and returns the accumulated result (lines 1284-1294).
+
+  stop_cost_budget:
+    kind: stop
+    when: TotalCostLimitExceededError is raised while forwarding (lines 1180-1181)
+    emits: failure
+    description: >
+      Re-raises immediately without autosubmission because the total cost
+      budget is exhausted; unlike every other fatal branch this one does not
+      call attempt_autosubmission.
+
+  interrupt:
+    kind: interrupt
+    when: KeyboardInterrupt or EOFError is raised while forwarding (lines 1113-1116)
+    emits: failure
+    description: >
+      Immediately re-raises the external interrupt/EOF signal, aborting the
+      loop without autosubmission or further handling.
+
+outputs:
+  final:
+    kind: final
+    terminates: run
+    description: >
+      AgentRunResult (info + trajectory) returned once step_output.done is
+      true, via ordinary completion, autosubmission after a handled fatal
+      error, or max_requeries exhaustion (lines 1211-1215, 1284-1294).
+  failure:
+    kind: failure
+    terminates: run
+    description: >
+      Exception propagated out of run() without autosubmission:
+      TotalCostLimitExceededError re-raise, or KeyboardInterrupt/EOFError
+      (lines 1113-1116, 1180-1181).
+  status:
+    kind: status
+    terminates: none
+    description: >
+      Per-step hook callbacks (on_step_start/on_step_done) and trajectory
+      save, emitted every step without ending the run (lines 1248, 1262, 1286-1287).
+
+when:
+  - if: >
+      a fatal error occurs while forwarding (exit-forfeit, total execution
+      time exceeded, command timeout, context window exceeded, cost limit
+      exceeded, retry error, environment error, runtime error, or an unknown
+      exception) or max_requeries formatting/blocklist/bash-syntax failures
+      are exhausted
+    reads: [task_resolved]
+    against: [task_resolved]
+    do: attempt_autosubmission
+
+never:
+  - "Continue requerying past max_requeries formatting/blocklist/bash-syntax failures without forcing an autosubmission exit (lines 1106-1107, 1211-1215)."
+  - "Autosubmit after a TotalCostLimitExceededError; that condition is always re-raised, not handled (lines 1180-1181)."
+  - "Swallow KeyboardInterrupt or EOFError; both are always re-raised (lines 1113-1116)."
+
+not_modelling:
+  - "The concrete environment/tool actions executed during a normal (non-erroring) forward() call, since that code path is not shown in this excerpt."
+  - "Internal cost/time accounting that raises CostLimitExceededError/TotalCostLimitExceededError/_TotalExecutionTimeExceeded."
+  - "Model sampling/generation mechanics inside forward() itself."
+
+people:
+  operator:
+    human: true
+    loses_if_wrong: >
+      compute/API cost spent on requeries and autosubmission, and receives an
+      incomplete or incorrect patch (info/trajectory) if the loop exits early
+    sees: [task_resolved]

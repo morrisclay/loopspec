@@ -1,0 +1,160 @@
+# codex-rs/core/src/session/turn.rs lines 140-185, 260-505
+# codex-rs/core/src/session/mod.rs lines 4024-4030
+# codex-rs/core/src/tools/sandboxing.rs lines 194-234
+# codex-rs/core/src/tools/runtimes/shell.rs lines 139-178
+loop: codex_turn_controller
+runs: per_run_invocation   # turn.rs:149-155 — one run_turn call internally drives every step of the turn
+
+boundary:
+  drawn_by: maintainer
+  purpose: >
+    Separate the turn controller's own step loop, compaction, and stop-hook
+    evaluation from the external model API, the sandboxed shell/OS process,
+    and the human operator it calls out to for command approval.
+  inside:
+    - run_turn step loop (turn.rs:268-505)
+    - pre-sampling and mid-turn compaction
+    - turn-stop hook evaluation
+    - shell exec-approval-requirement resolution (sandboxing.rs:199-234)
+  outside:
+    - model API (sampling response)
+    - sandboxed shell/OS process
+    - human operator approving commands
+
+goal:
+  turn_completion:
+    keep: "ends with a final assistant message, or an authorized stop, with no unresolved follow-up step"
+    from: [sampling_response, pending_input]
+  context_window_budget:
+    keep: "below the auto-compact scope/token limit"
+    unit: tokens
+    from: [context_token_status]
+
+beliefs:
+  needs_follow_up:
+    question: "does this turn require another sampling step before it can end?"
+    how: calculated   # turn.rs:383 — model_needs_follow_up || has_pending_input
+    explains: goal.turn_completion
+  token_budget_status:
+    question: "is the active context within its window/token limits, or does it need compaction?"
+    how: calculated   # turn.rs:374-427 context_window_token_status
+    explains: goal.context_window_budget
+
+observes:
+  sampling_response:
+    origin: outside
+    how: reported
+    reported_by: model
+    informs: [beliefs.needs_follow_up, goal.turn_completion]
+    source: model API
+  pending_input:
+    origin: outside
+    how: reported
+    reported_by: operator   # turn.rs:269-271 — message user submitted through the UI mid-turn
+    informs: beliefs.needs_follow_up
+  context_token_status:
+    origin: ourselves
+    how: calculated   # turn.rs:374-379
+    informs: beliefs.token_budget_status
+  approval_decision:
+    origin: outside
+    how: reported
+    reported_by: operator   # shell.rs:156-176 — ReviewDecision from request_command_approval
+    informs: goal.turn_completion
+  tool_output:
+    origin: ourselves
+    produced_by: execute_shell_command
+    how: measured
+    informs: beliefs.needs_follow_up
+
+processes:
+  shell_execution:
+    location: interface
+    observed_as: [tool_output]
+    description: "the sandboxed OS process that runs an approved shell command and returns output for the next sampling round"
+
+actions:
+  execute_shell_command:
+    moves: goal.turn_completion
+    through: shell_execution
+    effect: unknown
+
+action_profiles:
+  shell_skip:
+    action: execute_shell_command
+    when: "approval policy is Never, or policy is OnRequest/Granular and the filesystem sandbox is unrestricted"   # sandboxing.rs:203-210
+    resolved_at: deployment
+    can_undo: unknown
+    description: "ExecApprovalRequirement::Skip — sandbox policy allows running without prompting"
+  shell_needs_approval:
+    action: execute_shell_command
+    when: "approval policy is UnlessTrusted, or policy is OnRequest/Granular with a restricted filesystem sandbox and granular sandbox approval enabled"   # sandboxing.rs:205-227
+    resolved_at: deployment
+    can_undo: unknown
+    needs_approval: operator
+    description: "ExecApprovalRequirement::NeedsApproval — session.request_command_approval asks the operator before the command runs (shell.rs:139-178)"
+
+operations:
+  compact:
+    kind: compact
+    when: "before the turn's first sampling request, or mid-turn after sampling when a follow-up step is needed and either a new context window was requested or the token limit was reached"   # turn.rs:162-179, 418-457
+    description: "runs pre-sampling or mid-turn auto-compaction, then continues the step loop"
+  retry:
+    kind: retry
+    when: "a turn-stop hook blocks stopping and supplies a continuation prompt"   # turn.rs:469-485
+    description: "records the hook's continuation message and takes another sampling step instead of ending the turn"
+  interrupt:
+    kind: interrupt
+    authorized_by: operator
+    when: "an interrupt is received for the active turn"   # session/mod.rs:4024-4030
+    description: "aborts the current task (and cancels pending MCP startup if no turn was active)"
+  stop_with_result:
+    kind: stop
+    when: "the model needs no further follow-up and turn-stop hooks do not block stopping, or pending session-start hooks signal completion after compaction"   # turn.rs:453-455, 460-498
+    emits: turn_result
+  stop_on_error:
+    kind: stop
+    when: "pre-sampling or mid-turn compaction fails, whether because the turn was aborted or for another error"   # turn.rs:170-179, 444-452
+    emits: turn_failure
+
+outputs:
+  turn_result:
+    kind: final
+    terminates: run
+    description: "run_turn's returned value: the last agent message, or none, once the turn needs no further step"
+  turn_failure:
+    kind: failure
+    terminates: run
+    description: "propagated abort error or emitted turn-error event when compaction fails"
+  stop_hook_warning:
+    kind: status
+    terminates: none
+    description: "warning sent when a stop hook requested continuation but supplied no prompt; the block is ignored"   # turn.rs:487-494
+  approval_request:
+    kind: approval_request
+    terminates: none
+    description: "command approval request sent to the operator before an approval-requiring shell command runs"   # shell.rs:156-176
+
+people:
+  maintainer:
+    human: true
+    loses_if_wrong: "ships a controller that stalls, loops, or runs unapproved commands"
+  operator:
+    human: true
+    loses_if_wrong: "approves or is affected by a shell command that damages their system or data"
+  model:
+    agent: true
+    loses_if_wrong: nothing
+
+asks_human_when:
+  - "a shell command's resolved approval profile is shell_needs_approval"
+asks_human: operator
+
+never:
+  - "execute a shell command when the approval policy forbids the sandbox approval prompt (ExecApprovalRequirement::Forbidden, sandboxing.rs:214-223)"
+
+not_modelling:
+  - "approval logic and dispatch for tool calls other than shell commands"
+  - "internal contents of run_sampling_request beyond needs_follow_up/last_agent_message"
+  - "MCP server startup/cancellation and plugin-attribution details"
+  - "legacy after-agent hook behavior beyond triggering another step"

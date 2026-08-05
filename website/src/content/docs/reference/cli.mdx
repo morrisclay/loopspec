@@ -25,7 +25,7 @@ loopspec check SPEC [--json] [--fail-on-findings]
 
 ## `loopspec expand`
 
-Print canonical graph IR v2.1 after both authoring and semantic validation.
+Print canonical graph IR v2.2 after both authoring and semantic validation.
 
 ```bash
 loopspec expand SPEC
@@ -80,7 +80,7 @@ catalog gates. From an installed wheel it checks packaged runtime resources and 
 | `python3 tools/external_eval.py --freeze` | freeze a committed external-study artifact | research release gate |
 
 <Aside type="note" title="Compilation is not a release claim">
-The repository contains compilation experiments, but LoopSpec v1.1 is a specification and structural
+The repository contains compilation experiments, but LoopSpec is a specification and structural
 review tool. A generated implementation needs target-specific preservation evidence before a
 safety claim can be made.
 </Aside>

@@ -1,0 +1,99 @@
+# AgentLab at cbc35a9bc0facaf731bc858c5825edbe757c719f.
+# Evidence: src/agentlab/experiments/loop.py 40-100, 198-246, 402-509;
+# src/agentlab/agents/visualwebarena/agent.py 185-279.
+
+loop: agentlab_browser_episode
+runs: per_benchmark_episode
+
+boundary:
+  drawn_by: experiment_author
+  purpose: evaluate a browser agent by alternating environment observations and browser actions until the episode terminates
+  inside: [experiment runner, agent policy, step records, configured maximum step count]
+  outside: [browser environment, benchmark task, websites, model provider]
+
+goal:
+  episode_reward:
+    keep: the browser task terminates with the highest available benchmark reward
+
+beliefs:
+  next_browser_action:
+    question: Which valid browser action best advances the benchmark objective from this observation?
+    how: model judgement over the accessibility tree, optional screenshot, previous action, and objective
+    explains: episode_reward
+    settled_by: next_environment_state
+
+observes:
+  browser_observation:
+    informs: [episode_reward, next_browser_action]
+    every: before each agent decision
+    origin: outside
+    how: measured
+    source: BrowserGym environment observation
+  next_environment_state:
+    informs: [episode_reward, next_browser_action]
+    every: after each browser action
+    origin: outside
+    how: measured
+    source: environment step reward, termination, truncation, and next observation
+
+processes:
+  browser_environment:
+    location: outside
+    description: a concrete BrowserGym action changes or queries the browser and website, producing reward and a later observation
+    observed_as: [browser_observation, next_environment_state]
+
+actions:
+  browser_action:
+    moves: episode_reward
+    through: browser_environment
+    effect: unknown
+
+action_profiles:
+  concrete_browser_request:
+    action: browser_action
+    default: true
+    resolved_at: request
+    can_undo: unknown
+    description: reversibility and consequence depend on the concrete website action and state
+
+outputs:
+  episode_status:
+    kind: status
+    terminates: run
+    description: saved episode summary including reward, termination, truncation, or uncaught error
+
+operations:
+  stop_on_no_action:
+    kind: stop
+    when: the agent returns no action and the runner truncates the episode
+    emits: episode_status
+  stop_on_environment_end:
+    kind: stop
+    when: the environment reports termination or maximum-step truncation
+    emits: episode_status
+
+when:
+  - if: the episode is neither terminated nor truncated and the agent returns an action
+    reads: [next_browser_action, episode_reward]
+    against: [episode_reward]
+    do: browser_action
+
+people:
+  experiment_author:
+    human: true
+    loses_if_wrong: benchmark validity, compute, and confidence in the reported result
+    sees: [episode_reward]
+  browser_agent:
+    agent: true
+    loses_if_wrong: nothing
+    sees: [episode_reward, next_browser_action]
+
+spends:
+  step_budget:
+    limit: EnvArgs.max_steps when configured
+    replenished: a new episode
+    spent_by: browser_action
+
+not_modelling:
+  - approval policy and real-world consequences for concrete website actions
+  - control logic inside BrowserGym beyond the AgentLab environment interface

@@ -1,136 +1,60 @@
 # LoopSpec
 
-**A simple YAML for designing and arguing about agent loops: structural feedback, authority,
-resources, attention, and calibration in one checkable artifact.**
+> **Design the loop, not just the agent.**
 
-Agent frameworks build the **operating** loop — observe, believe, decide, act. Their examples
-rarely specify the meta-control loops *about* observing and believing:
+> [!WARNING]
+> **LoopSpec is very much a work in progress and an early research candidate.** Its language,
+> semantics, checks, and tooling may change substantially as they are tested against more real
+> agent loops and independent authors. It is not a standard, a safety certification, or a
+> production control boundary. Use it to expose and discuss design assumptions—not as evidence
+> that a system is safe, stable, or effective.
 
-- **Attention** — *am I looking at the right things, at what cost?* The input side.
-- **Calibration** — *does what I believe turn out to be true?* The output side.
+LoopSpec is a declarative specification language and structural design toolkit for agentic
+feedback loops. It makes a loop's purpose, boundary, observations, beliefs, decisions, actions,
+authority, resources, and stopping conditions explicit in one reviewable artifact.
 
-They are duals. Calibration helps determine whether attention was well spent; attention
-determines what can be calibrated against. A notation makes both reviewable before runtime.
+Write a human-readable YAML specification, then use LoopSpec to:
 
-**Status:** authoring language **v1.1** and canonical IR **v2.1** are a locally verified
-structural release candidate. `python3 tools/loopspec.py doctor` is the release gate. The tool does
-not claim dynamic stability or proven field usefulness; the external-author protocol is
-preregistered in
-[`research/external_validation/PREREGISTRATION.md`](research/external_validation/PREREGISTRATION.md),
-has no observed outcomes, and must pass before the claim advances beyond structural
-specification and review.
+- find missing feedback, actuation, limits, approval, escalation, and calibration paths;
+- distinguish world actions from operations that pause, retry, interrupt, or stop the controller;
+- draw the operating loop and its control plane;
+- compare revisions by canonical meaning rather than YAML text; and
+- check whether an implementation silently dropped declared safeguards.
 
-> **Renamed 2026-08-03.** LoopSpec was previously called URAS. The authoring and IR versions
-> did not change meaning during the rename. The old `uras` command remains a deprecated alias
-> throughout LoopSpec 2.x; see [`COMPATIBILITY.md`](COMPATIBILITY.md).
+LoopSpec is the design and assurance layer between an agent idea and its implementation. It is
+framework-neutral: it does not run the agent and it does not prescribe an orchestration stack.
 
-```yaml
-loop: customer_acquisition
-runs: weekly
+## Why specify a loop?
 
-boundary:
-  drawn_by: founder
-  purpose: regulate paid acquisition without spending the company past viability
-  inside: [growth policy, acquisition channel, company budget]
-  outside: [prospective customers, advertising market]
+Agent frameworks make it easy to connect a model to tools. That does not establish that the
+resulting system has a coherent feedback structure.
 
-goal:
-  cost_per_customer: { keep: below 400 }
+A useful loop needs answers to questions such as:
 
-beliefs:
-  product_market_fit:
-    question: "If we keep buying customers like this month's, will they stay?"
-    how: bayesian
-    checked_by: quarterly_cohort_review
-    checked_against: six_month_retention
-    scoring_rule: Brier score
-    window: 200 cohorts
-    adjusts: trust
+- What condition is it trying to regulate?
+- What can it observe, and what must it infer?
+- Through what process can its actions affect the next observation?
+- Which actions are reversible, and who authorizes the others?
+- What consumes time, money, tokens, or attention?
+- When does it stop, ask for help, or revise a failing belief?
 
-observes:
-  billing_events:      { informs: cost_per_customer, origin: outside, how: measured, source: Stripe }
-  customer_interviews: { informs: product_market_fit, origin: outside, how: reported, cost: high }
-  six_month_retention: { informs: product_market_fit, origin: outside, how: calculated, every: monthly }
+Those answers usually live across prompts, code, configuration, and institutional knowledge.
+LoopSpec puts them in one artifact that people and tools can inspect before runtime.
 
-processes:
-  acquisition_channel:
-    location: interface
-    observed_as: [billing_events]
-    description: market response that turns spend decisions into customers and cost
-
-actions:
-  increase_budget: { moves: cost_per_customer, through: acquisition_channel,
-                     effect: unknown, can_undo: yes }
-  exit_channel:    { moves: cost_per_customer, through: acquisition_channel,
-                     effect: decrease, can_undo: no, needs_approval: founder }
-
-when:
-  - if: "cost_per_customer above 400 and product_market_fit below 0.6"
-    reads: [cost_per_customer, product_market_fit]
-    against: [cost_per_customer]
-    do: exit_channel
-
-asks_human_when:
-  - "product_market_fit falls below 0.4"
-asks_human: founder
-
-people:
-  founder: { human: yes, loses_if_wrong: "the company", sees: [cost_per_customer] }
+```mermaid
+flowchart LR
+  R["Reference"] --> D["Decision policy"]
+  S["Observation"] --> D
+  D --> A["World action"]
+  A --> P["Controlled process"]
+  P --> S
+  C["Authority and limits"] --> D
+  O["Pause · retry · interrupt · stop"] --> D
 ```
 
-**[`ATTENTION.md`](ATTENTION.md)** works out the three levels attention operates at — the
-author's (a field is a place you have to look), the loop's (what it observes, at what cost —
-and the finding that *nothing had ever scored a signal*), and the humans' (who must look, and
-who pays when it is wrong).
+## Getting started
 
-**[`CALIBRATION.md`](CALIBRATION.md)** is the other half: verification asks *is this output
-good?*; calibration asks *has this thing's confidence historically tracked reality?* Agent
-frameworks commonly expose the first; the measured reference corpus does not make the second
-a first-class loop contract.
-
-**What was found by looking:** across 10 reference examples written by framework authors to
-demonstrate best practice, **10/10 form a belief nothing scores** and **10/10 encode no explicit
-process explanation for what they steer** — both robust to independent encoding. The second is
-a structural absence, not a Good Regulator theorem violation. The eval harnesses built to catch
-quality problems trip the calibration check **4 of 4.** Half the published loops have a ceiling
-nothing reads.
-
-**You cannot diff two blog posts. You can diff two specs.** `loopspec diff` compares validated
-canonical meaning and findings rather than YAML text; `tools/compare.py` puts a larger corpus
-side by side. Reflection and reflexion differ in exactly one column, and that column is the
-whole argument between them.
-
-### Where to start
-
-| | |
-|---|---|
-| **[`docs/GETTING-STARTED.md`](docs/GETTING-STARTED.md)** | **write your first spec — ten minutes with a lightweight local command** |
-| [`docs/COOKBOOK.md`](docs/COOKBOOK.md) | the common loop shapes — reflection, judge, RAG, tree search, verifier — and **what each one structurally costs** |
-| [`docs/LINTING-EXISTING.md`](docs/LINTING-EXISTING.md) | the brownfield path: lint a system you did not spec, including the three times it gave me a wrong answer |
-| [`docs/CHECKS.md`](docs/CHECKS.md) | every check: felt symptom, what it looked at, how to fix, with a real example |
-| **[`SYNTHESIS.md`](SYNTHESIS.md)** | where the field is, what this contributes, **and what it cannot claim** |
-| **[`ATTENTION.md`](ATTENTION.md)** | half one — a notation is an attention device |
-| **[`CALIBRATION.md`](CALIBRATION.md)** | half two — and why it is hard rather than neglected |
-| [`CYBERNETICS.md`](CYBERNETICS.md) | how cybernetic this actually is — including what is still missing |
-| [`REFERENCE.md`](REFERENCE.md) | every key — generated from `schema/loop.keys.yaml` |
-| [`COMPATIBILITY.md`](COMPATIBILITY.md) | authoring v1.1 / IR v2.1 promises and migrations |
-| [`schema/semantic-map.yaml`](schema/semantic-map.yaml) | traceability from every accepted key to its semantic effect |
-| [`NOTATION.md`](NOTATION.md) | the diagram language, independent of any renderer |
-| [`REFERENCES.md`](REFERENCES.md) | every external source and the decision it shaped |
-| [`RULESET.md`](RULESET.md) | the checks, assurance levels, and theorem boundaries |
-| [`research/real_loops/`](research/real_loops/) | source-pinned Codex, Goose, OpenHands, AI Scientist, SWE-agent, Browser Use, autoresearch, and Ralph evidence |
-| `examples/field/` | earlier field cases; `research/published_study/` two pre-registered studies |
-
-The complete searchable Astro manual lives in [`website/`](website/). Run `npm install` and
-`npm run dev` there for the local documentation experience; `npm run check` rebuilds the site,
-refreshes its canonical source pages, and validates routes and anchors.
-
-### The toolset
-
-One primary command, with focused scripts behind it. Nothing here is a framework — the spec is
-the artifact and every projection reads the same validated IR.
-
-For a clean local install:
+LoopSpec requires Python 3.11 or newer. Install it from this repository:
 
 ```bash
 python3 -m venv .venv
@@ -138,35 +62,397 @@ python3 -m venv .venv
 .venv/bin/loopspec doctor
 ```
 
-Use `.venv/bin/pip install -e .` instead when developing LoopSpec itself. The repository-local
-form below is equivalent and remains useful without installation.
+Use `.venv/bin/pip install -e .` when developing LoopSpec itself. You can also replace
+`.venv/bin/loopspec` in the examples below with `python3 tools/loopspec.py`.
 
-```bash
-python3 tools/loopspec.py check   spec.loop.yaml       # validate + findings + assurance
-python3 tools/loopspec.py expand  spec.loop.yaml       # canonical typed IR v2.1
-python3 tools/loopspec.py diff    before.loop.yaml after.loop.yaml
-python3 tools/loopspec.py diagram spec.loop.yaml --markdown
-python3 tools/loopspec.py diagram spec.loop.yaml --control --markdown
-python3 tools/loopspec.py doctor                        # tests + generated-artifact gates
+### 1. Write the smallest useful loop
 
-python3 tools/compare.py  specs/*.loop.yaml       # argue about loops side by side
-python3 tools/verify.py   spec.loop.yaml build/   # did compilation drop the approval gate?
+Create `support.loop.yaml`:
+
+```yaml
+loop: support_triage
+runs: per_ticket
+
+goal:
+  resolution_time: { keep: below 4 hours }
+
+observes:
+  ticket_age:
+    informs: resolution_time
+    origin: ourselves
+    how: measured
+
+actions:
+  escalate_to_engineer:
+    moves: resolution_time
+    effect: decrease
+    can_undo: yes
+
+when:
+  - if: resolution_time exceeds 4 hours
+    reads: [resolution_time]
+    against: [resolution_time]
+    do: escalate_to_engineer
 ```
 
-**Compilation is not part of the release claim.** In an exploratory one-spec study, models
-from 8B to frontier preserved 0.898–0.993 of mechanically checked source elements, but that
-grader did not establish executable or semantically correct target code. Real Flue API use was
-18% without target documentation and 100% (6/6 scored outputs) with a one-page API reference.
-[`research/llm_as_compiler.md`](research/llm_as_compiler.md) keeps the full correction and
-limits; `tools/compile_flue.py` remains a reference mapping, and `tools/verify.py` checks for
-declared elements silently lost by a generated implementation.
+This is enough to express feedback intent: a target, a measurement, an actuator, and a policy
+that compares the measurement with its reference. Partial specifications are valid input; the
+linter helps you discover what the first draft omitted, including the causal path through the
+controlled process.
 
----
+### 2. Check, draw, and expand it
 
-### Historical record
+```bash
+.venv/bin/loopspec check support.loop.yaml
+.venv/bin/loopspec diagram support.loop.yaml --markdown
+.venv/bin/loopspec expand support.loop.yaml
+```
 
-LoopSpec began as **URAS**, a proposed universal representation for adaptive systems. The corpus did not
-support that scope, so the project narrowed to agent control loops. The
-[`research/ORIGINAL-CHARTER.md`](research/ORIGINAL-CHARTER.md) preserves the original premise;
+`check` will accept the document and raise design questions such as the missing system boundary,
+human escalation path, and explicit process through which escalation changes resolution time.
+That is expected. The goal is not zero findings; it is a design whose findings have been resolved
+or consciously considered.
+
+### 3. Add the system and governance around the loop
+
+Grow the same file into a reviewable system description:
+
+```yaml
+loop: support_triage
+runs: per_ticket
+
+boundary:
+  drawn_by: support_lead
+  purpose: resolve urgent tickets without losing customer trust
+  inside: [triage policy, support queue, engineering escalation]
+  outside: [customer situation, product behavior]
+
+goal:
+  resolution_time: { keep: below 4 hours }
+
+observes:
+  ticket_age:
+    informs: resolution_time
+    origin: ourselves
+    how: measured
+
+processes:
+  support_workflow:
+    location: inside
+    observed_as: [ticket_age]
+    description: support and engineering work that changes time to resolution
+
+actions:
+  escalate_to_engineer:
+    moves: resolution_time
+    through: support_workflow
+    effect: decrease
+    can_undo: yes
+
+when:
+  - if: resolution_time exceeds 4 hours
+    reads: [resolution_time]
+    against: [resolution_time]
+    do: escalate_to_engineer
+
+asks_human_when: [evidence conflicts or the customer impact is unclear]
+asks_human: support_lead
+
+people:
+  support_lead:
+    human: yes
+    loses_if_wrong: the customer relationship
+    sees: [resolution_time]
+```
+
+Re-run the checker after each meaningful decision:
+
+```bash
+.venv/bin/loopspec check support.loop.yaml
+```
+
+Fix a finding in the model, or record an intentional exception without suppressing it:
+
+```yaml
+consider:
+  belief_never_checked/ticket_severity:
+    because: outcomes arrive too late to score severity per ticket
+    revisit: after the first 100 escalated tickets have resolved
+```
+
+If the finding later disappears, LoopSpec reports the explanation as stale rather than silently
+keeping obsolete design rationale.
+
+## Add beliefs and calibration
+
+Use a belief when the loop must estimate something it cannot observe directly. A calibration
+contract connects that judgement to later outcomes and states what should change when it is
+unreliable.
+
+```yaml
+beliefs:
+  ticket_severity:
+    question: How badly is this customer blocked?
+    how: judgement
+    checked_by: weekly_severity_review
+    checked_against: ticket_outcome
+    scoring_rule: severity classification error
+    window: 100 resolved tickets
+    adjusts: severity_prompt
+    every: weekly
+
+observes:
+  ticket_text:
+    informs: ticket_severity
+    origin: outside
+    how: reported
+  ticket_outcome:
+    informs: [ticket_severity, resolution_time]
+    origin: outside
+    how: measured
+```
+
+This distinguishes verification—“is this answer good?”—from calibration—“has confidence in this
+kind of judgement tracked reality over time, and what changes if it has not?”
+
+## Model conditional tool safety
+
+A generic tool action may only become irreversible after its concrete request is known. Profiles
+let safety properties vary without claiming that every tool call is dangerous.
+
+```yaml
+actions:
+  execute_tool:
+    moves: task_progress
+    through: tool_environment
+
+action_profiles:
+  destructive_request:
+    action: execute_tool
+    when: the request can delete or publish external state
+    resolved_at: request
+    can_undo: no
+    needs_approval: operator
+  other_request:
+    action: execute_tool
+    default: true
+    resolved_at: request
+    can_undo: unknown
+```
+
+The default is deliberately `unknown`, not silently reversible. LoopSpec checks that conditional
+profiles have a fallback and that they represent a real safety distinction.
+
+## Model the control plane
+
+World actions are not the same as operations on the controller. A file edit is an `action`; a
+retry, pause, handoff, interrupt, or stop is an `operation`; a final answer or approval request is
+an `output` crossing the represented boundary.
+
+```yaml
+outputs:
+  approval_request: { kind: approval_request, terminates: run }
+  final_result:     { kind: final, terminates: run }
+  terminal_error:   { kind: failure, terminates: run }
+
+operations:
+  defer_for_approval:
+    kind: pause
+    when: this invocation returns resumable approval state
+    emits: approval_request
+  continue_deferred_run:
+    kind: resume
+    when: a later invocation supplies the decision
+    authorized_by: run_caller
+  finish_successfully:
+    kind: stop
+    when: validated final output is ready
+    emits: final_result
+  finish_with_error:
+    kind: stop
+    when: a terminal limit or error is reached
+    emits: terminal_error
+```
+
+Render that projection separately:
+
+```bash
+.venv/bin/loopspec diagram agent.loop.yaml --control --markdown
+```
+
+The v1.2 control-plane vocabulary is experimental; see [Evidence and maturity](#evidence-and-maturity).
+
+## Compare designs by meaning
+
+Text diffs are noisy when a key is renamed or a list is reordered. LoopSpec expands both files
+to canonical semantic fingerprints before comparing them:
+
+```bash
+.venv/bin/loopspec diff before.loop.yaml after.loop.yaml
+```
+
+This exposes changes such as a removed approval gate, a new observation dependency, or a changed
+termination role even when the surrounding YAML was reformatted.
+
+## Use LoopSpec in CI
+
+Run the checker on the specifications your project depends on. In the LoopSpec repository,
+`doctor` additionally verifies tests and generated language artifacts.
+
+```yaml
+name: Loop specifications
+on: [push, pull_request]
+
+jobs:
+  loopspec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install .
+      - run: loopspec check examples/complete.loop.yaml
+      - run: loopspec doctor
+```
+
+## The design model
+
+LoopSpec treats cybernetics as a set of explicit modeling obligations, not as decorative
+terminology.
+
+| Concern | LoopSpec asks |
+|---|---|
+| Purpose and boundary | Who selected the system, environment, and condition to regulate? |
+| Observation and attention | What is sensed, from where, by what method, and at what cost? |
+| Belief and calibration | What is inferred, how is it scored against outcomes, and what changes after error? |
+| Decision and reference | Which signals and targets does each rule actually read? |
+| Action and process | What can the loop change, through which causal path, and with what reversibility? |
+| Authority and consequence | Who approves, who is informed, and who bears the cost of being wrong? |
+| Resources and viability | What is consumed, what is bounded, and does the policy respond before exhaustion? |
+| Control plane | What pauses, resumes, retries, hands off, interrupts, or terminates execution? |
+
+The analyzer checks the declared structure. It does **not** prove dynamic stability,
+controllability, observability, safety, or real-world effectiveness. Those stronger claims need
+runtime evidence and, in some cases, quantitative models that LoopSpec does not represent.
+
+## Commands
+
+```bash
+loopspec check   agent.loop.yaml
+loopspec expand  agent.loop.yaml
+loopspec diagram agent.loop.yaml --markdown
+loopspec diagram agent.loop.yaml --control --markdown
+loopspec diff    before.loop.yaml after.loop.yaml
+loopspec doctor
+```
+
+All projections read the same validated canonical graph:
+
+- `check` validates a specification and derives ranked structural findings;
+- `expand` emits canonical typed IR v2.2;
+- `diagram` renders operating-loop or control-plane Mermaid;
+- `diff` compares semantic fingerprints rather than source formatting; and
+- `doctor` runs tests plus generated-reference and schema-integrity gates.
+
+Additional research tools compare loop corpora and check declared elements against generated
+implementations:
+
+```bash
+python3 tools/compare.py specs/*.loop.yaml
+python3 tools/verify.py agent.loop.yaml build/
+```
+
+`verify.py` detects declared elements that disappeared during implementation. It does not prove
+that the resulting program behaves correctly.
+
+## Examples
+
+The repository includes small designed examples and source-backed encodings of existing agent
+systems.
+
+| Example | What it demonstrates |
+|---|---|
+| [`examples/complete.loop.yaml`](examples/complete.loop.yaml) | Most language constructs in one validated specification |
+| [`examples/customer_acquisition.loop.yaml`](examples/customer_acquisition.loop.yaml) | Goals, beliefs, calibration, resources, and irreversible action |
+| [`examples/research_group.loop.yaml`](examples/research_group.loop.yaml) | Multiple interacting research and governance concerns |
+| [`examples/field/ralph.loop.yaml`](examples/field/ralph.loop.yaml) | A field encoding of the Ralph agent loop |
+| [`research/real_loops/`](research/real_loops/) | Source-pinned Ralph, autoresearch, SWE-agent, Browser Use, Codex, Goose, OpenHands, and AI Scientist cases |
+
+Try one without creating a file:
+
+```bash
+.venv/bin/loopspec check examples/complete.loop.yaml
+.venv/bin/loopspec diagram examples/field/ralph.loop.yaml --markdown
+```
+
+## Documentation
+
+| Start here | Purpose |
+|---|---|
+| [`docs/GETTING-STARTED.md`](docs/GETTING-STARTED.md) | Write and lint your first loop |
+| [`docs/COOKBOOK.md`](docs/COOKBOOK.md) | Model reflection, judges, RAG, search, and verifier loops |
+| [`docs/LINTING-EXISTING.md`](docs/LINTING-EXISTING.md) | Reverse-engineer and lint a loop you did not design |
+| [`docs/CONTROL-PLANE.md`](docs/CONTROL-PLANE.md) | Separate actions, controller operations, outputs, and conditional safety |
+| [`docs/CHECKS.md`](docs/CHECKS.md) | Understand every finding and its assurance boundary |
+| [`REFERENCE.md`](REFERENCE.md) | Browse every accepted language key |
+| [`COMPATIBILITY.md`](COMPATIBILITY.md) | Understand authoring and canonical-IR compatibility |
+
+For the theory, evidence, and limits:
+
+| Read next | Purpose |
+|---|---|
+| [`SYNTHESIS.md`](SYNTHESIS.md) | The field-level argument and bounded contribution |
+| [`CYBERNETICS.md`](CYBERNETICS.md) | What is genuinely cybernetic and what is still missing |
+| [`ATTENTION.md`](ATTENTION.md) | Signals, selection, cost, and attention as meta-control |
+| [`CALIBRATION.md`](CALIBRATION.md) | Outcome scoring and revision of unreliable belief formation |
+| [`RULESET.md`](RULESET.md) | Checks, assurance levels, and theorem boundaries |
+| [`REFERENCES.md`](REFERENCES.md) | External sources and the decisions they shaped |
+| [`research/real_loops/`](research/real_loops/) | Source-pinned encodings of real agent loops |
+
+The searchable Astro manual lives in [`website/`](website/):
+
+```bash
+cd website
+npm install
+npm run dev
+```
+
+Run `npm run check` there to rebuild the site and validate its routes, anchors, generated pages,
+assets, and worker.
+
+## Evidence and maturity
+
+The package is version 2.0.0. Its current semantic layers are:
+
+- **authoring v1.1:** accepted compatibility baseline;
+- **authoring v1.2:** experimental control-plane additions; and
+- **canonical IR v2.2:** experimental typed operations, outputs, and action profiles.
+
+The v1.2 vocabulary is internally verified, but an eight-cycle independent-encoding study
+scored **0.467 raw micro-F1** against a preregistered **0.80** convergence threshold. It therefore
+remains an experimental candidate rather than a settled field standard. The complete negative
+result is retained in [`research/control_plane/`](research/control_plane/) and
+[`autoresearch/control-plane-260804-2251/`](autoresearch/control-plane-260804-2251/).
+
+The external-author usefulness protocol is preregistered in
+[`research/external_validation/PREREGISTRATION.md`](research/external_validation/PREREGISTRATION.md)
+and has no observed outcomes yet. LoopSpec currently claims useful structural specification and
+review machinery—not proven field usefulness or operational safety.
+
+## What LoopSpec is not
+
+- It is not an agent runtime, workflow engine, or orchestration framework.
+- It is not a prompt format or a replacement for executable tests.
+- It is not a formal proof of system safety or stability.
+- It is not yet a standards-body specification.
+
+## Project history
+
+LoopSpec began as **URAS**, a proposed universal representation for adaptive systems. Evidence
+did not support that scope, so the project narrowed to agent control loops. The old `uras`
+command remains a deprecated alias throughout LoopSpec 2.x.
+
+[`research/ORIGINAL-CHARTER.md`](research/ORIGINAL-CHARTER.md) preserves the original premise,
 [`FORK.md`](FORK.md) records the narrowing, and [`CONVERGENCE.md`](CONVERGENCE.md) records the
-current evidence gates. Those files are research history, not promises made by v1.1.
+evidence gates. Those documents are research history, not promises made by the language.

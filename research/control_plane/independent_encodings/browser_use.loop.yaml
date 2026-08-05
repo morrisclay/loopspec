@@ -1,0 +1,176 @@
+# LoopSpec encoded from browser_use/agent/service.py (lines 1205-1246, 1458-1545, 2575-2655)
+# and browser_use/agent/views.py (lines 200-315)
+loop: browser_task_agent
+# run() drives _execute_initial_actions then the while-loop to completion in one call
+# (service.py 2600-2655); no evidence of a per-step public return boundary.
+runs: per_run_invocation
+
+boundary:
+  drawn_by: operator
+  purpose: >-
+    Steer a browser session toward completing an assigned task via executed
+    actions, while bounding consecutive failures, step budget, and detecting
+    behavioral loops before returning a final result. (service.py 2600-2655)
+  inside:
+    - agent controller state (n_steps, consecutive_failures, plan, paused, stopped)
+    - loop detector (views.py 200-248, 274-275)
+    - message manager nudges (service.py 1458-1520)
+  outside:
+    - browser session / DOM
+    - external caller invoking pause/resume/stop
+
+people:
+  operator:
+    kind: system
+    # "Agent stopped programmatically" implies an external caller sets state.stopped;
+    # "consolidated pause state management" implies external pause()/resume() calls.
+    loses_if_wrong: time and step budget spent without a completed task
+    sees:
+      - goal.task_completion
+
+goal:
+  task_completion:
+    keep: model calls done with success before the step budget is exhausted
+    from:
+      - step_outcome
+
+beliefs:
+  plan:
+    question: What sequence of steps will complete the task?
+    how: LLM plan_update output, tracked in state.plan (views.py 260-262)
+    # replan nudge: service.py 1458-1472; exploration nudge: service.py 1474-1488
+    checked_by: >-
+      replan nudge injected when consecutive_failures reaches
+      planning_replan_on_stall; exploration nudge injected when steps without
+      a plan reach planning_exploration_limit
+    checked_against: step_outcome
+    adjusts: method
+    every: each step, when planning is enabled
+
+  approach:
+    question: Is the current sequence of actions still making progress?
+    how: loop detector hashes recent actions and page state for repetition/stagnation
+    # escalating nudges at repetition 5/8/12 and stagnation >=5 (views.py 211-248)
+    checked_by: escalating nudge injected at repetition/stagnation thresholds
+    checked_against: step_outcome
+    adjusts: method
+    every: each step, when loop_detection_enabled
+
+observes:
+  step_outcome:
+    # ActionResult(s) from multi_act plus resulting browser/page state (service.py 1210-1211, 1521-1534)
+    informs:
+      - goal.task_completion
+      - plan
+      - approach
+    origin: ourselves
+    how: measured
+    produced_by: execute_actions
+    every: per step
+
+actions:
+  execute_actions:
+    # multi_act call executing the model's chosen actions against the browser (service.py 1210)
+    moves:
+      - goal.task_completion
+    through: browser_execution
+    effect: unknown
+    can_undo: unknown
+
+processes:
+  browser_execution:
+    location: outside
+    description: >-
+      Live browser session receiving executed actions (including wrapped
+      initial actions, service.py 2582-2598); resulting DOM/page state and
+      action results become observable at the next step.
+    observed_as:
+      - step_outcome
+
+spends:
+  step_budget:
+    # while self.state.n_steps <= max_steps (service.py 2603); 75% warning at 1536-1545
+    limit: n_steps must stay within max_steps
+    spent_by: execute_actions
+
+  consecutive_failures:
+    # increment on single-action error (service.py 1229-1231); stop threshold (2613-2618)
+    limit: max_failures, plus one more try if final_response_after_failure is set
+    spent_by: execute_actions
+    # reset to 0 after any step whose last result has no error (service.py 1234-1236)
+    replenished: reset to 0 after a step with no error
+
+operations:
+  pause:
+    kind: pause
+    # self.state.paused checked each iteration; awaits _external_pause_event (service.py 2607-2610)
+    when: state.paused is set before a step begins
+    authorized_by: operator
+
+  resume:
+    kind: resume
+    when: external pause event is set, releasing the waiting step loop
+    authorized_by: operator
+
+  interrupt:
+    kind: interrupt
+    # "the callback can raise an InterruptedError" during initial actions (service.py 2578, 2587-2588)
+    when: callback raises InterruptedError during initial actions
+    # source does not establish who may raise it
+
+  stop_on_done:
+    kind: stop
+    # is_done True from executed step breaks the main loop (service.py 2629-2636)
+    when: executed step reports the task as done
+    emits: final_result
+
+  stop_on_failure:
+    kind: stop
+    # consecutive failure threshold (2613-2618) or exhausting max_steps without done (2637-2653)
+    when: >-
+      consecutive_failures reaches max_failures (plus one if
+      final_response_after_failure), or n_steps exceeds max_steps without
+      completion
+    emits: run_failure
+
+  stop_programmatic:
+    kind: stop
+    # self.state.stopped checked each iteration (service.py 2621-2624)
+    when: state.stopped is set
+    authorized_by: operator
+    emits: run_failure
+
+outputs:
+  final_result:
+    kind: final
+    terminates: run
+    # last_result[-1].extracted_content logged on is_done, success or failure content (service.py 1239-1246)
+    description: extracted content from the model's done action, on success or reported failure
+
+  run_failure:
+    kind: failure
+    terminates: run
+    # agent_run_error variants recorded to history (service.py 2617, 2623, 2638-2653)
+    description: >-
+      agent_run_error recorded to history: consecutive-failure stop, programmatic
+      stop, or step budget exhausted without completion
+
+when:
+  - if: >-
+      not paused, not stopped, consecutive_failures below its limit, and
+      n_steps within max_steps
+    reads:
+      - goal.task_completion
+      - step_budget
+      - consecutive_failures
+    against:
+      - goal.task_completion
+    do: execute_actions
+
+not_modelling:
+  - reversibility of individual browser actions (click/type/navigate/go_back/wait)
+    beyond the generic execute_actions lever
+  - skill registration and download tracking side effects (service.py 2576, 1218)
+  - JudgementResult trace scoring (views.py 288-304) — not wired to any consumer
+    in the excerpts
+  - demo-mode logging path (service.py 2631-2633)
