@@ -363,8 +363,11 @@ python3 tools/compare.py specs/*.loop.yaml
 python3 tools/verify.py agent.loop.yaml build/
 ```
 
-`verify.py` detects declared elements that disappeared during implementation. It does not prove
-that the resulting program behaves correctly.
+`verify.py` detects declared elements that disappeared during implementation. For approval gates,
+it ignores comments and string literals, excludes the action's own identifier, and scopes evidence
+to a recognised function body before falling back to a nearby-text scan for unknown targets. It
+does not prove that a gate executes, dominates the consequential effect, or that the resulting
+program behaves correctly.
 
 ## Examples
 
