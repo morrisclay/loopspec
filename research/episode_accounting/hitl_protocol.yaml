@@ -1,0 +1,52 @@
+version: "hitl-capability-probe-0.1"
+seed: 20260813
+minimum_delay_hours: 24
+arms:
+  - retrieval_before_reveal
+  - answer_first_control
+primary_outcome: delayed_transfer_accuracy_minus_baseline_accuracy
+secondary_outcomes:
+  - immediate_transfer_accuracy_minus_baseline_accuracy
+  - delayed_transfer_accuracy_minus_immediate_transfer_accuracy
+  - artifact_recovery_accuracy_minus_delayed_transfer_accuracy
+  - joint_final_accuracy_minus_joint_initial_accuracy
+  - joint_final_accuracy_minus_fixed_ai_accuracy
+  - harmful_revision_rate
+  - helpful_revision_rate
+phases:
+  - id: baseline
+    mode: unaided
+    item_set: baseline
+    feedback: after_study_completion
+    delay_after_hours: 0
+  - id: practice
+    mode: randomized_practice
+    item_set: practice
+    feedback: per_item
+    delay_after_hours: 0
+  - id: immediate_transfer
+    mode: unaided
+    item_set: immediate_transfer
+    feedback: after_study_completion
+    delay_after_hours: 24
+  - id: delayed_transfer
+    mode: unaided
+    item_set: delayed_transfer
+    feedback: after_phase
+    delay_after_hours: 0
+  - id: artifact_recovery
+    mode: artifact
+    item_set: artifact_recovery
+    feedback: after_phase
+    delay_after_hours: 0
+  - id: joint
+    mode: joint
+    item_set: joint
+    feedback: after_phase
+    delay_after_hours: 0
+carrier_card:
+  - Name the focal power and the conditions required to exercise it.
+  - Separate repetition, retention, later availability, actual retrieval, and consequential difference.
+  - Separate human, AI-in-use, institutional, affected-world, and relational afterstates.
+  - Treat authorization, invocation, execution, outside occurrence, consequence, and repair as different states.
+  - Preserve the strongest rival and answer unknown when the decisive join is not observed.

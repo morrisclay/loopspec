@@ -1285,6 +1285,7 @@ class SemanticPipelineTests(unittest.TestCase):
 
         self.assertEqual(0, result.returncode, result.stderr)
         output = __import__("json").loads(result.stdout)
+        self.assertEqual(1, output["protocol_version"])
         self.assertTrue(output["valid"])
         self.assertEqual(2, output["ir_version"])
         self.assertEqual("2.2", output["ir_revision"])
@@ -1307,6 +1308,19 @@ class SemanticPipelineTests(unittest.TestCase):
             )
         self.assertEqual(2, strict.returncode, strict.stderr)
         self.assertIn("incomplete_loop", strict.stdout)
+
+        expanded = subprocess.run(
+            [sys.executable, os.path.join(TOOLS, "loopspec.py"), "expand",
+             os.path.join(ROOT, "examples", "complete.loop.yaml"), "--json"],
+            capture_output=True, text=True,
+            env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"),
+        )
+        self.assertEqual(0, expanded.returncode, expanded.stderr)
+        expansion = __import__("json").loads(expanded.stdout)
+        self.assertEqual(1, expansion["protocol_version"])
+        self.assertTrue(expansion["valid"])
+        self.assertEqual("2.2", expansion["document"]["ir_revision"])
+        self.assertIn("findings", expansion)
 
     def test_cli_package_entry_point_matches_direct_script(self):
         path = os.path.join(ROOT, "examples", "complete.loop.yaml")
@@ -1356,6 +1370,7 @@ class SemanticPipelineTests(unittest.TestCase):
 
         self.assertEqual(0, same.returncode, same.stderr)
         same_delta = __import__("json").loads(same.stdout)
+        self.assertEqual(1, same_delta["protocol_version"])
         self.assertFalse(same_delta["changed"])
         self.assertEqual(same_delta["left"]["semantic_hash"],
                          same_delta["right"]["semantic_hash"])

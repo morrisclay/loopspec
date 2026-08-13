@@ -1,0 +1,41 @@
+{
+  "conditions": [
+    "episode_ledger",
+    "ordinary_trace",
+    "performance_only"
+  ],
+  "episodes": 560,
+  "families": [
+    "investment_diligence",
+    "research_evaluation",
+    "software_delivery",
+    "support_triage"
+  ],
+  "generated_hashes": {
+    "packets.episode_ledger.jsonl": "f89a51dd4786621e19328e6c38df793c932e657cea97072e964fcad7b93ee4c1",
+    "packets.ordinary_trace.jsonl": "40c3be0d2e8524af427b90e4eb04009a5a1199dda3981223a8567765f37d5296",
+    "packets.performance_only.jsonl": "d8aa2c953a6f67d531899a228e7a8a11c4c360b8622a1e140606279c49d2f4d5",
+    "synthetic_series.jsonl": "aadc7e0f4ff1fa4b0c6e5eb8ff55c2d4ff0c3769a554cb079dc86354dd27fc27"
+  },
+  "generator_version": "0.1",
+  "mechanisms": [
+    "ai_model_upgrade",
+    "assisted_substitution",
+    "authority_window_erosion",
+    "case_mix_shift",
+    "institutional_rule_learning",
+    "provider_dependency",
+    "repetition_without_retention",
+    "retained_but_unused",
+    "stable_rehearsal",
+    "structured_reappropriation"
+  ],
+  "schema_version": "episode-ledger-0.1",
+  "seed": 20260813,
+  "series": 80,
+  "source_hashes": {
+    "case_families.yaml": "2909811225aa54c36c2be02a0df8f3da2c4fe6f8a48c039a96199ffd82c1eafa",
+    "episode.schema.json": "61291f8ae7c5dfcd87358e169081f4ccd13c9f573c7291599069f32c86d1d20c",
+    "series.schema.json": "0d409b23a748e075d244a57072257f25e867c1f6cf575f08bc7c131be10ba01d"
+  }
+}

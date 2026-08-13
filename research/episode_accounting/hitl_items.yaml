@@ -1,0 +1,255 @@
+version: "0.1"
+choices:
+  return:
+    A: consequential return
+    B: retention without demonstrated return
+    C: repetition without retention
+    D: apparent change explained by a rival
+    E: unanswerable from the available evidence
+  bearer:
+    A: human
+    B: AI-in-use
+    C: institution
+    D: distributed configuration
+    E: no supported bearer claim
+  intervention:
+    A: viable intervention path
+    B: trigger or grounds failure
+    C: window failure
+    D: authority or control failure
+    E: return or consequence-evidence failure
+
+items:
+  - id: b_ret_1
+    set: baseline
+    construct: return
+    difficulty: 0.45
+    stem: A support team saves an AI-generated escalation rule. Three later cases are handled as before, and no system loads or cites the rule. What is supported?
+    answer: B
+    explanation: Storage establishes a retention carrier, but no later uptake or consequential difference is observed.
+  - id: b_ret_2
+    set: baseline
+    construct: return
+    difficulty: 0.55
+    stem: Review accuracy rises over four cases, but the last two cases were independently rated much easier. No retained artifact or practice change is observed. What is supported?
+    answer: D
+    explanation: The performance trajectory has a live case-mix rival and no observed return path.
+  - id: b_bear_1
+    set: baseline
+    construct: bearer
+    difficulty: 0.5
+    stem: An analyst fails a fresh unaided reconstruction but succeeds when a versioned archive is restored; the archive alone does not decide or act. Where is the demonstrated power best located?
+    answer: D
+    explanation: Recovery requires the person and retained archive together, supporting a distributed configuration.
+  - id: b_bear_2
+    set: baseline
+    construct: bearer
+    difficulty: 0.6
+    stem: A new model solves a case without human correction after a versioned upgrade. Human transfer was not tested. Which bearer claim is supported for that episode?
+    answer: B
+    explanation: The observed realization is in the configured AI-in-use; no human change has been tested.
+  - id: b_int_1
+    set: baseline
+    construct: intervention
+    difficulty: 0.45
+    stem: A reviewer receives exact sources and has stop authority, but the alert arrives after the external transfer is irreversible. What is the limiting failure?
+    answer: C
+    explanation: Grounds and authority cannot repair a closed intervention window.
+  - id: b_int_2
+    set: baseline
+    construct: intervention
+    difficulty: 0.55
+    stem: A deployment dashboard reports that a stop command was accepted. It gives no execution receipt and no observation from production. What is missing?
+    answer: E
+    explanation: Command acknowledgement does not establish execution, outside occurrence, or consequence.
+
+  - id: p_ret_1
+    set: practice
+    construct: return
+    difficulty: 0.4
+    stem: A prompt template created in case two is loaded in case five and causes a previously absent source check that blocks publication. What is supported?
+    answer: A
+    explanation: The template persisted, returned, and made a consequential later difference.
+  - id: p_ret_2
+    set: practice
+    construct: return
+    difficulty: 0.45
+    stem: Six independent sessions produce similar summaries from the same unchanged source packet. No session receives an earlier output. What is supported?
+    answer: C
+    explanation: Similarity and repetition do not establish retention or return.
+  - id: p_bear_1
+    set: practice
+    construct: bearer
+    difficulty: 0.45
+    stem: A policy adopted after an incident automatically blocks the same unsafe action months later, even with new staff and a different model. Where is the demonstrated power principally located?
+    answer: C
+    explanation: A governed institutional rule carries and realizes the response across changed people and models.
+  - id: p_bear_2
+    set: practice
+    construct: bearer
+    difficulty: 0.55
+    stem: After delayed practice, an engineer diagnoses a novel failure without agents, repository history, or a runbook. Where is the demonstrated power principally located?
+    answer: A
+    explanation: The fresh unaided transfer supports a bounded human capability claim.
+  - id: p_int_1
+    set: practice
+    construct: intervention
+    difficulty: 0.45
+    stem: A legal reviewer sees the exact payload, has ten minutes remaining, can edit or reject it, and later receives delivery and counterparty receipts. How is the path classified?
+    answer: A
+    explanation: Trigger, grounds, window, authority, effective control, and world return are all present.
+  - id: p_int_2
+    set: practice
+    construct: intervention
+    difficulty: 0.55
+    stem: A committee is responsible for a decision and receives the sources in time, but policy grants only the system owner permission to halt execution. What is the limiting failure?
+    answer: D
+    explanation: Responsibility and visibility do not supply legitimate, effective control.
+
+  - id: i_ret_1
+    set: immediate_transfer
+    construct: return
+    difficulty: 0.48
+    stem: A code review checklist is versioned after an outage, retrieved during a later release, and its new rollback check catches the same failure class. What is supported?
+    answer: A
+    explanation: Retention, later uptake, and consequential difference are observed.
+  - id: i_ret_2
+    set: immediate_transfer
+    construct: return
+    difficulty: 0.58
+    stem: A researcher adopts a phrase after an AI session and uses it later, but the conversation, prompt library, reading notes, and unaided memory were not separated. What is supported?
+    answer: E
+    explanation: Re-entry is plausible, but the carrier and causal seam are unresolved.
+  - id: i_bear_1
+    set: immediate_transfer
+    construct: bearer
+    difficulty: 0.52
+    stem: During a provider outage, the operator cannot reconstruct the decision, but the organization follows a locally stored and rehearsed recovery procedure successfully. Where is the demonstrated power principally located?
+    answer: C
+    explanation: The institutionally retained and rehearsed procedure realizes recovery despite individual reconstruction failure.
+  - id: i_bear_2
+    set: immediate_transfer
+    construct: bearer
+    difficulty: 0.62
+    stem: A person detects an anomaly, an archive supplies the decisive historical comparison, and an agent traces dependencies; removing any one defeats repair. Where is the power located?
+    answer: D
+    explanation: The realized capability depends conjunctively on differentiated components.
+  - id: i_int_1
+    set: immediate_transfer
+    construct: intervention
+    difficulty: 0.5
+    stem: An alert arrives in time and the reviewer can reject, but it contains only a persuasive summary and withholds the conflicting primary source needed for judgment. What is the limiting failure?
+    answer: B
+    explanation: An available control is not enough when the grounds for the required judgment are absent.
+  - id: i_int_2
+    set: immediate_transfer
+    construct: intervention
+    difficulty: 0.6
+    stem: A reviewer approves version 12, but the runtime executes a materially changed version 13 under the same approval token. What is the limiting failure?
+    answer: D
+    explanation: Approval is not bound to the state and payload that execution uses, so control is ineffective.
+
+  - id: d_ret_1
+    set: delayed_transfer
+    construct: return
+    difficulty: 0.5
+    stem: An interview rubric from episode one is reused in episode six and suppresses a category of dissent. A counterbalanced interview without the rubric restores it. What is supported?
+    answer: A
+    explanation: The retained rubric returned and the contrast supports a consequential effect.
+  - id: d_ret_2
+    set: delayed_transfer
+    construct: return
+    difficulty: 0.6
+    stem: A team is faster in month two. Staffing, task mix, model version, incentives, and retained workflow changes all changed together. What is supported?
+    answer: E
+    explanation: A trajectory exists, but the available evidence cannot localize the return path.
+  - id: d_bear_1
+    set: delayed_transfer
+    construct: bearer
+    difficulty: 0.52
+    stem: A reviewer can state the method fluently but fails fresh falsifier-generation; a validator and archive catch the error when restored. Where is the demonstrated power best located?
+    answer: D
+    explanation: The functioning configuration has the power; fluent human recall does not establish unaided capability.
+  - id: d_bear_2
+    set: delayed_transfer
+    construct: bearer
+    difficulty: 0.62
+    stem: Independent human and AI judgments are both weak, but their recorded disagreement reliably summons a specialist who resolves the case. Where is the effective power best located?
+    answer: D
+    explanation: The power is realized through the relation among components and escalation, not either component alone.
+  - id: d_int_1
+    set: delayed_transfer
+    construct: intervention
+    difficulty: 0.52
+    stem: A worker may formally appeal, but doing so risks retaliation and the appeal body cannot change the automated decision. What is the limiting failure?
+    answer: D
+    explanation: Nominal standing without safe, effective control is not a viable intervention path.
+  - id: d_int_2
+    set: delayed_transfer
+    construct: intervention
+    difficulty: 0.62
+    stem: The system reports execution and an external receipt confirms delivery, but no later observation can establish whether the intervention reduced the intended harm. What is missing?
+    answer: E
+    explanation: Occurrence is established; intended consequence remains unresolved.
+
+  - id: a_ret_1
+    set: artifact_recovery
+    construct: return
+    difficulty: 0.6
+    stem: A saved model assumption appears in a later report, but the later analyst independently derived the same assumption before opening the file. What is supported?
+    answer: D
+    explanation: Availability and similarity do not show that the saved assumption made the difference; independent convergence is a live rival.
+  - id: a_bear_1
+    set: artifact_recovery
+    construct: bearer
+    difficulty: 0.65
+    stem: A person can apply a method only when a compact causal-accounting card is available, and can explain which step the card supplies. Where is the demonstrated power best located?
+    answer: D
+    explanation: The recoverable power is distributed across person and artifact; that is not the same as human-only acquisition.
+  - id: a_int_1
+    set: artifact_recovery
+    construct: intervention
+    difficulty: 0.58
+    stem: A reviewer has evidence, time, and authority to pause. The pause stops new actions but cannot revoke already issued external credentials, and no repair path exists. What is the limiting failure?
+    answer: E
+    explanation: Partial interruption does not establish outside effect or repair of residual consequences.
+  - id: a_ret_2
+    set: artifact_recovery
+    construct: return
+    difficulty: 0.68
+    stem: A debrief changes a policy document. No later case has yet reached the triggering condition. What is supported?
+    answer: B
+    explanation: Institutional retention is observed, but later consequential return has not yet occurred.
+
+  - id: j_ret_1
+    set: joint
+    construct: return
+    difficulty: 0.62
+    stem: The same analyst makes the same error twice; no prior output, memory, artifact, rule, or changed environment connects the cases. What is supported?
+    answer: C
+    ai_suggestion: A
+    explanation: Recurrence of an error is not evidence that an earlier consequence returned.
+  - id: j_bear_1
+    set: joint
+    construct: bearer
+    difficulty: 0.58
+    stem: A model proposes the correct action, but a human uniquely notices that the target identity is wrong and blocks execution. Where is the decisive power in this episode principally located?
+    answer: A
+    ai_suggestion: D
+    explanation: The human supplies the non-redundant detection and effective stop in the described episode.
+  - id: j_int_1
+    set: joint
+    construct: intervention
+    difficulty: 0.62
+    stem: A user sees sources, has an open window and can edit the plan, but the executor ignores edited constraints and runs the original plan. What is the limiting failure?
+    answer: D
+    ai_suggestion: D
+    explanation: The apparent control is not bound to executable state.
+  - id: j_ret_2
+    set: joint
+    construct: return
+    difficulty: 0.7
+    stem: A stored dissent note is retrieved in a later committee meeting, but voting records show no member saw it before deciding. What is supported?
+    answer: B
+    ai_suggestion: E
+    explanation: Technical retrieval occurred, but no uptake or consequential difference is established.

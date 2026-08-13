@@ -1,0 +1,141 @@
+loop: deal_steward
+runs: per_case
+boundary:
+  drawn_by: investment_partner
+  purpose: decide whether evidence warrants a bounded investment action
+  inside:
+  - deal_steward
+  - versioned_diligence_model
+  - typed occurrence log
+  outside:
+  - counterparty_and_portfolio_outcome
+  - investment_committee_and_company
+goal:
+  resilient_focal_power:
+    keep: above 0.60 in normal and degraded conditions
+    unit: capability score
+beliefs:
+  focal_power_is_viable:
+    question: detect and stop a false investment thesis before commitment
+    how: judgement from typed probes and outside consequence
+    explains: resilient_focal_power
+    settled_by: outside_consequence
+    safe_to_repeat: episode id plus semantic LoopSpec digest
+    checked_by: five-case capability outcome review
+    checked_against: outside_consequence
+    scoring_rule: normal result, removal-probe result, and intervention viability
+    window: five later cases
+    adjusts: method
+    every: after five cases
+  changed_configuration_preserves_recovery:
+    question: Which component realizes the focal power after the configuration change?
+    how: typed cross-episode evidence join
+    explains: resilient_focal_power
+    settled_by: outside_consequence
+    safe_to_repeat: episode id, probe condition, and artifact or configuration digest
+    checked_by: five-case post-revision review
+    checked_against: outside_consequence
+    scoring_rule: paired capability and governance difference from the prior design
+    window: five later cases
+    adjusts: method
+    every: after each five-case window
+observes:
+  joint_result:
+    informs:
+    - focal_power_is_viable
+    - resilient_focal_power
+    origin: ourselves
+    how: calculated
+    source: typed episode closure event
+  outside_consequence:
+    informs:
+    - focal_power_is_viable
+    - resilient_focal_power
+    - changed_configuration_preserves_recovery
+    origin: outside
+    how: measured
+    source: counterparty_and_portfolio_outcome
+  case_context:
+    informs:
+    - focal_power_is_viable
+    - resilient_focal_power
+    origin: outside
+    how: measured
+    source: case intake and affected-world state
+  post_change_component_capability:
+    informs: changed_configuration_preserves_recovery
+    origin: ourselves
+    how: calculated
+    source: configuration identity plus human-only and AI-only probes
+processes:
+  focal_work:
+    description: The work through which authorize_investment_terms affects later outcomes.
+    location: interface
+    observed_as:
+    - joint_result
+    - outside_consequence
+actions:
+  execute_focal_action:
+    moves: resilient_focal_power
+    through: focal_work
+    effect: unknown
+    can_undo: costly
+    needs_approval: investment_partner
+    effect_after: the next outside consequence
+    consumes:
+    - review_attention
+  defer_focal_action:
+    moves: resilient_focal_power
+    through: focal_work
+    effect: unknown
+    can_undo: 'yes'
+    needs_approval: investment_partner
+    effect_after: the next case
+  run_post_change_component_validation:
+    moves: resilient_focal_power
+    through: focal_work
+    effect: increase
+    can_undo: 'yes'
+    needs_approval: investment_partner
+    effect_after: within the next five cases
+    consumes:
+    - review_attention
+spends:
+  review_attention:
+    limit: two consequential reviews per case
+    replenished: the next case
+    spent_by:
+    - execute_focal_action
+    - run_post_change_component_validation
+when:
+- if: review attention is low
+  reads:
+  - review_attention
+  do: defer_focal_action
+- if: the focal power is viable and the resilient-capability target can be met
+  reads:
+  - focal_power_is_viable
+  - resilient_focal_power
+  against:
+  - resilient_focal_power
+  do: execute_focal_action
+- if: the model or tool configuration changes materially
+  reads:
+  - changed_configuration_preserves_recovery
+  do: run_post_change_component_validation
+asks_human_when:
+- the focal belief is unresolved before a consequential action
+- the model or tool configuration changes materially
+asks_human: investment_partner
+people:
+  investment_partner:
+    human: true
+    loses_if_wrong: investment_committee_and_company
+    sees:
+    - focal_power_is_viable
+    - resilient_focal_power
+    - changed_configuration_preserves_recovery
+never:
+- treat successful joint output alone as evidence that a person learned
+not_modelling:
+- the longer-horizon dynamics of counterparty_and_portfolio_outcome beyond five later cases

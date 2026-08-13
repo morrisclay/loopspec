@@ -1,0 +1,482 @@
+{
+  "all_specs_clear": true,
+  "all_specs_valid": true,
+  "designs": 40,
+  "experiment_version": "log-to-design-0.1",
+  "future_episodes_per_arm": 5,
+  "promotion_gate": true,
+  "series": 80,
+  "splits": {
+    "audit": {
+      "arms": {
+        "log_informed": {
+          "mean_design_burden": 0.137,
+          "mean_governance": 0.72245,
+          "mean_normal_power": 0.608815,
+          "mean_removal_probe_power": 0.45975,
+          "mean_score": 0.549532,
+          "series": 40
+        },
+        "maximal_controls": {
+          "mean_design_burden": 1.17,
+          "mean_governance": 0.72245,
+          "mean_normal_power": 0.65582,
+          "mean_removal_probe_power": 0.553,
+          "mean_score": 0.547009,
+          "series": 40
+        },
+        "oracle": {
+          "mean_design_burden": 0.137,
+          "mean_governance": 0.72245,
+          "mean_normal_power": 0.608815,
+          "mean_removal_probe_power": 0.45975,
+          "mean_score": 0.549532,
+          "series": 40
+        },
+        "shuffled_placebo": {
+          "mean_design_burden": 0.137,
+          "mean_governance": 0.692245,
+          "mean_normal_power": 0.593435,
+          "mean_removal_probe_power": 0.4295,
+          "mean_score": 0.527495,
+          "series": 40
+        },
+        "unchanged": {
+          "mean_design_burden": 0,
+          "mean_governance": 0.692245,
+          "mean_normal_power": 0.575355,
+          "mean_removal_probe_power": 0.408125,
+          "mean_score": 0.519796,
+          "series": 40
+        }
+      },
+      "exact_bundle_accuracy": 1.0,
+      "no_material_regression_rate": 1,
+      "series": 40
+    },
+    "development": {
+      "arms": {
+        "log_informed": {
+          "mean_design_burden": 0.137,
+          "mean_governance": 0.72495,
+          "mean_normal_power": 0.60823,
+          "mean_removal_probe_power": 0.461,
+          "mean_score": 0.550144,
+          "series": 20
+        },
+        "maximal_controls": {
+          "mean_design_burden": 1.17,
+          "mean_governance": 0.72495,
+          "mean_normal_power": 0.65628,
+          "mean_removal_probe_power": 0.5533,
+          "mean_score": 0.547806,
+          "series": 20
+        },
+        "oracle": {
+          "mean_design_burden": 0.137,
+          "mean_governance": 0.72495,
+          "mean_normal_power": 0.60823,
+          "mean_removal_probe_power": 0.461,
+          "mean_score": 0.550144,
+          "series": 20
+        },
+        "shuffled_placebo": {
+          "mean_design_burden": 0.137,
+          "mean_governance": 0.69482,
+          "mean_normal_power": 0.59305,
+          "mean_removal_probe_power": 0.42995,
+          "mean_score": 0.527972,
+          "series": 20
+        },
+        "unchanged": {
+          "mean_design_burden": 0,
+          "mean_governance": 0.69482,
+          "mean_normal_power": 0.57476,
+          "mean_removal_probe_power": 0.4081,
+          "mean_score": 0.520036,
+          "series": 20
+        }
+      },
+      "exact_bundle_accuracy": 1.0,
+      "no_material_regression_rate": 1,
+      "series": 20
+    },
+    "holdout": {
+      "arms": {
+        "log_informed": {
+          "mean_design_burden": 0.137,
+          "mean_governance": 0.71865,
+          "mean_normal_power": 0.60828,
+          "mean_removal_probe_power": 0.4617,
+          "mean_score": 0.549116,
+          "series": 20
+        },
+        "maximal_controls": {
+          "mean_design_burden": 1.17,
+          "mean_governance": 0.71865,
+          "mean_normal_power": 0.6537,
+          "mean_removal_probe_power": 0.55025,
+          "mean_score": 0.54447,
+          "series": 20
+        },
+        "oracle": {
+          "mean_design_burden": 0.137,
+          "mean_governance": 0.71865,
+          "mean_normal_power": 0.60828,
+          "mean_removal_probe_power": 0.4617,
+          "mean_score": 0.549116,
+          "series": 20
+        },
+        "shuffled_placebo": {
+          "mean_design_burden": 0.137,
+          "mean_governance": 0.68857,
+          "mean_normal_power": 0.59289,
+          "mean_removal_probe_power": 0.42985,
+          "mean_score": 0.52662,
+          "series": 20
+        },
+        "unchanged": {
+          "mean_design_burden": 0,
+          "mean_governance": 0.68857,
+          "mean_normal_power": 0.5746,
+          "mean_removal_probe_power": 0.4081,
+          "mean_score": 0.518714,
+          "series": 20
+        }
+      },
+      "exact_bundle_accuracy": 1.0,
+      "gates": {
+        "G1_score_over_unchanged": true,
+        "G2_score_over_shuffled": true,
+        "G3_oracle_regret": true,
+        "G4_burden_below_maximal": true,
+        "G5_no_material_regression": true,
+        "G7_bundle_selection": true
+      },
+      "no_material_regression_rate": 1,
+      "series": 20
+    }
+  },
+  "validations": [
+    {
+      "design_key": "intervention_window",
+      "errors": [],
+      "family": "investment_diligence",
+      "findings": 0,
+      "path": "designs/investment_diligence.intervention_window.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "carrier_uptake",
+      "errors": [],
+      "family": "investment_diligence",
+      "findings": 0,
+      "path": "designs/investment_diligence.carrier_uptake.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "matched_case_hold",
+      "errors": [],
+      "family": "investment_diligence",
+      "findings": 0,
+      "path": "designs/investment_diligence.matched_case_hold.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "model_change_revalidation",
+      "errors": [],
+      "family": "investment_diligence",
+      "findings": 0,
+      "path": "designs/investment_diligence.model_change_revalidation.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "degraded_rehearsal",
+      "errors": [],
+      "family": "investment_diligence",
+      "findings": 0,
+      "path": "designs/investment_diligence.degraded_rehearsal.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "returned_rule_audit",
+      "errors": [],
+      "family": "investment_diligence",
+      "findings": 0,
+      "path": "designs/investment_diligence.returned_rule_audit.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "human_recovery",
+      "errors": [],
+      "family": "investment_diligence",
+      "findings": 0,
+      "path": "designs/investment_diligence.human_recovery.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "provider_resilience",
+      "errors": [],
+      "family": "investment_diligence",
+      "findings": 0,
+      "path": "designs/investment_diligence.provider_resilience.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "unchanged",
+      "errors": [],
+      "family": "investment_diligence",
+      "findings": 0,
+      "path": "designs/investment_diligence.unchanged.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "transfer_practice",
+      "errors": [],
+      "family": "investment_diligence",
+      "findings": 0,
+      "path": "designs/investment_diligence.transfer_practice.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "intervention_window",
+      "errors": [],
+      "family": "research_evaluation",
+      "findings": 0,
+      "path": "designs/research_evaluation.intervention_window.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "carrier_uptake",
+      "errors": [],
+      "family": "research_evaluation",
+      "findings": 0,
+      "path": "designs/research_evaluation.carrier_uptake.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "matched_case_hold",
+      "errors": [],
+      "family": "research_evaluation",
+      "findings": 0,
+      "path": "designs/research_evaluation.matched_case_hold.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "model_change_revalidation",
+      "errors": [],
+      "family": "research_evaluation",
+      "findings": 0,
+      "path": "designs/research_evaluation.model_change_revalidation.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "degraded_rehearsal",
+      "errors": [],
+      "family": "research_evaluation",
+      "findings": 0,
+      "path": "designs/research_evaluation.degraded_rehearsal.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "returned_rule_audit",
+      "errors": [],
+      "family": "research_evaluation",
+      "findings": 0,
+      "path": "designs/research_evaluation.returned_rule_audit.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "human_recovery",
+      "errors": [],
+      "family": "research_evaluation",
+      "findings": 0,
+      "path": "designs/research_evaluation.human_recovery.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "provider_resilience",
+      "errors": [],
+      "family": "research_evaluation",
+      "findings": 0,
+      "path": "designs/research_evaluation.provider_resilience.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "unchanged",
+      "errors": [],
+      "family": "research_evaluation",
+      "findings": 0,
+      "path": "designs/research_evaluation.unchanged.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "transfer_practice",
+      "errors": [],
+      "family": "research_evaluation",
+      "findings": 0,
+      "path": "designs/research_evaluation.transfer_practice.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "intervention_window",
+      "errors": [],
+      "family": "software_delivery",
+      "findings": 0,
+      "path": "designs/software_delivery.intervention_window.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "carrier_uptake",
+      "errors": [],
+      "family": "software_delivery",
+      "findings": 0,
+      "path": "designs/software_delivery.carrier_uptake.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "matched_case_hold",
+      "errors": [],
+      "family": "software_delivery",
+      "findings": 0,
+      "path": "designs/software_delivery.matched_case_hold.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "model_change_revalidation",
+      "errors": [],
+      "family": "software_delivery",
+      "findings": 0,
+      "path": "designs/software_delivery.model_change_revalidation.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "degraded_rehearsal",
+      "errors": [],
+      "family": "software_delivery",
+      "findings": 0,
+      "path": "designs/software_delivery.degraded_rehearsal.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "returned_rule_audit",
+      "errors": [],
+      "family": "software_delivery",
+      "findings": 0,
+      "path": "designs/software_delivery.returned_rule_audit.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "human_recovery",
+      "errors": [],
+      "family": "software_delivery",
+      "findings": 0,
+      "path": "designs/software_delivery.human_recovery.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "provider_resilience",
+      "errors": [],
+      "family": "software_delivery",
+      "findings": 0,
+      "path": "designs/software_delivery.provider_resilience.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "unchanged",
+      "errors": [],
+      "family": "software_delivery",
+      "findings": 0,
+      "path": "designs/software_delivery.unchanged.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "transfer_practice",
+      "errors": [],
+      "family": "software_delivery",
+      "findings": 0,
+      "path": "designs/software_delivery.transfer_practice.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "intervention_window",
+      "errors": [],
+      "family": "support_triage",
+      "findings": 0,
+      "path": "designs/support_triage.intervention_window.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "carrier_uptake",
+      "errors": [],
+      "family": "support_triage",
+      "findings": 0,
+      "path": "designs/support_triage.carrier_uptake.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "matched_case_hold",
+      "errors": [],
+      "family": "support_triage",
+      "findings": 0,
+      "path": "designs/support_triage.matched_case_hold.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "model_change_revalidation",
+      "errors": [],
+      "family": "support_triage",
+      "findings": 0,
+      "path": "designs/support_triage.model_change_revalidation.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "degraded_rehearsal",
+      "errors": [],
+      "family": "support_triage",
+      "findings": 0,
+      "path": "designs/support_triage.degraded_rehearsal.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "returned_rule_audit",
+      "errors": [],
+      "family": "support_triage",
+      "findings": 0,
+      "path": "designs/support_triage.returned_rule_audit.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "human_recovery",
+      "errors": [],
+      "family": "support_triage",
+      "findings": 0,
+      "path": "designs/support_triage.human_recovery.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "provider_resilience",
+      "errors": [],
+      "family": "support_triage",
+      "findings": 0,
+      "path": "designs/support_triage.provider_resilience.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "unchanged",
+      "errors": [],
+      "family": "support_triage",
+      "findings": 0,
+      "path": "designs/support_triage.unchanged.loop.yaml",
+      "valid": true
+    },
+    {
+      "design_key": "transfer_practice",
+      "errors": [],
+      "family": "support_triage",
+      "findings": 0,
+      "path": "designs/support_triage.transfer_practice.loop.yaml",
+      "valid": true
+    }
+  ]
+}

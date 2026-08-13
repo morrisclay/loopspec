@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://loopspec.dev/experimental/episode-ledger-0.1.schema.json",
+  "title": "LoopSpec experimental episode ledger",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "record_version",
+    "episode_id",
+    "series_id",
+    "ordinal",
+    "spec_ref",
+    "boundary",
+    "entry_profile",
+    "work",
+    "interventions",
+    "operational_status",
+    "exit_profile",
+    "carriers",
+    "returns",
+    "next_episode",
+    "limitations",
+    "trace"
+  ],
+  "properties": {
+    "record_version": {"const": "episode-ledger-0.1"},
+    "episode_id": {"type": "string", "minLength": 1},
+    "series_id": {"type": "string", "minLength": 1},
+    "ordinal": {"type": "integer", "minimum": 1},
+    "spec_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["loop", "semantic_hash"],
+      "properties": {
+        "loop": {"type": "string"},
+        "semantic_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "boundary": {
+      "type": "object",
+      "required": ["purpose", "start", "provisional_closure", "unresolved_returns"],
+      "properties": {
+        "purpose": {"type": "string"},
+        "start": {"type": "string"},
+        "provisional_closure": {"type": "string"},
+        "unresolved_returns": {"type": "array", "items": {"type": "string"}},
+        "overlaps": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "entry_profile": {"$ref": "#/$defs/profile"},
+    "exit_profile": {"$ref": "#/$defs/profile"},
+    "work": {
+      "type": "object",
+      "required": ["assistance_posture", "case_difficulty", "joint_result", "latency"],
+      "properties": {
+        "assistance_posture": {"enum": ["answer", "advise", "critique", "test", "withhold", "automate"]},
+        "case_difficulty": {"type": "number", "minimum": 0, "maximum": 1},
+        "joint_result": {"type": "number", "minimum": 0, "maximum": 1},
+        "latency": {"type": "number", "minimum": 0}
+      }
+    },
+    "interventions": {"type": "array", "items": {"$ref": "#/$defs/intervention"}},
+    "operational_status": {
+      "type": "object",
+      "required": ["proposed", "authorized", "invoked", "executed", "occurred_outside", "consequence_observed"],
+      "properties": {
+        "proposed": {"type": "boolean"},
+        "authorized": {"type": "boolean"},
+        "invoked": {"type": "boolean"},
+        "executed": {"type": "boolean"},
+        "occurred_outside": {"type": ["boolean", "null"]},
+        "consequence_observed": {"type": ["boolean", "null"]},
+        "adjudicated": {"type": ["boolean", "null"]},
+        "repaired": {"type": ["boolean", "null"]}
+      }
+    },
+    "carriers": {"type": "array", "items": {"$ref": "#/$defs/carrier"}},
+    "returns": {"type": "array", "items": {"$ref": "#/$defs/return"}},
+    "next_episode": {
+      "type": "object",
+      "required": ["decision", "mechanism", "strongest_rival", "evidence_deadline", "expiry", "rollback"],
+      "properties": {
+        "decision": {"type": "string"},
+        "mechanism": {"type": "string"},
+        "strongest_rival": {"type": "string"},
+        "evidence_deadline": {"type": "string"},
+        "expiry": {"type": "string"},
+        "rollback": {"type": "string"}
+      }
+    },
+    "limitations": {
+      "type": "object",
+      "required": ["contamination", "confounders", "missing", "retention_policy"],
+      "properties": {
+        "contamination": {"type": "array", "items": {"type": "string"}},
+        "confounders": {"type": "array", "items": {"type": "string"}},
+        "missing": {"type": "array", "items": {"type": "string"}},
+        "retention_policy": {"type": "string"}
+      }
+    },
+    "trace": {"type": "array", "items": {"$ref": "#/$defs/event"}}
+  },
+  "$defs": {
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["human", "ai_in_use", "institution", "affected_world", "power"],
+      "properties": {
+        "human": {"type": "object", "additionalProperties": {"type": "number"}},
+        "ai_in_use": {"type": "object", "additionalProperties": {"type": "number"}},
+        "institution": {"type": "object", "additionalProperties": {"type": "number"}},
+        "affected_world": {"type": "object", "additionalProperties": {"type": "number"}},
+        "power": {"type": "object", "additionalProperties": {"type": "number"}}
+      }
+    },
+    "intervention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trigger", "grounds", "window", "authority", "control", "return"],
+      "properties": {
+        "trigger": {"type": "string"},
+        "grounds": {"type": "array", "items": {"type": "string"}},
+        "window": {"enum": ["open", "narrow", "closed"]},
+        "authority": {"enum": ["effective", "formal_only", "absent"]},
+        "control": {"enum": ["bound", "partial", "inert"]},
+        "return": {"enum": ["command", "execution", "occurrence", "consequence", "none"]}
+      }
+    },
+    "carrier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["carrier_id", "kind", "retained", "available_later", "retrieved_in", "transformation", "evidence_status"],
+      "properties": {
+        "carrier_id": {"type": "string"},
+        "kind": {"enum": ["practice", "artifact", "workflow", "rule", "configuration", "history"]},
+        "retained": {"type": "boolean"},
+        "available_later": {"type": "boolean"},
+        "retrieved_in": {"type": "array", "items": {"type": "string"}},
+        "transformation": {"type": "string"},
+        "evidence_status": {"enum": ["observed", "inferred", "speculative", "contested", "unanswerable"]}
+      }
+    },
+    "return": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_episode", "carrier_id", "effect_on", "made_difference", "evidence_status"],
+      "properties": {
+        "source_episode": {"type": "string"},
+        "carrier_id": {"type": "string"},
+        "effect_on": {"enum": ["human", "ai_in_use", "institution", "affected_world", "relation"]},
+        "made_difference": {"type": "boolean"},
+        "evidence_status": {"enum": ["observed", "inferred", "speculative", "contested", "unanswerable"]}
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tick", "type", "actor", "object", "value"],
+      "properties": {
+        "tick": {"type": "integer", "minimum": 0},
+        "type": {"type": "string"},
+        "actor": {"type": "string"},
+        "object": {"type": "string"},
+        "value": {}
+      }
+    }
+  }
+}

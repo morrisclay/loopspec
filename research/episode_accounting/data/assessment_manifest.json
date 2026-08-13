@@ -1,0 +1,16 @@
+{
+  "assessment_version": "0.1",
+  "assessments": 240,
+  "assessments_sha256": "b57f6784001fc1fa3c148c1e4a3f984b2e5476805173a6a0751387fa49e48bb2",
+  "assessor_sha256": "00065e214b1cc45ac31244b444d0946df9263154e1a10b304c084f920d8239f8",
+  "conditions": [
+    "performance_only",
+    "ordinary_trace",
+    "episode_ledger"
+  ],
+  "packet_sha256": {
+    "episode_ledger": "f89a51dd4786621e19328e6c38df793c932e657cea97072e964fcad7b93ee4c1",
+    "ordinary_trace": "40c3be0d2e8524af427b90e4eb04009a5a1199dda3981223a8567765f37d5296",
+    "performance_only": "d8aa2c953a6f67d531899a228e7a8a11c4c360b8622a1e140606279c49d2f4d5"
+  }
+}

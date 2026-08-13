@@ -1,0 +1,322 @@
+[
+  {
+    "design_key": "intervention_window",
+    "errors": [],
+    "family": "investment_diligence",
+    "findings": 0,
+    "path": "designs/investment_diligence.intervention_window.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "carrier_uptake",
+    "errors": [],
+    "family": "investment_diligence",
+    "findings": 0,
+    "path": "designs/investment_diligence.carrier_uptake.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "matched_case_hold",
+    "errors": [],
+    "family": "investment_diligence",
+    "findings": 0,
+    "path": "designs/investment_diligence.matched_case_hold.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "model_change_revalidation",
+    "errors": [],
+    "family": "investment_diligence",
+    "findings": 0,
+    "path": "designs/investment_diligence.model_change_revalidation.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "degraded_rehearsal",
+    "errors": [],
+    "family": "investment_diligence",
+    "findings": 0,
+    "path": "designs/investment_diligence.degraded_rehearsal.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "returned_rule_audit",
+    "errors": [],
+    "family": "investment_diligence",
+    "findings": 0,
+    "path": "designs/investment_diligence.returned_rule_audit.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "human_recovery",
+    "errors": [],
+    "family": "investment_diligence",
+    "findings": 0,
+    "path": "designs/investment_diligence.human_recovery.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "provider_resilience",
+    "errors": [],
+    "family": "investment_diligence",
+    "findings": 0,
+    "path": "designs/investment_diligence.provider_resilience.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "unchanged",
+    "errors": [],
+    "family": "investment_diligence",
+    "findings": 0,
+    "path": "designs/investment_diligence.unchanged.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "transfer_practice",
+    "errors": [],
+    "family": "investment_diligence",
+    "findings": 0,
+    "path": "designs/investment_diligence.transfer_practice.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "intervention_window",
+    "errors": [],
+    "family": "research_evaluation",
+    "findings": 0,
+    "path": "designs/research_evaluation.intervention_window.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "carrier_uptake",
+    "errors": [],
+    "family": "research_evaluation",
+    "findings": 0,
+    "path": "designs/research_evaluation.carrier_uptake.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "matched_case_hold",
+    "errors": [],
+    "family": "research_evaluation",
+    "findings": 0,
+    "path": "designs/research_evaluation.matched_case_hold.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "model_change_revalidation",
+    "errors": [],
+    "family": "research_evaluation",
+    "findings": 0,
+    "path": "designs/research_evaluation.model_change_revalidation.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "degraded_rehearsal",
+    "errors": [],
+    "family": "research_evaluation",
+    "findings": 0,
+    "path": "designs/research_evaluation.degraded_rehearsal.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "returned_rule_audit",
+    "errors": [],
+    "family": "research_evaluation",
+    "findings": 0,
+    "path": "designs/research_evaluation.returned_rule_audit.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "human_recovery",
+    "errors": [],
+    "family": "research_evaluation",
+    "findings": 0,
+    "path": "designs/research_evaluation.human_recovery.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "provider_resilience",
+    "errors": [],
+    "family": "research_evaluation",
+    "findings": 0,
+    "path": "designs/research_evaluation.provider_resilience.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "unchanged",
+    "errors": [],
+    "family": "research_evaluation",
+    "findings": 0,
+    "path": "designs/research_evaluation.unchanged.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "transfer_practice",
+    "errors": [],
+    "family": "research_evaluation",
+    "findings": 0,
+    "path": "designs/research_evaluation.transfer_practice.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "intervention_window",
+    "errors": [],
+    "family": "software_delivery",
+    "findings": 0,
+    "path": "designs/software_delivery.intervention_window.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "carrier_uptake",
+    "errors": [],
+    "family": "software_delivery",
+    "findings": 0,
+    "path": "designs/software_delivery.carrier_uptake.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "matched_case_hold",
+    "errors": [],
+    "family": "software_delivery",
+    "findings": 0,
+    "path": "designs/software_delivery.matched_case_hold.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "model_change_revalidation",
+    "errors": [],
+    "family": "software_delivery",
+    "findings": 0,
+    "path": "designs/software_delivery.model_change_revalidation.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "degraded_rehearsal",
+    "errors": [],
+    "family": "software_delivery",
+    "findings": 0,
+    "path": "designs/software_delivery.degraded_rehearsal.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "returned_rule_audit",
+    "errors": [],
+    "family": "software_delivery",
+    "findings": 0,
+    "path": "designs/software_delivery.returned_rule_audit.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "human_recovery",
+    "errors": [],
+    "family": "software_delivery",
+    "findings": 0,
+    "path": "designs/software_delivery.human_recovery.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "provider_resilience",
+    "errors": [],
+    "family": "software_delivery",
+    "findings": 0,
+    "path": "designs/software_delivery.provider_resilience.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "unchanged",
+    "errors": [],
+    "family": "software_delivery",
+    "findings": 0,
+    "path": "designs/software_delivery.unchanged.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "transfer_practice",
+    "errors": [],
+    "family": "software_delivery",
+    "findings": 0,
+    "path": "designs/software_delivery.transfer_practice.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "intervention_window",
+    "errors": [],
+    "family": "support_triage",
+    "findings": 0,
+    "path": "designs/support_triage.intervention_window.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "carrier_uptake",
+    "errors": [],
+    "family": "support_triage",
+    "findings": 0,
+    "path": "designs/support_triage.carrier_uptake.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "matched_case_hold",
+    "errors": [],
+    "family": "support_triage",
+    "findings": 0,
+    "path": "designs/support_triage.matched_case_hold.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "model_change_revalidation",
+    "errors": [],
+    "family": "support_triage",
+    "findings": 0,
+    "path": "designs/support_triage.model_change_revalidation.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "degraded_rehearsal",
+    "errors": [],
+    "family": "support_triage",
+    "findings": 0,
+    "path": "designs/support_triage.degraded_rehearsal.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "returned_rule_audit",
+    "errors": [],
+    "family": "support_triage",
+    "findings": 0,
+    "path": "designs/support_triage.returned_rule_audit.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "human_recovery",
+    "errors": [],
+    "family": "support_triage",
+    "findings": 0,
+    "path": "designs/support_triage.human_recovery.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "provider_resilience",
+    "errors": [],
+    "family": "support_triage",
+    "findings": 0,
+    "path": "designs/support_triage.provider_resilience.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "unchanged",
+    "errors": [],
+    "family": "support_triage",
+    "findings": 0,
+    "path": "designs/support_triage.unchanged.loop.yaml",
+    "valid": true
+  },
+  {
+    "design_key": "transfer_practice",
+    "errors": [],
+    "family": "support_triage",
+    "findings": 0,
+    "path": "designs/support_triage.transfer_practice.loop.yaml",
+    "valid": true
+  }
+]

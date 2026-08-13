@@ -16,6 +16,7 @@ and with [`SYNTHESIS.md`](SYNTHESIS.md) for the bounded field-level argument.
 | [`control_plane/`](control_plane/) | Do independent encoders converge on actions, controller operations, outputs, and conditional safety? |
 | [`external_validation/`](external_validation/) | Can independent authors use LoopSpec, and does it improve their review of a loop? |
 | [`published_study/`](published_study/) | Which structural patterns appear in framework-authored examples and evaluation loops? |
+| [`episode_accounting/`](episode_accounting/) | Can typed longitudinal evidence distinguish causal-power transitions and inform small, prospectively testable LoopSpec design revisions? |
 
 The control-plane study stopped below its preregistered threshold. The external-author protocol
 has no observed outcomes yet. These are explicit limits, not missing footnotes.

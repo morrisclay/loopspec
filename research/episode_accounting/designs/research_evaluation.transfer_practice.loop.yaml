@@ -1,0 +1,141 @@
+loop: evidence_inquiry
+runs: per_case
+boundary:
+  drawn_by: research_lead
+  purpose: discriminate rival explanations without laundering generated agreement
+  inside:
+  - evidence_inquiry
+  - versioned_evidence_register
+  - typed occurrence log
+  outside:
+  - external_review_and_replication
+  - readers_and_represented_subjects
+goal:
+  resilient_focal_power:
+    keep: above 0.60 in normal and degraded conditions
+    unit: capability score
+beliefs:
+  focal_power_is_viable:
+    question: identify the weakest causal join and preserve a warranted negative
+    how: judgement from typed probes and outside consequence
+    explains: resilient_focal_power
+    settled_by: outside_consequence
+    safe_to_repeat: episode id plus semantic LoopSpec digest
+    checked_by: five-case capability outcome review
+    checked_against: outside_consequence
+    scoring_rule: normal result, removal-probe result, and intervention viability
+    window: five later cases
+    adjusts: method
+    every: after five cases
+  human_transfer_is_becoming_retained:
+    question: Does unaided capability transfer to later cases?
+    how: typed cross-episode evidence join
+    explains: resilient_focal_power
+    settled_by: outside_consequence
+    safe_to_repeat: episode id, probe condition, and artifact or configuration digest
+    checked_by: five-case post-revision review
+    checked_against: outside_consequence
+    scoring_rule: paired capability and governance difference from the prior design
+    window: five later cases
+    adjusts: method
+    every: after each five-case window
+observes:
+  joint_result:
+    informs:
+    - focal_power_is_viable
+    - resilient_focal_power
+    origin: ourselves
+    how: calculated
+    source: typed episode closure event
+  outside_consequence:
+    informs:
+    - focal_power_is_viable
+    - resilient_focal_power
+    - human_transfer_is_becoming_retained
+    origin: outside
+    how: measured
+    source: external_review_and_replication
+  case_context:
+    informs:
+    - focal_power_is_viable
+    - resilient_focal_power
+    origin: outside
+    how: measured
+    source: case intake and affected-world state
+  delayed_human_transfer:
+    informs: human_transfer_is_becoming_retained
+    origin: ourselves
+    how: calculated
+    source: typed human-only probes joined across episodes
+processes:
+  focal_work:
+    description: The work through which publish_or_withhold_claim affects later outcomes.
+    location: interface
+    observed_as:
+    - joint_result
+    - outside_consequence
+actions:
+  execute_focal_action:
+    moves: resilient_focal_power
+    through: focal_work
+    effect: unknown
+    can_undo: costly
+    needs_approval: research_lead
+    effect_after: the next outside consequence
+    consumes:
+    - review_attention
+  defer_focal_action:
+    moves: resilient_focal_power
+    through: focal_work
+    effect: unknown
+    can_undo: 'yes'
+    needs_approval: research_lead
+    effect_after: the next case
+  continue_retrieval_before_reveal:
+    moves: resilient_focal_power
+    through: focal_work
+    effect: increase
+    can_undo: 'yes'
+    needs_approval: research_lead
+    effect_after: within the next five cases
+    consumes:
+    - review_attention
+spends:
+  review_attention:
+    limit: two consequential reviews per case
+    replenished: the next case
+    spent_by:
+    - execute_focal_action
+    - continue_retrieval_before_reveal
+when:
+- if: review attention is low
+  reads:
+  - review_attention
+  do: defer_focal_action
+- if: the focal power is viable and the resilient-capability target can be met
+  reads:
+  - focal_power_is_viable
+  - resilient_focal_power
+  against:
+  - resilient_focal_power
+  do: execute_focal_action
+- if: delayed unaided transfer remains above the baseline margin
+  reads:
+  - human_transfer_is_becoming_retained
+  do: continue_retrieval_before_reveal
+asks_human_when:
+- the focal belief is unresolved before a consequential action
+- delayed unaided transfer remains above the baseline margin
+asks_human: research_lead
+people:
+  research_lead:
+    human: true
+    loses_if_wrong: readers_and_represented_subjects
+    sees:
+    - focal_power_is_viable
+    - resilient_focal_power
+    - human_transfer_is_becoming_retained
+never:
+- treat successful joint output alone as evidence that a person learned
+not_modelling:
+- the longer-horizon dynamics of external_review_and_replication beyond five later cases

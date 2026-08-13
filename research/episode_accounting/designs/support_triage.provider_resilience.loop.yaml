@@ -1,0 +1,175 @@
+loop: support_triage
+runs: per_case
+boundary:
+  drawn_by: support_lead
+  purpose: resolve urgent cases while preserving effective escalation
+  inside:
+  - support_triage
+  - versioned_case_rule
+  - typed occurrence log
+  outside:
+  - customer_outcome
+  - customer_and_support_team
+goal:
+  resilient_focal_power:
+    keep: above 0.60 in normal and degraded conditions
+    unit: capability score
+beliefs:
+  focal_power_is_viable:
+    question: notice and escalate a severe case inside the recovery window
+    how: judgement from typed probes and outside consequence
+    explains: resilient_focal_power
+    settled_by: outside_consequence
+    safe_to_repeat: episode id plus semantic LoopSpec digest
+    checked_by: five-case capability outcome review
+    checked_against: outside_consequence
+    scoring_rule: normal result, removal-probe result, and intervention viability
+    window: five later cases
+    adjusts: method
+    every: after five cases
+  human_recovery_remains_available:
+    question: Can the human still recover the focal task without assistance?
+    how: typed cross-episode evidence join
+    explains: resilient_focal_power
+    settled_by: outside_consequence
+    safe_to_repeat: episode id, probe condition, and artifact or configuration digest
+    checked_by: five-case post-revision review
+    checked_against: outside_consequence
+    scoring_rule: paired capability and governance difference from the prior design
+    window: five later cases
+    adjusts: method
+    every: after each five-case window
+  local_fallback_is_usable:
+    question: Can the focal task continue when provider and archive access disappear?
+    how: typed cross-episode evidence join
+    explains: resilient_focal_power
+    settled_by: outside_consequence
+    safe_to_repeat: episode id, probe condition, and artifact or configuration digest
+    checked_by: five-case post-revision review
+    checked_against: outside_consequence
+    scoring_rule: paired capability and governance difference from the prior design
+    window: five later cases
+    adjusts: method
+    every: after each five-case window
+observes:
+  joint_result:
+    informs:
+    - focal_power_is_viable
+    - resilient_focal_power
+    origin: ourselves
+    how: calculated
+    source: typed episode closure event
+  outside_consequence:
+    informs:
+    - focal_power_is_viable
+    - resilient_focal_power
+    - human_recovery_remains_available
+    - local_fallback_is_usable
+    origin: outside
+    how: measured
+    source: customer_outcome
+  case_context:
+    informs:
+    - focal_power_is_viable
+    - resilient_focal_power
+    origin: outside
+    how: measured
+    source: case intake and affected-world state
+  unaided_recovery_capability:
+    informs: human_recovery_remains_available
+    origin: ourselves
+    how: calculated
+    source: typed human-only removal probes
+  provider_and_archive_availability:
+    informs: local_fallback_is_usable
+    origin: outside
+    how: measured
+    source: outside availability checks and a local fallback probe
+processes:
+  focal_work:
+    description: The work through which escalate_and_apply_remedy affects later outcomes.
+    location: interface
+    observed_as:
+    - joint_result
+    - outside_consequence
+actions:
+  execute_focal_action:
+    moves: resilient_focal_power
+    through: focal_work
+    effect: unknown
+    can_undo: costly
+    needs_approval: support_lead
+    effect_after: the next outside consequence
+    consumes:
+    - review_attention
+  defer_focal_action:
+    moves: resilient_focal_power
+    through: focal_work
+    effect: unknown
+    can_undo: 'yes'
+    needs_approval: support_lead
+    effect_after: the next case
+  run_unaided_recovery_checkpoint:
+    moves: resilient_focal_power
+    through: focal_work
+    effect: increase
+    can_undo: 'yes'
+    needs_approval: support_lead
+    effect_after: within the next five cases
+    consumes:
+    - review_attention
+  switch_to_local_degraded_mode:
+    moves: resilient_focal_power
+    through: focal_work
+    effect: increase
+    can_undo: 'yes'
+    needs_approval: support_lead
+    effect_after: within the next five cases
+    consumes:
+    - review_attention
+spends:
+  review_attention:
+    limit: two consequential reviews per case
+    replenished: the next case
+    spent_by:
+    - execute_focal_action
+    - run_unaided_recovery_checkpoint
+    - switch_to_local_degraded_mode
+when:
+- if: review attention is low
+  reads:
+  - review_attention
+  do: defer_focal_action
+- if: the focal power is viable and the resilient-capability target can be met
+  reads:
+  - focal_power_is_viable
+  - resilient_focal_power
+  against:
+  - resilient_focal_power
+  do: execute_focal_action
+- if: unaided recovery falls below the retained-capability floor
+  reads:
+  - human_recovery_remains_available
+  do: run_unaided_recovery_checkpoint
+- if: provider or archive access is unavailable
+  reads:
+  - local_fallback_is_usable
+  do: switch_to_local_degraded_mode
+asks_human_when:
+- the focal belief is unresolved before a consequential action
+- unaided recovery falls below the retained-capability floor
+- provider or archive access is unavailable
+asks_human: support_lead
+people:
+  support_lead:
+    human: true
+    loses_if_wrong: customer_and_support_team
+    sees:
+    - focal_power_is_viable
+    - resilient_focal_power
+    - human_recovery_remains_available
+    - local_fallback_is_usable
+never:
+- treat successful joint output alone as evidence that a person learned
+not_modelling:
+- the longer-horizon dynamics of customer_outcome beyond five later cases

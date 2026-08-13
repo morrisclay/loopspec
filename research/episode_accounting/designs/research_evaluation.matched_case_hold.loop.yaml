@@ -1,0 +1,141 @@
+loop: evidence_inquiry
+runs: per_case
+boundary:
+  drawn_by: research_lead
+  purpose: discriminate rival explanations without laundering generated agreement
+  inside:
+  - evidence_inquiry
+  - versioned_evidence_register
+  - typed occurrence log
+  outside:
+  - external_review_and_replication
+  - readers_and_represented_subjects
+goal:
+  resilient_focal_power:
+    keep: above 0.60 in normal and degraded conditions
+    unit: capability score
+beliefs:
+  focal_power_is_viable:
+    question: identify the weakest causal join and preserve a warranted negative
+    how: judgement from typed probes and outside consequence
+    explains: resilient_focal_power
+    settled_by: outside_consequence
+    safe_to_repeat: episode id plus semantic LoopSpec digest
+    checked_by: five-case capability outcome review
+    checked_against: outside_consequence
+    scoring_rule: normal result, removal-probe result, and intervention viability
+    window: five later cases
+    adjusts: method
+    every: after five cases
+  apparent_gain_survives_case_matching:
+    question: Does the apparent improvement survive matched case difficulty?
+    how: typed cross-episode evidence join
+    explains: resilient_focal_power
+    settled_by: outside_consequence
+    safe_to_repeat: episode id, probe condition, and artifact or configuration digest
+    checked_by: five-case post-revision review
+    checked_against: outside_consequence
+    scoring_rule: paired capability and governance difference from the prior design
+    window: five later cases
+    adjusts: method
+    every: after each five-case window
+observes:
+  joint_result:
+    informs:
+    - focal_power_is_viable
+    - resilient_focal_power
+    origin: ourselves
+    how: calculated
+    source: typed episode closure event
+  outside_consequence:
+    informs:
+    - focal_power_is_viable
+    - resilient_focal_power
+    - apparent_gain_survives_case_matching
+    origin: outside
+    how: measured
+    source: external_review_and_replication
+  case_context:
+    informs:
+    - focal_power_is_viable
+    - resilient_focal_power
+    origin: outside
+    how: measured
+    source: case intake and affected-world state
+  matched_case_capability_result:
+    informs: apparent_gain_survives_case_matching
+    origin: ourselves
+    how: calculated
+    source: case-distribution samples joined to capability results
+processes:
+  focal_work:
+    description: The work through which publish_or_withhold_claim affects later outcomes.
+    location: interface
+    observed_as:
+    - joint_result
+    - outside_consequence
+actions:
+  execute_focal_action:
+    moves: resilient_focal_power
+    through: focal_work
+    effect: unknown
+    can_undo: costly
+    needs_approval: research_lead
+    effect_after: the next outside consequence
+    consumes:
+    - review_attention
+  defer_focal_action:
+    moves: resilient_focal_power
+    through: focal_work
+    effect: unknown
+    can_undo: 'yes'
+    needs_approval: research_lead
+    effect_after: the next case
+  run_matched_case_review:
+    moves: resilient_focal_power
+    through: focal_work
+    effect: unknown
+    can_undo: 'yes'
+    needs_approval: research_lead
+    effect_after: within the next five cases
+    consumes:
+    - review_attention
+spends:
+  review_attention:
+    limit: two consequential reviews per case
+    replenished: the next case
+    spent_by:
+    - execute_focal_action
+    - run_matched_case_review
+when:
+- if: review attention is low
+  reads:
+  - review_attention
+  do: defer_focal_action
+- if: the focal power is viable and the resilient-capability target can be met
+  reads:
+  - focal_power_is_viable
+  - resilient_focal_power
+  against:
+  - resilient_focal_power
+  do: execute_focal_action
+- if: case mix changed enough to rival a capability explanation
+  reads:
+  - apparent_gain_survives_case_matching
+  do: run_matched_case_review
+asks_human_when:
+- the focal belief is unresolved before a consequential action
+- case mix changed enough to rival a capability explanation
+asks_human: research_lead
+people:
+  research_lead:
+    human: true
+    loses_if_wrong: readers_and_represented_subjects
+    sees:
+    - focal_power_is_viable
+    - resilient_focal_power
+    - apparent_gain_survives_case_matching
+never:
+- treat successful joint output alone as evidence that a person learned
+not_modelling:
+- the longer-horizon dynamics of external_review_and_replication beyond five later cases

@@ -1,0 +1,37 @@
+{
+  "name": "loopspec-flue-evidence-to-eval-tutorial",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "tutorial": "tsx src/tutorial.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --exclude='tests/*.eval.ts'",
+    "evals": "tsx src/tutorial.ts && vitest run --config vitest.evals.config.ts",
+    "evals:json": "tsx src/tutorial.ts && vitest run --config vitest.evals.config.ts --reporter=vitest-evals/reporter --reporter=json --outputFile.json=generated/vitest-results.json",
+    "check:spec": "python3 ../../tools/loopspec.py check generated/support-triage.candidate.yaml --fail-on-findings",
+    "diff:spec": "python3 ../../tools/loopspec.py diff loops/support-triage.base.yaml generated/support-triage.candidate.yaml",
+    "check": "npm run lint && npm run typecheck && npm run test && npm run tutorial && npm run check:spec && npm run diff:spec && npm run evals"
+  },
+  "dependencies": {
+    "@flue/github": "2.0.3",
+    "@flue/runtime": "2.0.3",
+    "yaml": "2.9.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.1",
+    "@types/node": "24.10.1",
+    "eslint": "9.39.1",
+    "tsx": "4.23.12",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.67.0",
+    "vitest": "4.1.10",
+    "vitest-evals": "0.16.1"
+  },
+  "overrides": {
+    "@flue/github": {
+      "hono": "4.12.34"
+    }
+  }
+}
