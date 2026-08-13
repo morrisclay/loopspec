@@ -7,7 +7,7 @@
     "sync:docs": "node scripts/sync-content.mjs",
     "dev": "npm run brand:assets && npm run sync:docs && astro dev",
     "start": "npm run brand:assets && npm run sync:docs && astro dev",
-    "build": "npm run brand:assets && npm run sync:docs && astro build && node scripts/write-worker.mjs",
+    "build": "npm run sync:docs && astro build && node scripts/write-worker.mjs",
     "check": "npm run build && node scripts/check-build.mjs",
     "preview": "astro preview",
     "astro": "astro"
