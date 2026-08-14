@@ -7,12 +7,13 @@
     "sync:docs": "node scripts/sync-content.mjs",
     "dev": "npm run brand:assets && npm run sync:docs && astro dev",
     "start": "npm run brand:assets && npm run sync:docs && astro dev",
-    "build": "npm run sync:docs && astro build && node scripts/write-worker.mjs",
+    "build": "npm run sync:docs && astro build && node scripts/write-agent-content.mjs && node scripts/write-worker.mjs",
     "check": "npm run build && node scripts/check-build.mjs",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/sitemap": "^3.7.3",
     "@astrojs/starlight": "^0.41.6",
     "@fontsource-variable/geist": "^5.3.0",
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
