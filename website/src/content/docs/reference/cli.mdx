@@ -28,11 +28,12 @@ loopspec check SPEC [--json] [--fail-on-findings]
 Print canonical graph IR v2.2 after both authoring and semantic validation.
 
 ```bash
-loopspec expand SPEC
+loopspec expand SPEC [--json]
 ```
 
 Use this when building a renderer, adapter, or independent implementation test. Ordinary authors
-should not need to learn IR vocabulary.
+should not need to learn IR vocabulary. `--json` emits a versioned envelope containing the
+canonical document, findings, and warnings for typed clients and language-neutral integrations.
 
 ## `loopspec diagram`
 

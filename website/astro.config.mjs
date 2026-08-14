@@ -1,10 +1,15 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
+	site: 'https://loopspec.cyborg.build',
 	outDir: './dist/client',
 	integrations: [
+		sitemap({
+			filter: (page) => !page.endsWith('/404.html'),
+		}),
 		starlight({
 			title: 'LoopSpec',
 			description: 'Specify, inspect, and argue about cybernetic agent loops.',

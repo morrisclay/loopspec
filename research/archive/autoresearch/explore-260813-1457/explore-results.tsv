@@ -1,0 +1,5 @@
+cycle	split	log_informed	unchanged	shuffled	oracle	gate	decision
+1	development	0.550144	0.520036	0.527972	0.550144	not_opened	keep
+2	holdout	0.549116	0.518714	0.526620	0.549116	G6_failed	repair_materializer
+3	holdout	0.549116	0.518714	0.526620	0.549116	passed	keep
+4	regression	0.549116	0.518714	0.526620	0.549116	passed	converged

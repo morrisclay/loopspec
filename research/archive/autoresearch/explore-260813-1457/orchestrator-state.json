@@ -1,0 +1,23 @@
+{
+  "goal": "Test whether ordinary episode logs can infer useful LoopSpec design revisions that improve held-out future capability and governance outcomes without excessive controls",
+  "archetype": "explore",
+  "mode": "orchestration-loop",
+  "predicate": {
+    "command": "python3 research/episode_accounting/design_evolution.py --check-gates",
+    "expected": "PASS and exit 0"
+  },
+  "terminal_choice": "stop-at-verified",
+  "cycle_count": 4,
+  "units_remaining": [7, 1, 0, 0],
+  "pending_verify": false,
+  "current_incumbent": "40 structurally valid, finding-free candidate LoopSpecs; seven of seven holdout gates passed",
+  "pipeline": [
+    {"hop": "probe", "outcome": "progressed"},
+    {"hop": "scenario", "outcome": "progressed"},
+    {"hop": "plan", "outcome": "progressed"},
+    {"hop": "verify", "outcome": "failed", "note": "G6 exposed an invalid people.sees materialization"},
+    {"hop": "fix", "outcome": "progressed", "note": "materialization fixed without changing frozen replay"},
+    {"hop": "verify", "outcome": "progressed"},
+    {"hop": "regression", "outcome": "progressed"}
+  ]
+}

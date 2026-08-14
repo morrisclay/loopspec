@@ -1,0 +1,123 @@
+{
+  "episodes": 560,
+  "families": {
+    "investment_diligence": 20,
+    "research_evaluation": 20,
+    "software_delivery": 20,
+    "support_triage": 20
+  },
+  "hypotheses": {
+    "H1": true,
+    "H2": false,
+    "H3": true,
+    "H4": false
+  },
+  "mechanism_accuracy": {
+    "episode_ledger": {
+      "ai_model_upgrade": 1.0,
+      "assisted_substitution": 1.0,
+      "authority_window_erosion": 1.0,
+      "case_mix_shift": 1.0,
+      "institutional_rule_learning": 1.0,
+      "provider_dependency": 1.0,
+      "repetition_without_retention": 1.0,
+      "retained_but_unused": 1.0,
+      "stable_rehearsal": 1.0,
+      "structured_reappropriation": 1.0
+    },
+    "ordinary_trace": {
+      "ai_model_upgrade": 1.0,
+      "assisted_substitution": 1.0,
+      "authority_window_erosion": 1.0,
+      "case_mix_shift": 1.0,
+      "institutional_rule_learning": 1.0,
+      "provider_dependency": 1.0,
+      "repetition_without_retention": 1.0,
+      "retained_but_unused": 1.0,
+      "stable_rehearsal": 1.0,
+      "structured_reappropriation": 1.0
+    },
+    "performance_only": {
+      "ai_model_upgrade": 0.0,
+      "assisted_substitution": 0.0,
+      "authority_window_erosion": 0.0,
+      "case_mix_shift": 0.125,
+      "institutional_rule_learning": 1.0,
+      "provider_dependency": 1.0,
+      "repetition_without_retention": 1.0,
+      "retained_but_unused": 1.0,
+      "stable_rehearsal": 0.0,
+      "structured_reappropriation": 0.875
+    }
+  },
+  "mechanisms": {
+    "ai_model_upgrade": 8,
+    "assisted_substitution": 8,
+    "authority_window_erosion": 8,
+    "case_mix_shift": 8,
+    "institutional_rule_learning": 8,
+    "provider_dependency": 8,
+    "repetition_without_retention": 8,
+    "retained_but_unused": 8,
+    "stable_rehearsal": 8,
+    "structured_reappropriation": 8
+  },
+  "metrics": {
+    "episode_ledger": {
+      "accuracy": 1.0,
+      "bearer_accuracy": 1.0,
+      "brier": 0.011000000000000006,
+      "false_recursion_rate": 0.0,
+      "governance_accuracy": 1.0,
+      "macro_f1": 1.0,
+      "n": 80,
+      "overclaim_rate": 0.0,
+      "per_label_f1": {
+        "acquired": 1.0,
+        "lost": 1.0,
+        "none": 1.0,
+        "preserved": 1.0,
+        "redistributed": 1.0
+      },
+      "recursion_f1": 1.0
+    },
+    "ordinary_trace": {
+      "accuracy": 1.0,
+      "bearer_accuracy": 1.0,
+      "brier": 0.12530000000000008,
+      "false_recursion_rate": 0.0,
+      "governance_accuracy": 0.9,
+      "macro_f1": 1.0,
+      "n": 80,
+      "overclaim_rate": 0.0,
+      "per_label_f1": {
+        "acquired": 1.0,
+        "lost": 1.0,
+        "none": 1.0,
+        "preserved": 1.0,
+        "redistributed": 1.0
+      },
+      "recursion_f1": 1.0
+    },
+    "performance_only": {
+      "accuracy": 0.5,
+      "bearer_accuracy": 0.4125,
+      "brier": 0.7026250000000009,
+      "false_recursion_rate": 0.2916666666666667,
+      "governance_accuracy": 0.9,
+      "macro_f1": 0.366798418972332,
+      "n": 80,
+      "overclaim_rate": 0.2916666666666667,
+      "per_label_f1": {
+        "acquired": 0.6521739130434783,
+        "lost": 0.6666666666666666,
+        "none": 0.5151515151515152,
+        "preserved": 0.0,
+        "redistributed": 0.0
+      },
+      "recursion_f1": 0.6595744680851064
+    }
+  },
+  "promotion_gate": false,
+  "series": 80
+}

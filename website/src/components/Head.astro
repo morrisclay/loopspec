@@ -1,8 +1,64 @@
 ---
 import DefaultHead from '@astrojs/starlight/components/Head.astro';
+
+const { entry, lang, lastUpdated } = Astro.locals.starlightRoute;
+const isNotFound = entry.id === '404' || entry.id.endsWith('/404');
+const siteUrl = new URL('/', Astro.site ?? Astro.url);
+const canonical = new URL(Astro.url.pathname, siteUrl);
+const markdownPath = canonical.pathname === '/'
+	? '/index.md'
+	: `${canonical.pathname.replace(/\/$/, '')}/index.md`;
+const markdownUrl = new URL(markdownPath, siteUrl);
+const description = entry.data.description ?? 'Specify, inspect, and argue about cybernetic agent loops.';
+const softwareId = new URL('/#software', siteUrl).href;
+const websiteId = new URL('/#website', siteUrl).href;
+const structuredData = {
+	'@context': 'https://schema.org',
+	'@graph': [
+		{
+			'@type': 'WebSite',
+			'@id': websiteId,
+			url: siteUrl.href,
+			name: 'LoopSpec documentation',
+			description: 'Specify, inspect, and argue about cybernetic agent loops.',
+			inLanguage: 'en',
+		},
+		{
+			'@type': 'SoftwareApplication',
+			'@id': softwareId,
+			name: 'LoopSpec',
+			url: siteUrl.href,
+			applicationCategory: 'DeveloperApplication',
+			operatingSystem: 'Cross-platform',
+			description: 'A specification language and structural design toolkit for agentic feedback loops.',
+			sameAs: 'https://github.com/morrisclay/loopspec',
+		},
+		{
+			'@type': canonical.pathname === '/' ? 'WebPage' : 'TechArticle',
+			'@id': `${canonical.href}#page`,
+			url: canonical.href,
+			headline: entry.data.title,
+			description,
+			inLanguage: lang,
+			isPartOf: { '@id': websiteId },
+			about: { '@id': softwareId },
+			...(lastUpdated ? { dateModified: lastUpdated.toISOString() } : {}),
+		},
+	],
+};
+const serializedStructuredData = JSON.stringify(structuredData).replaceAll('<', '\\u003c');
 ---
 
 <DefaultHead {...Astro.props} />
+<meta
+	name="robots"
+	content={isNotFound
+		? 'noindex, nofollow'
+		: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'}
+/>
+{!isNotFound && <link rel="describedby" href={new URL('/llms.txt', siteUrl)} />}
+{!isNotFound && <link rel="alternate" type="text/markdown" href={markdownUrl} />}
+{!isNotFound && <script type="application/ld+json" set:html={serializedStructuredData} />}
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="LoopSpec documentation" />
 <meta property="og:image" content={new URL('/og.png', Astro.url).href} />

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://loopspec.dev/experimental/episode-series-0.1.schema.json",
+  "title": "LoopSpec synthetic episode series",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["generator_version", "seed", "series_id", "family", "focal_power", "episodes", "ground_truth"],
+  "properties": {
+    "generator_version": {"const": "0.1"},
+    "seed": {"type": "integer"},
+    "series_id": {"type": "string"},
+    "family": {"type": "string"},
+    "focal_power": {"type": "string"},
+    "episodes": {
+      "type": "array",
+      "minItems": 2,
+      "items": {"$ref": "episode.schema.json"}
+    },
+    "ground_truth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mechanism", "transition", "bearer", "recursion", "source_episode", "target_episode", "carrier_kind", "intervention_viable"],
+      "properties": {
+        "mechanism": {"type": "string"},
+        "transition": {"enum": ["acquired", "lost", "redistributed", "preserved", "none"]},
+        "bearer": {"enum": ["human", "ai_in_use", "institution", "distributed", "none"]},
+        "recursion": {"type": "boolean"},
+        "source_episode": {"type": ["string", "null"]},
+        "target_episode": {"type": ["string", "null"]},
+        "carrier_kind": {"type": "string"},
+        "intervention_viable": {"type": "boolean"}
+      }
+    }
+  }
+}

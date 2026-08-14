@@ -7,4 +7,7 @@ __pycache__/
 /.coverage
 /htmlcov/
 /build/
+/.wrangler/
+/autoresearch/
+/research/episode_accounting/private_runs/
 .DS_Store

@@ -56,6 +56,8 @@ RUNTIME_SMOKE_SPEC = {
     }],
 }
 
+CLI_PROTOCOL_VERSION = 1
+
 
 def checked_document(path):
     DEPRECATIONS.clear()
@@ -72,12 +74,14 @@ def command_check(args):
         document, expansion_warnings, report, findings = checked_document(args.spec)
     except (SpecError, yaml.YAMLError, OSError, RuntimeError) as error:
         if args.json:
-            print(json.dumps({"valid": False, "errors": [str(error)]}, indent=2))
+            print(json.dumps({"protocol_version": CLI_PROTOCOL_VERSION,
+                              "valid": False, "errors": [str(error)]}, indent=2))
         else:
             print(f"INVALID\n\n{error}", file=sys.stderr)
         return 1
 
     result = {
+        "protocol_version": CLI_PROTOCOL_VERSION,
         "valid": report.ok,
         "spec": args.spec,
         "encodes": document.get("encodes"),
@@ -133,14 +137,32 @@ def command_check(args):
 
 def command_expand(args):
     try:
-        document, _warnings, report, _findings = checked_document(args.spec)
+        document, warnings, report, findings = checked_document(args.spec)
     except (SpecError, yaml.YAMLError, OSError, RuntimeError) as error:
-        print(error, file=sys.stderr)
+        if args.json:
+            print(json.dumps({"protocol_version": CLI_PROTOCOL_VERSION,
+                              "valid": False, "errors": [str(error)]}, indent=2))
+        else:
+            print(error, file=sys.stderr)
         return 1
     if not report.ok:
-        print("\n".join(report.errors), file=sys.stderr)
+        if args.json:
+            print(json.dumps({"protocol_version": CLI_PROTOCOL_VERSION,
+                              "valid": False, "errors": report.errors}, indent=2))
+        else:
+            print("\n".join(report.errors), file=sys.stderr)
         return 1
-    print(yaml.safe_dump(document, sort_keys=False, width=100), end="")
+    if args.json:
+        print(json.dumps({
+            "protocol_version": CLI_PROTOCOL_VERSION,
+            "valid": True,
+            "spec": args.spec,
+            "warnings": warnings,
+            "findings": findings,
+            "document": document,
+        }, indent=2))
+    else:
+        print(yaml.safe_dump(document, sort_keys=False, width=100), end="")
     return 0
 
 
@@ -192,12 +214,15 @@ def command_diff(args):
         )
     except (SpecError, yaml.YAMLError, OSError, RuntimeError) as error:
         if args.json:
-            print(json.dumps({"valid": False, "errors": [str(error)]}, indent=2))
+            print(json.dumps({"protocol_version": CLI_PROTOCOL_VERSION,
+                              "valid": False, "errors": [str(error)]}, indent=2))
         else:
             print(f"INVALID\n\n{error}", file=sys.stderr)
         return 1
 
     if args.json:
+        delta["protocol_version"] = CLI_PROTOCOL_VERSION
+        delta["valid"] = True
         print(json.dumps(delta, indent=2, sort_keys=True))
     else:
         print(render(delta))
@@ -255,6 +280,8 @@ def parser():
 
     expand_command = subcommands.add_parser("expand", help="print canonical IR v2.2")
     expand_command.add_argument("spec")
+    expand_command.add_argument("--json", action="store_true",
+                                help="emit a versioned machine-readable expansion envelope")
     expand_command.set_defaults(run=command_expand)
 
     diff_command = subcommands.add_parser(

@@ -1,0 +1,104 @@
+version: "0.1"
+seed: 20260813
+episodes_per_series: 7
+replicates_per_mechanism: 2
+
+families:
+  investment_diligence:
+    loop: deal_steward
+    purpose: decide whether evidence warrants a bounded investment action
+    focal_power: detect and stop a false investment thesis before commitment
+    human_role: investment_partner
+    action: authorize_investment_terms
+    artifact: versioned_diligence_model
+    outside_return: counterparty_and_portfolio_outcome
+    affected_party: investment_committee_and_company
+  software_delivery:
+    loop: coding_agent
+    purpose: deliver a correct change without losing recovery and review capability
+    focal_power: diagnose and repair a faulty change after agent scaffolding fails
+    human_role: software_engineer
+    action: merge_and_deploy_change
+    artifact: versioned_repository_and_runbook
+    outside_return: production_behavior
+    affected_party: users_and_on_call_team
+  support_triage:
+    loop: support_triage
+    purpose: resolve urgent cases while preserving effective escalation
+    focal_power: notice and escalate a severe case inside the recovery window
+    human_role: support_lead
+    action: escalate_and_apply_remedy
+    artifact: versioned_case_rule
+    outside_return: customer_outcome
+    affected_party: customer_and_support_team
+  research_evaluation:
+    loop: evidence_inquiry
+    purpose: discriminate rival explanations without laundering generated agreement
+    focal_power: identify the weakest causal join and preserve a warranted negative
+    human_role: research_lead
+    action: publish_or_withhold_claim
+    artifact: versioned_evidence_register
+    outside_return: external_review_and_replication
+    affected_party: readers_and_represented_subjects
+
+mechanisms:
+  structured_reappropriation:
+    target_transition: acquired
+    target_bearer: human
+    carrier_kind: practice
+    return_lag: 2
+    description: Independent reconstruction and outcome feedback become retained practice.
+  assisted_substitution:
+    target_transition: redistributed
+    target_bearer: distributed
+    carrier_kind: artifact
+    return_lag: 1
+    description: Joint output improves while unassisted capability migrates into an artifact-supported arrangement.
+  authority_window_erosion:
+    target_transition: lost
+    target_bearer: none
+    carrier_kind: workflow
+    return_lag: 1
+    description: Fast automation and normalized assent close the human recovery window.
+  institutional_rule_learning:
+    target_transition: acquired
+    target_bearer: institution
+    carrier_kind: rule
+    return_lag: 3
+    description: A reviewed exception becomes a governed rule that changes a later case.
+  repetition_without_retention:
+    target_transition: none
+    target_bearer: none
+    carrier_kind: none
+    return_lag: 0
+    description: Similar episodes recur without retaining a consequential difference.
+  retained_but_unused:
+    target_transition: none
+    target_bearer: none
+    carrier_kind: artifact
+    return_lag: 0
+    description: An artifact is stored but never retrieved or made action-relevant.
+  case_mix_shift:
+    target_transition: none
+    target_bearer: none
+    carrier_kind: none
+    return_lag: 0
+    description: Immediate performance rises because later cases are easier.
+  stable_rehearsal:
+    target_transition: preserved
+    target_bearer: human
+    carrier_kind: practice
+    return_lag: 2
+    description: Periodic degraded-mode rehearsal demonstrates maintained human capability.
+  provider_dependency:
+    target_transition: lost
+    target_bearer: none
+    carrier_kind: artifact
+    return_lag: 1
+    description: Normal joint performance hides dependency until provider and archive access fail.
+  ai_model_upgrade:
+    target_transition: redistributed
+    target_bearer: ai_in_use
+    carrier_kind: configuration
+    return_lag: 1
+    description: A model and tool upgrade shifts the principal realization of the power into AI-in-use.

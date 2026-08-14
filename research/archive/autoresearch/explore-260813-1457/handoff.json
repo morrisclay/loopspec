@@ -1,0 +1,30 @@
+{
+  "status": "converged",
+  "objective": "Blinded typed logs to reviewable LoopSpec design revisions",
+  "predicate": "python3 research/episode_accounting/design_evolution.py --check-gates",
+  "result": {
+    "holdout_series": 20,
+    "log_informed_score": 0.549116,
+    "unchanged_score": 0.518714,
+    "shuffled_placebo_score": 0.52662,
+    "materialized_designs": 40,
+    "active_design_findings": 0,
+    "promotion_gate": true
+  },
+  "findings": {
+    "errors": 0,
+    "untested_gaps": [
+      "real policy effects",
+      "real delayed unaided human transfer",
+      "independent proposal authors",
+      "approved prospective rollout"
+    ],
+    "verification": {
+      "episode_tests": "9 tests passed",
+      "doctor": "47 tests passed; generated grammar and check catalog current",
+      "design_gate": "seven of seven frozen holdout gates passed",
+      "candidates": "40 of 40 structurally valid with zero active design findings"
+    }
+  },
+  "next": "run an approved prospective human-in-the-loop comparison before claiming real capability effects"
+}

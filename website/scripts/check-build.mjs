@@ -75,6 +75,47 @@ if (broken.length) {
 await access(serverEntry);
 await access(resolve(clientRoot, 'og.png'));
 await access(resolve(clientRoot, 'favicon.png'));
+await access(resolve(clientRoot, 'robots.txt'));
+await access(resolve(clientRoot, 'sitemap-index.xml'));
+await access(resolve(clientRoot, 'sitemap-0.xml'));
+await access(resolve(clientRoot, 'llms.txt'));
+await access(resolve(clientRoot, 'index.md'));
+
+for (const [route, page] of pagesByRoute) {
+	const html = await readFile(page, 'utf8');
+	if (route === '/404.html') {
+		if (!html.includes('name="robots" content="noindex, nofollow"')) {
+			throw new Error('404 page must be noindex.');
+		}
+		continue;
+	}
+	const canonical = new URL(route, 'https://loopspec.cyborg.build').href;
+	if (!html.includes(`rel="canonical" href="${canonical}"`)) {
+		throw new Error(`Missing canonical URL on ${route}`);
+	}
+	if (!html.includes('rel="describedby" href="https://loopspec.cyborg.build/llms.txt"')) {
+		throw new Error(`Missing llms.txt discovery on ${route}`);
+	}
+	if (!html.includes('rel="alternate" type="text/markdown"')) {
+		throw new Error(`Missing Markdown alternate on ${route}`);
+	}
+	if (!html.includes('type="application/ld+json"')) {
+		throw new Error(`Missing structured data on ${route}`);
+	}
+	const markdownPath = route === '/' ? '/index.md' : `${route}index.md`;
+	await access(resolve(clientRoot, `.${markdownPath}`));
+}
+
+const robots = await readFile(resolve(clientRoot, 'robots.txt'), 'utf8');
+if (!robots.includes('Sitemap: https://loopspec.cyborg.build/sitemap-index.xml')) {
+	throw new Error('robots.txt does not advertise the sitemap.');
+}
+const sitemap = await readFile(resolve(clientRoot, 'sitemap-0.xml'), 'utf8');
+if (sitemap.includes('/404')) throw new Error('The sitemap includes the 404 route.');
+const llms = await readFile(resolve(clientRoot, 'llms.txt'), 'utf8');
+if (!llms.includes('# LoopSpec') || !llms.includes('/reference/cli/index.md')) {
+	throw new Error('llms.txt does not include the expected documentation index.');
+}
 
 const builtText = (await Promise.all(pages.map((page) => readFile(page, 'utf8')))).join('\n');
 for (const starterText of ['Welcome to Starlight', 'Example Guide', 'My Docs']) {

@@ -1,0 +1,141 @@
+loop: coding_agent
+runs: per_case
+boundary:
+  drawn_by: software_engineer
+  purpose: deliver a correct change without losing recovery and review capability
+  inside:
+  - coding_agent
+  - versioned_repository_and_runbook
+  - typed occurrence log
+  outside:
+  - production_behavior
+  - users_and_on_call_team
+goal:
+  resilient_focal_power:
+    keep: above 0.60 in normal and degraded conditions
+    unit: capability score
+beliefs:
+  focal_power_is_viable:
+    question: diagnose and repair a faulty change after agent scaffolding fails
+    how: judgement from typed probes and outside consequence
+    explains: resilient_focal_power
+    settled_by: outside_consequence
+    safe_to_repeat: episode id plus semantic LoopSpec digest
+    checked_by: five-case capability outcome review
+    checked_against: outside_consequence
+    scoring_rule: normal result, removal-probe result, and intervention viability
+    window: five later cases
+    adjusts: method
+    every: after five cases
+  degraded_mode_recovery_is_preserved:
+    question: Does unaided capability remain available under degraded conditions?
+    how: typed cross-episode evidence join
+    explains: resilient_focal_power
+    settled_by: outside_consequence
+    safe_to_repeat: episode id, probe condition, and artifact or configuration digest
+    checked_by: five-case post-revision review
+    checked_against: outside_consequence
+    scoring_rule: paired capability and governance difference from the prior design
+    window: five later cases
+    adjusts: method
+    every: after each five-case window
+observes:
+  joint_result:
+    informs:
+    - focal_power_is_viable
+    - resilient_focal_power
+    origin: ourselves
+    how: calculated
+    source: typed episode closure event
+  outside_consequence:
+    informs:
+    - focal_power_is_viable
+    - resilient_focal_power
+    - degraded_mode_recovery_is_preserved
+    origin: outside
+    how: measured
+    source: production_behavior
+  case_context:
+    informs:
+    - focal_power_is_viable
+    - resilient_focal_power
+    origin: outside
+    how: measured
+    source: case intake and affected-world state
+  degraded_mode_human_capability:
+    informs: degraded_mode_recovery_is_preserved
+    origin: ourselves
+    how: calculated
+    source: typed human-only probes with assistance removed
+processes:
+  focal_work:
+    description: The work through which merge_and_deploy_change affects later outcomes.
+    location: interface
+    observed_as:
+    - joint_result
+    - outside_consequence
+actions:
+  execute_focal_action:
+    moves: resilient_focal_power
+    through: focal_work
+    effect: unknown
+    can_undo: costly
+    needs_approval: software_engineer
+    effect_after: the next outside consequence
+    consumes:
+    - review_attention
+  defer_focal_action:
+    moves: resilient_focal_power
+    through: focal_work
+    effect: unknown
+    can_undo: 'yes'
+    needs_approval: software_engineer
+    effect_after: the next case
+  run_degraded_mode_rehearsal:
+    moves: resilient_focal_power
+    through: focal_work
+    effect: increase
+    can_undo: 'yes'
+    needs_approval: software_engineer
+    effect_after: within the next five cases
+    consumes:
+    - review_attention
+spends:
+  review_attention:
+    limit: two consequential reviews per case
+    replenished: the next case
+    spent_by:
+    - execute_focal_action
+    - run_degraded_mode_rehearsal
+when:
+- if: review attention is low
+  reads:
+  - review_attention
+  do: defer_focal_action
+- if: the focal power is viable and the resilient-capability target can be met
+  reads:
+  - focal_power_is_viable
+  - resilient_focal_power
+  against:
+  - resilient_focal_power
+  do: execute_focal_action
+- if: the scheduled degraded-mode rehearsal is due
+  reads:
+  - degraded_mode_recovery_is_preserved
+  do: run_degraded_mode_rehearsal
+asks_human_when:
+- the focal belief is unresolved before a consequential action
+- the scheduled degraded-mode rehearsal is due
+asks_human: software_engineer
+people:
+  software_engineer:
+    human: true
+    loses_if_wrong: users_and_on_call_team
+    sees:
+    - focal_power_is_viable
+    - resilient_focal_power
+    - degraded_mode_recovery_is_preserved
+never:
+- treat successful joint output alone as evidence that a person learned
+not_modelling:
+- the longer-horizon dynamics of production_behavior beyond five later cases
